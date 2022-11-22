@@ -21,7 +21,7 @@ col3 = hcl.colors(10, "YlOrRd", rev = TRUE) #color scale to use for consistency
 
 Reading in dataframe
 ```{r}
-paired_methods_long <- read.csv(here("processed-data", "compiled-datasets", "METHODS", "bothm_bothl_manual_ignitions_in.csv"))
+paired_methods_long <- read.csv(here("processed-data", "bothm_bothl_manual_ignitions_in.csv"))
 
 epi.df <- paired_methods_long %>% 
   filter(model == "EPI" & ignition == 1) # n = 96
@@ -629,7 +629,7 @@ tab_model(mpa.mod, lfm.mod, dw.mod, ww.mod, mod1, mod2, mod3, mod4, int1, int2, 
          title = "predictor analysis: tti, epiradiator",
   string.p = "P-Value", 
   p.style = "stars",
-  file = 'mem-model-selection/tti.EPI.mem.html')
+  file = here('mem-model-selection/tti.EPI.mem.html'))
 
 # Best model: MPa + DW*spp
 # Best model (w/o interactions): MPa + DW; MPa alone not sig. worse
@@ -667,7 +667,7 @@ tab_model(mpa.mod, lfm.mod, dw.mod, ww.mod, mod1, mod2, mod3, mod4, int1, int2, 
          title = "predictor analysis: fd, epiradiator",
   string.p = "P-Value", 
   p.style = "stars",
-  file = 'mem-model-selection/fd.EPI.mem.html')
+  file = here('mem-model-selection/fd.EPI.mem.html'))
 
 # NOTE: No interaction between LFM and spp. DW*spp seems highly important, so going to continue to incorporate interaction terms into best models
 # Best model: DW*spp
@@ -704,7 +704,7 @@ tab_model(mpa.mod, lfm.mod, dw.mod, ww.mod, mod1, mod2, mod3, mod4, int1, int2, 
          title = "predictor analysis: fh, epiradiator",
   string.p = "P-Value", 
   p.style = "stars",
-  file = 'mem-model-selection/fh.EPI.mem.html')
+  file = here('mem-model-selection/fh.EPI.mem.html'))
 
 # Best models:  MPa + DW and MPa + DW*spp, LFM + DW*spp not sig. worse
 ```
@@ -743,7 +743,7 @@ tab_model(mpa.mod, lfm.mod, dw.mod, ww.mod, mod1, mod2, mod3, mod4, int1, int2, 
          title = "predictor analysis: gd, epiradiator",
   string.p = "P-Value", 
   p.style = "stars",
-  file = 'mem-model-selection/gd.EPI.mem.html')
+  file = here('mem-model-selection/gd.EPI.mem.html'))
 
 # Best model: LFM + DW*spp
 ```
@@ -781,7 +781,7 @@ tab_model(mpa.mod, lfm.mod, dw.mod, ww.mod, mod1, mod2, mod3, mod4, int1, int2, 
          title = "predictor analysis: temp_max, epiradiator",
   string.p = "P-Value", 
   p.style = "stars",
-  file = 'mem-model-selection/temp_max.EPI.mem.html')
+  file = here('mem-model-selection/temp_max.EPI.mem.html'))
 
 # Best model: MPa + LFM + DW*spp
 # Best model (w/o interactions): MPa + LFM + DW; MPa + LFM not sig. worse, LFM + DW not sig. worse
@@ -821,7 +821,7 @@ tab_model(mpa.mod, lfm.mod, dw.mod, ww.mod, mod1, mod2, mod3, mod4, int1, int2, 
          title = "predictor analysis: pfg, epiradiator",
   string.p = "P-Value", 
   p.style = "stars",
-  file = 'mem-model-selection/pfg.EPI.mem.html')
+  file = here('mem-model-selection/pfg.EPI.mem.html'))
 
 # Best model: LFM + DW*spp
 ```
@@ -855,7 +855,7 @@ tab_model(mpa.mod, lfm.mod, dw.mod, ww.mod, mod1, mod2, mod3, mod4, int1, int2, 
          title = "predictor analysis: gti, epiradiator",
   string.p = "P-Value", 
   p.style = "stars",
-  file = 'mem-model-selection/gti.EPI.mem.html')
+  file = here('mem-model-selection/gti.EPI.mem.html'))
 
 # Best model: LFM + DW*spp
 # Best model (w/o interactions): LFM + DW;  MPa + DW not sig. worse, MPa alone not sig. worse
@@ -892,7 +892,7 @@ tab_model(mpa.mod, lfm.mod, dw.mod, ww.mod, mod1, mod2, mod3, mod4, int1, int2, 
          title = "predictor analysis: ttfg, epiradiator",
   string.p = "P-Value", 
   p.style = "stars",
-  file = 'mem-model-selection/ttfg.EPI.mem.html')
+  file = here('mem-model-selection/ttfg.EPI.mem.html'))
 
 # Best model: LFM + DW*spp
 ```
@@ -936,7 +936,7 @@ tab_model(mpa.mod, lfm.mod, dw.mod, ww.mod, mod1, mod2, mod3, mod4, int1, int2, 
          title = "predictor analysis: tti, hot plate",
   string.p = "P-Value", 
   p.style = "stars",
-  file = 'mem-model-selection/tti.HP.mem.html')
+  file = here('mem-model-selection/tti.HP.mem.html'))
 
 # Best model: LFM + DW*spp
 # MPa*spp close behind
@@ -973,7 +973,7 @@ tab_model(mpa.mod, lfm.mod, dw.mod, ww.mod, mod1, mod2, mod3, mod4, int1, int2, 
          title = "predictor analysis: fd, hot plate",
   string.p = "P-Value", 
   p.style = "stars",
-  file = 'mem-model-selection/fd.HP.mem.html')
+  file = here('mem-model-selection/fd.HP.mem.html'))
 
 # Best model: DW*spp; MPa + DW*spp not sig. worse
 # Best model (w/o interactions): DW alone; MPa + DW not sig. worse, MPa not sig. worse
@@ -1009,7 +1009,7 @@ tab_model(mpa.mod, lfm.mod, dw.mod, ww.mod, mod1, mod2, mod3, mod4, int1, int2, 
          title = "predictor analysis: fh, hot plate",
   string.p = "P-Value", 
   p.style = "stars",
-  file = 'mem-model-selection/fh.HP.mem.html')
+  file = here('mem-model-selection/fh.HP.mem.html'))
 
 # Best model: LFM + DW*spp; DW*spp not sig. worse
 # Best model (w/o interactions): DW alone; LFM + DW not sig. worse
@@ -1049,7 +1049,7 @@ tab_model(mpa.mod, lfm.mod, dw.mod, ww.mod, mod1, mod2, mod3, mod4, int1, int2, 
          title = "predictor analysis: gd, hot plate",
   string.p = "P-Value", 
   p.style = "stars",
-  file = 'mem-model-selection/gd.HP.mem.html')
+  file = here('mem-model-selection/gd.HP.mem.html'))
 
 # Best model: LFM + DW*spp
 ```
@@ -1084,7 +1084,7 @@ tab_model(mpa.mod, lfm.mod, dw.mod, ww.mod, mod1, mod2, mod3, mod4, int1, int2, 
          title = "predictor analysis: temp_max, hot plate",
   string.p = "P-Value", 
   p.style = "stars",
-  file = 'mem-model-selection/temp_max.HP.mem.html')
+  file = here('mem-model-selection/temp_max.HP.mem.html'))
 
 # Best model: MPa + DW*spp; MPa + LFM + DW*spp not sig. worse
 ```
@@ -1120,7 +1120,7 @@ tab_model(mpa.mod, lfm.mod, dw.mod, ww.mod, mod1, mod2, mod3, mod4, int1, int2, 
          title = "predictor analysis: pfg, hot plate",
   string.p = "P-Value", 
   p.style = "stars",
-  file = 'mem-model-selection/pfg.HP.mem.html')
+  file = here('mem-model-selection/pfg.HP.mem.html'))
 
 # Best model: LFM + DW*spp
 ```
@@ -1157,7 +1157,7 @@ tab_model(mpa.mod, lfm.mod, dw.mod, ww.mod, mod1, mod2, mod3, mod4, int1, int2, 
          title = "predictor analysis: gti, hot plate",
   string.p = "P-Value", 
   p.style = "stars",
-  file = 'mem-model-selection/gti.HP.mem.html')
+  file = here('mem-model-selection/gti.HP.mem.html'))
 
 # Best model: LFM + DW*spp
 ```
@@ -1194,7 +1194,7 @@ tab_model(mpa.mod, lfm.mod, dw.mod, ww.mod, mod1, mod2, mod3, mod4, int1, int2, 
          title = "predictor analysis: ttfg, hot plate",
   string.p = "P-Value", 
   p.style = "stars",
-  file = 'mem-model-selection/ttfg.HP.mem.html')
+  file = here('mem-model-selection/ttfg.HP.mem.html'))
 
 # Best model: LFM + DW*spp
 ```
@@ -1236,6 +1236,6 @@ kable.df %>%
   column_spec(c(3,5,7), border_right = T) %>% 
   row_spec(c(1:3, 7:8, 12:13, 17:18), background = '#F9F6EE') %>% 
   add_header_above(c(" ", "Top Model(s)" = 2, "AIC" = 2, "Marginal R2 / Conditional R2" = 2), color = 'black', border_left = T, border_right = T) %>% 
-  save_kable('mem-model-selection/MEM_kable.html')
+  save_kable(here('mem-model-selection/MEM_kable.html'))
 ```
 

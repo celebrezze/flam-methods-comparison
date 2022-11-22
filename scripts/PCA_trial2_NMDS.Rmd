@@ -1,5 +1,5 @@
 ---
-title: 'PCA (trial 2) and NMDS: Methods Paper '
+title: 'PCA (trial 2) and NMDS'
 author: "Joe Celebrezze"
 date: "3/8/2022"
 output: html_document

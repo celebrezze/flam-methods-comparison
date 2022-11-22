@@ -5,6 +5,8 @@ date: "8/4/2022"
 output: html_document
 ---
 
+This script is to investigate the manual ignitions for hot plate burns that were most prevalent for *C. cordulatus*
+
 # Set-up
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
@@ -24,7 +26,7 @@ col3 = hcl.colors(10, "YlOrRd", rev = TRUE) #color scale to use for consistency
 
 Reading in dataframe
 ```{r}
-paired_methods_long <- read.csv(here("processed-data", "compiled-datasets", "METHODS", "bothm_bothl_manual_ignitions_in.csv"))
+paired_methods_long <- read.csv(here("processed-data", "bothm_bothl_manual_ignitions_in.csv"))
 
 epi.df <- paired_methods_long %>% 
   filter(model == "EPI" & ignition == 1) # n = 96

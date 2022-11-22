@@ -1,6 +1,6 @@
 ---
-title: "Method comparison - "
-author: "Indra Boving"
+title: "Data Wrangling "
+author: "Indra Boving & Joe Celebrezze"
 date: "8/16/2021"
 output: html_document
 ---
@@ -19,7 +19,7 @@ col3 = hcl.colors(10, "YlOrRd", rev = TRUE) #color scale to use for consistency
 # SEKI DATA: 
 
 ```{r}
-seki_all_methods <- read_csv(here("processed-data", "compiled-datasets", "SEKI", "seki_flam_data_all.csv"), show_col_types = FALSE) %>% 
+seki_all_methods <- read_csv(here("processed-data", "seki_flam_data_all.csv"), show_col_types = FALSE) %>% 
   clean_names() %>% 
   mutate(lfm = lfm_n_as_imputed) %>% 
   select(2:49, flam_index, max_mpa_sample, -ttms, -bottle_wt, lfm) %>%  #drop columns we don't want
@@ -38,7 +38,7 @@ seki_all_methods <- read_csv(here("processed-data", "compiled-datasets", "SEKI",
 # LOCAL DATA: 
 
 ```{r}
-local_all_methods <- read_csv(here("processed-data", "compiled-datasets", "LOCAL", "local_flam_data_all.csv"), show_col_types = FALSE) %>% clean_names() %>% 
+local_all_methods <- read_csv(here("raw-data", "local_flam_data_all.csv"), show_col_types = FALSE) %>% clean_names() %>% 
   mutate(lfm = lfm_n_as_imputed) %>% 
   select(5:8, 12:44, 53:61, flam_index, max_mpa_sample, lfm) %>%  #drop columns we dont want
   select(-year_month_spp, -model_spp_bins10lfm_gr_nodate, -individual_bins10lfm_gr_nodate, -prop_ignite_bins10_nodate) %>% 
@@ -150,10 +150,10 @@ summary.df <- rbind(epi.sum, hp.sum)
 
 # Writing csv. files
 ```{r, include = FALSE}
-write_csv(paired_methods_long2, here("processed-data", "compiled-datasets", "METHODS", "bothmethods_bothlocations_long.csv"))
+write_csv(paired_methods_long2, here("processed-data", "bothmethods_bothlocations_long.csv"))
 
-write_csv(paired_methods_long, here("processed-data", "compiled-datasets", "METHODS", "bothm_bothl_manual_ignitions_in.csv"))
+write_csv(paired_methods_long, here("processed-data", "bothm_bothl_manual_ignitions_in.csv"))
 
-write_csv(paired_methods_wide2, here("processed-data", "compiled-datasets", "METHODS", "bothmethods_bothlocations_wide.csv"))
+write_csv(paired_methods_wide2, here("processed-data", "bothmethods_bothlocations_wide.csv"))
 ```
 

@@ -5,6 +5,8 @@ date: "4/5/2022"
 output: html_document
 ---
 
+This served as an exploratory analysis for us to get a better idea of how the data was structured and what variables we should look further into
+
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
@@ -22,7 +24,7 @@ library(rpart.plot) # for cart visualization -- nicer than just plot()
 
 # Loading in dataset
 ```{r, include = FALSE}
-main_df <- read_csv(here("processed-data/compiled-datasets/METHODS/bothmethods_bothlocations_long.csv"))
+main_df <- read_csv(here("processed-data/bothmethods_bothlocations_long.csv"))
 ```
 
 # Data wrangling
@@ -33,15 +35,7 @@ df1 <- main_df %>%
          lfm_outliers_out, start_temp, location, temp_max, ignition_temp, sample_wt)
 ```
 
-# Try 1
-Going to try a relatively simple one with only species, model and water status
-```{r}
-tti.cfit <- rpart(tti ~ spp + model + mpa, data = df1, method = "class", cp = 0.011765)
-print(tti.cfit)
-printcp(tti.cfit)
-prp(tti.cfit, type = 5, branch = 1)
-```
-
+Notes from meeting with Max:
 cp = cost-penalty parameter; limits the complexity of the tree
   pruning parameter, tells R how high up to prune the tree
   try out 0.001
@@ -54,8 +48,7 @@ Try to predict ignition = 1 or 0
 
 Normalize by sample weight? Scale and center?
 
-# Post-meeting-with-Max
-
+# ---------------------------
 # Data Wrangling
 
 ## Normalizing flam. metrics
@@ -126,8 +119,9 @@ hpdf_nsc <- hpdf_norm %>%
 df_nsc <- rbind(hpdf_nsc, epidf_nsc)
 ```
 
+# ---------------------------
 
-# TTI
+# Time to Ignition
 
 ## Normalized by sample weight
 ```{r}
@@ -193,7 +187,9 @@ printcp(tti.nsc.epi.cfit)
 prp(tti.nsc.epi.cfit, type = 5, branch = 1)
 ```
 
-# FLAME DURATION
+# ---------------------------
+
+# Flame Duration
 
 ## No data manipulation
 ```{r}
@@ -228,21 +224,21 @@ prp(fd.n.epi.cfit, type = 5, branch = 1)
 ## Scaled and Centered
 ### Both Methods
 ```{r}
-tti.sc.cfit <- rpart(tti ~ spp + mpa + model + sample_wt, data = df_sc, method = "class")
+fd.sc.cfit <- rpart(fd ~ spp + mpa + model + sample_wt, data = df_sc, method = "class")
 # Including sample.wt in the above to try and see if that could be what is driving initial split rather than model
-printcp(tti.sc.cfit)
-prp(tti.sc.cfit, type = 5, branch = 1)
+printcp(fd.sc.cfit)
+prp(fd.sc.cfit, type = 5, branch = 1)
 ```
 
 ### Methods side-by-side
 ```{r}
-tti.sc.hp.cfit <- rpart(tti ~ spp + mpa + sample_wt, data = hpdf_sc, method = "class")
-printcp(tti.sc.hp.cfit)
-prp(tti.sc.hp.cfit, type = 5, branch = 1)
+fd.sc.hp.cfit <- rpart(fd ~ spp + mpa + sample_wt, data = hpdf_sc, method = "class")
+printcp(fd.sc.hp.cfit)
+prp(fd.sc.hp.cfit, type = 5, branch = 1)
 # Interestingly enough, sample weight appears to be a MAJOR driver in time to ignition for the hot plate chamber
 
-tti.sc.epi.cfit <- rpart(tti ~ spp + mpa + sample_wt, data = epidf_sc, method = "class")
-printcp(tti.sc.epi.cfit)
-prp(tti.sc.epi.cfit, type = 5, branch = 1)
+fd.sc.epi.cfit <- rpart(fd ~ spp + mpa + sample_wt, data = epidf_sc, method = "class")
+printcp(fd.sc.epi.cfit)
+prp(fd.sc.epi.cfit, type = 5, branch = 1)
 ```
 

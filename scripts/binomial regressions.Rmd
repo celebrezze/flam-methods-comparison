@@ -11,7 +11,6 @@ knitr::opts_chunk$set(echo = TRUE)
 
 # Introduction
 This .Rmd is for the binomial regressions of ignitions vs. non-ignitions in the method comparison dataset
-See scripts/LOCAL/5.0_figures_2020.Rmd for the binomial regressions for the local species
 
 # Loading in necessary packages
 ```{r, include = FALSE}
@@ -32,7 +31,7 @@ right?
 Let's see how this goes!
 ```{r, include = FALSE}
 seki.raw.data <- read_csv(here("raw-data/SEKI_flammability.csv"))
-local.raw.data <- read_csv(here("processed-data/compiled-datasets/LOCAL/local_flam_data_all.csv"))
+local.raw.data <- read_csv(here("raw-data/local_flam_data_all.csv"))
 ```
 
 # Data Wrangling (Yee-haw!)
@@ -93,9 +92,9 @@ paired_methods_long <- paired_methods_long %>%
 
 ## Writing new csv. files (in case we need these datasets again...)
 ```{r}
-write_csv(paired_methods_long, here("processed-data", "compiled-datasets", "METHODS", "bothmethods_and_locations_long_noignitionsincluded.csv"))
+write_csv(paired_methods_long, here("processed-data", "bothmethods_and_locations_long_noignitionsincluded.csv"))
 
-write_csv(paired_methods_wide, here("processed-data", "compiled-datasets", "METHODS", "bothmethods_and_locations_wide_noignitionsincluded.csv"))
+write_csv(paired_methods_wide, here("processed-data", "bothmethods_and_locations_wide_noignitionsincluded.csv"))
 ```
 
 ## Filtering out manual ignitions, species not-of-interest
@@ -208,7 +207,7 @@ main.df %>%
   theme_bw() +
   labs(x = "Water Potential", y = "Ignition?", title = "Binomial Regression")
 
-ggsave("figures/binomialregression.jpg", height = 7, width = 10)
+ggsave(here("figures/extra-figures/binomialregression.jpg"), height = 7, width = 10)
 ```
 
 ## ARPA and CECO only
@@ -245,5 +244,5 @@ lfm.bin.reg <- main.df %>%
 
 cowplot::plot_grid(ncol = 2, mpa.bin.reg, lfm.bin.reg)
 
-ggsave("figures/binomialregression.2spp.jpg", height = 7, width = 14)
+ggsave(here("figures/extra-figures/binomialregression.2spp.jpg"), height = 7, width = 14)
 ```

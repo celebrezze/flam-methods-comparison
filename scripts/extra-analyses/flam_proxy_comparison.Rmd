@@ -5,6 +5,8 @@ date: '2022-09-13'
 output: html_document
 ---
 
+This was an idea to compare the two methods, but it didn't end up working out how we thought it would, hence why we put it into extra analyses
+
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
@@ -29,8 +31,8 @@ library(grid)
 
 # Loading in datasets
 ```{r, include = FALSE}
-main_df <- read_csv(here("processed-data/compiled-datasets/METHODS/bothmethods_bothlocations_long.csv"))
-wide_df <- read_csv(here("processed-data/compiled-datasets/METHODS/bothmethods_bothlocations_wide.csv"))
+main_df <- read_csv(here("processed-data/bothmethods_bothlocations_long.csv"))
+wide_df <- read_csv(here("processed-data/bothmethods_bothlocations_wide.csv"))
 ```
 
 # Taking out NA values

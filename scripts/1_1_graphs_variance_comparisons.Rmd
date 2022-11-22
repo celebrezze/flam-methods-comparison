@@ -1,5 +1,5 @@
 ---
-title: "1:1, Variance Comparisons - Methods Paper"
+title: "1 to 1 Graphs & Variance Comparisons"
 author: "Joe Celebrezze"
 date: "12/16/2021"
 output:
@@ -30,131 +30,14 @@ library(reshape2) #for "melting" dataframe into longer form (variance decomposit
 
 # Loading in datasets
 ```{r, include = FALSE}
-main_df <- read_csv(here("processed-data/compiled-datasets/METHODS/bothmethods_bothlocations_long.csv"))
-wide_df <- read_csv(here("processed-data/compiled-datasets/METHODS/bothmethods_bothlocations_wide.csv"))
+main_df <- read_csv(here("processed-data/bothmethods_bothlocations_long.csv"))
+wide_df <- read_csv(here("processed-data/bothmethods_bothlocations_wide.csv"))
 ```
 
 # ---------------------------------
 
-# Try 1
+# 1:1 Comparison  Graphs
 
-# First, 1:1 graphs
-These graphs show the flam. metrics for the EPI and the flam. metrics for the HP on a scatterplot; if there were no major differences between the two methods, the points would land squarely on the 1:1 line
-
-## Getting dataset all prepped, centered and scaled
-```{r}
-df1 <- wide_df %>% 
-  select(temp_max_epi, temp_max_hp, ignition_temp_epi, ignition_temp_hp, fh_epi, fh_hp, fd_epi, fd_hp, ttfg_epi, ttfg_hp, gti_epi, gti_hp, tti_epi, tti_hp, gd_epi, gd_hp, pfg_epi, pfg_hp, spp_epi, hydration_epi, mpa_epi) %>% 
-  na.omit() %>% 
-  mutate(fh_epi = fh_epi - mean(fh_epi), fh_hp = fh_hp - mean(fh_hp),
-        fd_epi = fd_epi - mean(fd_epi), fd_hp = fd_hp - mean(fd_hp),
-        temp_max_epi = temp_max_epi - mean(temp_max_epi),
-        temp_max_hp = temp_max_hp - mean(temp_max_hp),
-        ignition_temp_epi = ignition_temp_epi - mean(ignition_temp_epi),
-        ignition_temp_hp = ignition_temp_hp - mean(ignition_temp_hp),
-        ttfg_epi = ttfg_epi - mean(ttfg_epi), ttfg_hp = ttfg_hp - mean(ttfg_hp),
-        gti_epi = gti_epi - mean(gti_epi), gti_hp = gti_hp - mean(gti_hp),
-        tti_epi = tti_epi - mean(tti_epi), tti_hp = tti_hp - mean(tti_hp),
-        gd_epi = gd_epi - mean(gd_epi), gd_hp = gd_hp - mean(gd_hp), 
-        pfg_epi = pfg_epi - mean(pfg_epi), pfg_hp = pfg_hp - mean(pfg_hp)) %>%  #centered variables of interest
-  mutate(fh_epi = scale(fh_epi), fh_hp = scale(fh_hp), fd_epi = scale(fd_epi), fd_hp = scale(fd_hp), ttfg_epi = scale(ttfg_epi), ttfg_hp = scale(ttfg_hp), tti_epi = scale(tti_epi), tti_hp = scale(tti_hp), gti_epi = scale(gti_epi), gti_hp = scale(gti_hp), gd_epi = scale(gd_epi), gd_hp = scale(gd_hp), pfg_epi = scale(pfg_epi), pfg_hp = scale(pfg_hp), ignition_temp_epi = scale(ignition_temp_epi), ignition_temp_hp = scale(ignition_temp_hp), temp_max_epi = scale(temp_max_epi), temp_max_hp = scale(temp_max_hp))#scaled variables of interest  
-```
-
-## 1:1 Graphs!
-```{r}
-tti.plot <- ggplot(df1, aes(x = tti_epi, y = tti_hp, color = spp_epi)) +
-  ylim(-2, 3.5) +
-  xlim(-2, 3.5) +
-  geom_point() +
-  geom_abline() +
-  theme_bw() +
-  coord_equal()+
-  labs(x = "Time to Ignition (Epiradiator)", y = "Time to Ignition (Hot Plate)", color = "Species") +
-  theme_bw() + theme(axis.text = element_blank(),
-                     aspect.ratio = 1/1)
-
-fh.plot <- ggplot(df1, aes(x = fh_epi, y = fh_hp, color = spp_epi)) +
-  ylim(-3, 3) +
-  xlim(-3, 3) +
-  geom_point() +
-  geom_abline() +
-  theme_bw()+
-  coord_equal() +
-  labs(x = "Flame Height (Epiradiator)", y = "Flame Height (Hot Plate)", 
-       color = "Species") +
-  theme_bw() + theme(axis.text = element_blank(),
-                     aspect.ratio = 1/1)
-
-fd.plot <- ggplot(df1, aes(x = fd_epi, y = fd_hp, color = spp_epi)) +  
-  ylim(-2, 3.5) +
-  xlim(-2, 3.5) +
-  geom_point() +
-  geom_abline() +
-  theme_bw()+
-  coord_equal() +
-  labs(x = "Flame Duration (Epiradiator)", y = "Flame Duration (Hot Plate)", color = "Species") +
-  theme_bw() + theme(axis.text = element_blank(),
-                     aspect.ratio = 1/1)
-  
-gd.plot <- ggplot(df1, aes(x = gd_epi, y = gd_hp, color = spp_epi)) +
-  ylim(-2.5, 3.5) +
-  xlim(-2.5, 3.5) +
-  geom_point() +
-  geom_abline() +
-  labs(x = "Glow Duration (Epiradiator)", y = "Glow Duration (Hot Plate)", color = "Species") +
-  theme_bw() + theme(axis.text = element_blank(),
-                     aspect.ratio = 1/1)
-  
-gti.plot <- ggplot(df1, aes(x = gti_epi, y = gti_hp, color = spp_epi)) +
-  ylim(-2.5, 3.5) +
-  xlim(-2.5, 3.5) +
-  geom_point() +
-  geom_abline() +
-  labs(x = "Glow to Ignition (Epiradiator)", y = "Glow to Ignition (Hot Plate)", color = "Species") +
-  theme_bw() + theme(axis.text = element_blank(),
-                     aspect.ratio = 1/1)
-  
-# WHY DOES IT GO TO SIX
-ttfg.plot <- ggplot(df1, aes(x = ttfg_epi, y = ttfg_hp, color = spp_epi)) +
-  ylim(-2, 6) +
-  xlim(-2, 6) +
-  geom_point() +
-  geom_abline() +
-  labs(x = "Time to First Glow (Epiradiator)", y = "Time to First Glow (Hot Plate)", color = "Species") +
-  theme_bw() + theme(axis.text = element_blank(),
-                     aspect.ratio = 1/1)
-  
-temp.max.plot <- ggplot(df1, aes(x = temp_max_epi, y = temp_max_hp, color = spp_epi)) +
-  ylim(-3, 4) +
-  xlim(-3, 4) +
-  geom_point() +
-  geom_abline() +
-  labs(x = "Max Temp. (Epiradiator)", y = "Max Temp. (Hot Plate)", color = "Species") +
-  theme_bw() + theme(axis.text = element_blank(),
-                     aspect.ratio = 1/1)
-
-pfg.plot <- ggplot(df1, aes(x = pfg_epi, y = pfg_hp, color = spp_epi)) +
-  ylim(-2.5, 4) +
-  xlim(-2.5, 4) +
-  geom_point() +
-  geom_abline() +
-  labs(x = "Post-Flame Glow (Epiradiator)", y = "Post-Flame Glow (Hot Plate)", color = "Species") +
-  theme_bw() + theme(axis.text = element_blank(),
-                     aspect.ratio = 1/1)
-pfg.plot
-```
-
-
-
-Putting above 7 plots all on one
-```{r}
-ggarrange(tti.plot, fh.plot, fd.plot, gd.plot, gti.plot, ttfg.plot, temp.max.plot, ncol = 4, nrow = 2, widths = c(1,1,1,1), heights = c(1,1), common.legend = TRUE)
-
-ggsave("figures/1to1graphs.jpg", height = 7, width = 10)
-```
-
-# ---------------------------------
-# Try 2
 ## Dataset Prepping
 - Excluding manual ignitions (therefore, excluding all CECO, as all hot plate tests of CECO were manual ignitions)
 - Scaling, centering after excluding manual ignitions
@@ -318,14 +201,12 @@ pfg.plot <- ggplot(df2, aes(x = pfg_epi, y = pfg_hp, color = Species)) +
 pfg.plot
 ```
 
-
 Arranging above 8 plots
 ```{r}
 ggarrange(tti.plot, fd.plot, fh.plot, temp.max.plot, gti.plot, gd.plot, pfg.plot, ttfg.plot, ncol = 4, nrow = 2, widths = c(1,1,1,1), heights = c(1,1), common.legend = TRUE, legend = 'right')
 
-ggsave("figures/1to1graphsV2.jpg", height = 6, width = 12)
+ggsave(here("figures/1to1graphs.jpg"), height = 6, width = 12)
 ```
-
 
 # ---------------------------------
 
@@ -381,3 +262,118 @@ var.test(temp_max ~ model, data = main_df) #Not significantly different variance
 
 # ---------------------------------
 
+# Past Attempt
+
+The following code is the first attempt of the one to one plots...
+
+These graphs show the flam. metrics for the EPI and the flam. metrics for the HP on a scatterplot; if there were no major differences between the two methods, the points would land squarely on the 1:1 line
+
+Getting dataset all prepped, centered and scaled
+```{r}
+df1 <- wide_df %>% 
+  select(temp_max_epi, temp_max_hp, ignition_temp_epi, ignition_temp_hp, fh_epi, fh_hp, fd_epi, fd_hp, ttfg_epi, ttfg_hp, gti_epi, gti_hp, tti_epi, tti_hp, gd_epi, gd_hp, pfg_epi, pfg_hp, spp_epi, hydration_epi, mpa_epi) %>% 
+  na.omit() %>% 
+  mutate(fh_epi = fh_epi - mean(fh_epi), fh_hp = fh_hp - mean(fh_hp),
+        fd_epi = fd_epi - mean(fd_epi), fd_hp = fd_hp - mean(fd_hp),
+        temp_max_epi = temp_max_epi - mean(temp_max_epi),
+        temp_max_hp = temp_max_hp - mean(temp_max_hp),
+        ignition_temp_epi = ignition_temp_epi - mean(ignition_temp_epi),
+        ignition_temp_hp = ignition_temp_hp - mean(ignition_temp_hp),
+        ttfg_epi = ttfg_epi - mean(ttfg_epi), ttfg_hp = ttfg_hp - mean(ttfg_hp),
+        gti_epi = gti_epi - mean(gti_epi), gti_hp = gti_hp - mean(gti_hp),
+        tti_epi = tti_epi - mean(tti_epi), tti_hp = tti_hp - mean(tti_hp),
+        gd_epi = gd_epi - mean(gd_epi), gd_hp = gd_hp - mean(gd_hp), 
+        pfg_epi = pfg_epi - mean(pfg_epi), pfg_hp = pfg_hp - mean(pfg_hp)) %>%  #centered variables of interest
+  mutate(fh_epi = scale(fh_epi), fh_hp = scale(fh_hp), fd_epi = scale(fd_epi), fd_hp = scale(fd_hp), ttfg_epi = scale(ttfg_epi), ttfg_hp = scale(ttfg_hp), tti_epi = scale(tti_epi), tti_hp = scale(tti_hp), gti_epi = scale(gti_epi), gti_hp = scale(gti_hp), gd_epi = scale(gd_epi), gd_hp = scale(gd_hp), pfg_epi = scale(pfg_epi), pfg_hp = scale(pfg_hp), ignition_temp_epi = scale(ignition_temp_epi), ignition_temp_hp = scale(ignition_temp_hp), temp_max_epi = scale(temp_max_epi), temp_max_hp = scale(temp_max_hp))#scaled variables of interest  
+```
+
+1:1 Graphs!
+```{r}
+tti.plot <- ggplot(df1, aes(x = tti_epi, y = tti_hp, color = spp_epi)) +
+  ylim(-2, 3.5) +
+  xlim(-2, 3.5) +
+  geom_point() +
+  geom_abline() +
+  theme_bw() +
+  coord_equal()+
+  labs(x = "Time to Ignition (Epiradiator)", y = "Time to Ignition (Hot Plate)", color = "Species") +
+  theme_bw() + theme(axis.text = element_blank(),
+                     aspect.ratio = 1/1)
+
+fh.plot <- ggplot(df1, aes(x = fh_epi, y = fh_hp, color = spp_epi)) +
+  ylim(-3, 3) +
+  xlim(-3, 3) +
+  geom_point() +
+  geom_abline() +
+  theme_bw()+
+  coord_equal() +
+  labs(x = "Flame Height (Epiradiator)", y = "Flame Height (Hot Plate)", 
+       color = "Species") +
+  theme_bw() + theme(axis.text = element_blank(),
+                     aspect.ratio = 1/1)
+
+fd.plot <- ggplot(df1, aes(x = fd_epi, y = fd_hp, color = spp_epi)) +  
+  ylim(-2, 3.5) +
+  xlim(-2, 3.5) +
+  geom_point() +
+  geom_abline() +
+  theme_bw()+
+  coord_equal() +
+  labs(x = "Flame Duration (Epiradiator)", y = "Flame Duration (Hot Plate)", color = "Species") +
+  theme_bw() + theme(axis.text = element_blank(),
+                     aspect.ratio = 1/1)
+  
+gd.plot <- ggplot(df1, aes(x = gd_epi, y = gd_hp, color = spp_epi)) +
+  ylim(-2.5, 3.5) +
+  xlim(-2.5, 3.5) +
+  geom_point() +
+  geom_abline() +
+  labs(x = "Glow Duration (Epiradiator)", y = "Glow Duration (Hot Plate)", color = "Species") +
+  theme_bw() + theme(axis.text = element_blank(),
+                     aspect.ratio = 1/1)
+  
+gti.plot <- ggplot(df1, aes(x = gti_epi, y = gti_hp, color = spp_epi)) +
+  ylim(-2.5, 3.5) +
+  xlim(-2.5, 3.5) +
+  geom_point() +
+  geom_abline() +
+  labs(x = "Glow to Ignition (Epiradiator)", y = "Glow to Ignition (Hot Plate)", color = "Species") +
+  theme_bw() + theme(axis.text = element_blank(),
+                     aspect.ratio = 1/1)
+  
+# WHY DOES IT GO TO SIX
+ttfg.plot <- ggplot(df1, aes(x = ttfg_epi, y = ttfg_hp, color = spp_epi)) +
+  ylim(-2, 6) +
+  xlim(-2, 6) +
+  geom_point() +
+  geom_abline() +
+  labs(x = "Time to First Glow (Epiradiator)", y = "Time to First Glow (Hot Plate)", color = "Species") +
+  theme_bw() + theme(axis.text = element_blank(),
+                     aspect.ratio = 1/1)
+  
+temp.max.plot <- ggplot(df1, aes(x = temp_max_epi, y = temp_max_hp, color = spp_epi)) +
+  ylim(-3, 4) +
+  xlim(-3, 4) +
+  geom_point() +
+  geom_abline() +
+  labs(x = "Max Temp. (Epiradiator)", y = "Max Temp. (Hot Plate)", color = "Species") +
+  theme_bw() + theme(axis.text = element_blank(),
+                     aspect.ratio = 1/1)
+
+pfg.plot <- ggplot(df1, aes(x = pfg_epi, y = pfg_hp, color = spp_epi)) +
+  ylim(-2.5, 4) +
+  xlim(-2.5, 4) +
+  geom_point() +
+  geom_abline() +
+  labs(x = "Post-Flame Glow (Epiradiator)", y = "Post-Flame Glow (Hot Plate)", color = "Species") +
+  theme_bw() + theme(axis.text = element_blank(),
+                     aspect.ratio = 1/1)
+pfg.plot
+```
+
+Putting above 7 plots all on one
+```{r}
+ggarrange(tti.plot, fh.plot, fd.plot, gd.plot, gti.plot, ttfg.plot, temp.max.plot, ncol = 4, nrow = 2, widths = c(1,1,1,1), heights = c(1,1), common.legend = TRUE)
+
+#ggsave("figures/1to1graphs.jpg", height = 7, width = 10)
+```
