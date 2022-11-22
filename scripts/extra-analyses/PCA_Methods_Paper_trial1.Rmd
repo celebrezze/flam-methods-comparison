@@ -1,0 +1,368 @@
+---
+title: "PCA: Methods Paper (trial 1)"
+author: "Joe Celebrezze"
+date: "12/15/2021"
+output: 
+  html_document:
+    toc: true
+    toc_depth: 4
+    theme: united
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Note: "trial 1" has more PCAs done and uses all of the species, whereas "trial 2" is more refined in choosing the most effective PCAs and takes out the species with very low sample sizes
+
+# Loading in necessary packages
+```{r, include = FALSE}
+library(tidyverse)
+library(here)
+here = here::here
+library(ggbiplot) #for nicer PCA plots
+ggbiplot = ggbiplot::ggbiplot
+library(psych) #for pairs.panels()
+library(gridExtra) #to put graphs side by side
+library(sjPlot) #for nice tables of eigenvalues
+library(RColorBrewer) #to change color palette
+#Add in packages as necessary so no redundant packages
+
+col3 = hcl.colors(10, "YlOrRd", rev = TRUE) #color scale to use for consistency 
+```
+
+# Loading in datasets
+```{r, include = FALSE}
+main_df <- read_csv(here("processed-data/compiled-datasets/METHODS/bothmethods_bothlocations_long.csv"))
+wide_df <- read_csv(here("processed-data/compiled-datasets/METHODS/bothmethods_bothlocations_wide.csv"))
+```
+
+# Select columns of interest from main_df to run PCA on
+```{r}
+pca_df <- main_df %>% 
+  select(spp, model, mpa, fh, ttfg, gti, tti, fd, gd, pfg, dw_flam_sample, lfm_outliers_out, start_temp, location, temp_max, ignition_temp, sample_wt)
+```
+
+# Look at distribution using pairs_panels()
+```{r}
+pca_df %>% 
+  select(-spp,-model,-location) %>% 
+  #Excluding columns that we wouldn't expect to have a normal distribution
+  pairs.panels()
+```
+
+# Let's try a PCA - PCA 1
+Running a PCA without any significant changes to the dataset (only centering and scaling); including all relevant continuous, numerical variables (total of 16)
+
+## PCA 1 - Getting Eigenvalues
+```{r}
+#First, must exclude columns that are not numerical
+str(pca_df) #spp, model, location should be excluded
+
+pca_first_try <- pca_df %>% 
+  select(-spp, -model, -location) %>%  #Excluding spp, model, location
+  na.omit() %>%  #Getting rid of NAs
+  prcomp(center = TRUE, scale = TRUE) #Running PCA
+
+print(pca_first_try)
+summary(pca_first_try) #First two principal components only describe 40.9% of variance
+```
+
+## PCA 1 - Exploratory Visualization
+```{r}
+plot(pca_first_try, type = "lines") #Showing relative amounts of variance explained by first ten principal components; first FIVE principal components each explain a lot of variance
+
+pca_first_try_df <- as.data.frame(pca_first_try$x)
+df_noNA <- na.omit(pca_df)
+ggplot(pca_first_try_df, aes(x = PC1, y = PC2, color = df_noNA$model)) +
+  geom_point() +
+  scale_color_discrete(name = "Model") +
+  theme_bw() #Exploratory plot to show that there is a notable difference between the two models
+```
+
+## PCA 1 - More In-depth Visualization
+```{r}
+ggbiplot(pca_first_try,
+         groups = df_noNA$model,
+         ellipse = TRUE, circle = TRUE, varname.size = 4, alpha = 0.5) +
+  theme_bw() +
+  scale_color_manual(values = c("#FED976", "#E31A1C"))
+```
+
+## PCA 1 - Table of Eigenvalues
+```{r}
+tab_pca(pca_first_try)
+```
+
+
+# Focusing on the Flam. Metrics - PCA 2
+
+For this PCA, will focus on the primary flammability metrics:
+  Max temp, ignition temp, flame ht, time to first glow, glow to ignition, time to igniton, flame duration, glow duration, post-flame glow
+  
+This means that the following variables will be excluded:
+  Moisture metrics -- mpa, lfm, fresh_wt, dry_wt
+  Sample wt, start temp
+  Flam. metrics -- proportion ignited (does not weight heavily on first two principal components, so wanted to see how things looked without it)
+  
+## PCA 2 - Getting Eigenvalues
+```{r}
+flam_metrics_df <- df_noNA %>% 
+  select(temp_max, ignition_temp, fh, ttfg, gti, tti, fd, gd, pfg, spp, model)
+
+pca_flam <- flam_metrics_df %>% 
+  select(-spp, -model) %>% 
+  na.omit() %>%  #Getting rid of NAs
+  prcomp(center = TRUE, scale = TRUE) #Running PCA
+
+print(pca_flam)
+summary(pca_flam) #First two principal components describe 52% of variance
+```
+
+## PCA 2 - Exploratory Visualization
+```{r}
+plot(pca_flam, type = "lines") #Showing relative amounts of variance explained by first ten principal components; notice steeper drop indicating more variance described by first couple principal components
+
+pca_flam_df <- as.data.frame(pca_flam$x)
+ggplot(pca_flam_df, aes(x = PC1, y = PC2, color = df_noNA$model)) +
+  geom_point() +
+  scale_color_discrete(name = "Model") +
+  theme_bw() # Still a notable difference between models (this makes sense since many of the variables removed were identical for the two models -- moisture metrics)
+```
+
+## PCA 2 - More In-depth Visualization
+```{r}
+ggbiplot(pca_flam,
+         groups = df_noNA$model,
+         ellipse = TRUE, circle = TRUE, varname.size = 4, alpha = 0.5) +
+  theme_bw()+
+  scale_color_manual(values = c("#FED976", "#E31A1C"))
+```
+
+## PCA 2 - Table of Eigenvalues
+```{r}
+tab_pca(pca_flam)
+```
+
+
+# Messing with the dataframe a bit before running PCA - PCA 3
+Normalizing values with dry weight, centering and scaling before PCA rather than during
+```{r}
+pca_df_norm <- pca_df %>% 
+  mutate(fh.norm = fh/dw_flam_sample, ttfg.norm = ttfg/dw_flam_sample, gti.norm = gti/dw_flam_sample, tti.norm = tti/dw_flam_sample, fd.norm = fd/dw_flam_sample, gd.norm = gd/dw_flam_sample, pfg.norm = pfg/dw_flam_sample, temp_max.norm = temp_max/dw_flam_sample, ignition_temp.norm = ignition_temp/dw_flam_sample) #Normalizing flam. metrics
+
+pca_df_norm <- pca_df_norm %>% 
+  na.omit(pca_df_norm) %>% 
+  mutate(fh.norm = fh.norm - mean(fh.norm), fd.norm = fd.norm - mean(fd.norm), ttfg.norm = ttfg.norm - mean(ttfg.norm), gti.norm = gti.norm - mean(gti.norm), tti.norm = tti.norm - mean(tti.norm), gd.norm = gd.norm - mean(gd.norm), pfg.norm = pfg.norm - mean(pfg.norm), temp_max.norm = temp_max.norm - mean(temp_max.norm), ignition_temp.norm = ignition_temp.norm - mean(ignition_temp.norm)) #Centering flam. metrics
+
+pca_df_norm <- pca_df_norm %>% 
+  mutate(fh.norm = scale(fh.norm), fd.norm = scale(fd.norm), ttfg.norm = scale(ttfg.norm), gti.norm = scale(gti.norm), tti.norm = scale(tti.norm), gd.norm = scale(gd.norm), pfg.norm = scale(pfg.norm), temp_max.norm = scale(temp_max.norm), ignition_temp.norm = scale(ignition_temp.norm)) #Scaling flam. metrics by standard deviation
+```
+
+## Running/Visualizing PCA using Normalized, Centered, Scaled Flam. Metrics - PCA 3
+```{r}
+pca_norm_flam <- pca_df_norm %>% 
+  select(fh.norm, fd.norm, ttfg.norm, gti.norm, tti.norm, gd.norm, pfg.norm, temp_max.norm, ignition_temp.norm) %>% 
+  prcomp()
+
+print(pca_norm_flam)
+summary(pca_norm_flam) # Woah, first two PC explain 86.8% of variance now
+
+plot(pca_norm_flam, type = "lines") # VERY steep drop - most of variance is in PC1
+
+pca_norm_flam_df <- as.data.frame(pca_norm_flam$x)
+ggplot(pca_norm_flam_df, aes(x = PC1, y = PC2, color =pca_df_norm$model)) +
+  geom_point() +
+  scale_color_discrete(name = "Model") +
+  theme_bw() + #Still a difference between the two models
+  scale_color_manual(values = c("#FED976", "#E31A1C"))
+
+ggbiplot(pca_norm_flam,
+         groups = pca_df_norm$model,
+         ellipse = TRUE, circle = TRUE, varname.size = 4, alpha = 0.5) +
+  theme_bw()+
+  scale_color_manual(values = c("#FED976", "#E31A1C"))
+
+ggbiplot(pca_norm_flam,
+         groups = pca_df_norm$spp,
+         ellipse = TRUE, varname.size = 4, alpha = 0.5) +
+  theme_bw() +
+  scale_color_brewer(palette = "YlOrRd")
+
+ggbiplot(pca_norm_flam,
+         groups = pca_df_norm$location,
+         ellipse = TRUE, varname.size = 4, alpha = 0.5) +
+  theme_bw()+
+  scale_color_manual(values = c("#FED976", "#E31A1C"))
+```
+
+## Side-by-side Comparison of PCA for Normalized Flam. Metrics for EPI and HP - PCA 3
+```{r}
+pca_norm_flam_epi <- pca_df_norm %>% 
+  filter(model == "EPI") %>% 
+  select(fh.norm, fd.norm, ttfg.norm, gti.norm, tti.norm, gd.norm, pfg.norm, temp_max.norm, ignition_temp.norm) %>% 
+    prcomp()
+
+pca_norm_flam_hp <- pca_df_norm %>% 
+  filter(model == "HP") %>% 
+  select(fh.norm, fd.norm, ttfg.norm, gti.norm, tti.norm, gd.norm, pfg.norm, temp_max.norm, ignition_temp.norm) %>% 
+    prcomp()
+
+epi.plot1 <- ggbiplot(pca_norm_flam_epi,
+                      circle = TRUE, varname.size = 2, alpha = 0.5) +
+  theme_bw() +
+  labs(title = "Epiradiator") +
+  xlim(-2,3) + ylim(-3,4)
+
+hp.plot1 <- ggbiplot(pca_norm_flam_hp,
+                      circle = TRUE, varname.size = 2, alpha = 0.5) +
+  theme_bw() +
+  labs(title = "Hot Plate") +
+  xlim(-2,3) + ylim(-3,4)
+
+grid.arrange(epi.plot1, hp.plot1, ncol = 2)
+```
+
+## PCA 3 - Tables of Eigenvalues
+
+### Both Models, Normalized
+```{r}
+tab_pca(pca_norm_flam)
+```
+
+# Epi and Hotplate Flam. Metrics on Same PCA - PCA 4
+Using the flam. metrics from each method separately and running the PCA on them. For example, flame height for epi, flame height for hp, flame duration for epi, flame duration for hp, etc.
+
+## Gathering Dataset - PCA 4
+```{r}
+pca4_df <- wide_df %>% 
+  select(temp_max_epi, temp_max_hp, ignition_temp_epi, ignition_temp_hp, fh_epi, fh_hp, fd_epi, fd_hp, ttfg_epi, ttfg_hp, gti_epi, gti_hp, tti_epi, tti_hp, gd_epi, gd_hp, pfg_epi, pfg_hp, spp_epi, hydration_epi, mpa_epi, location_epi) %>% 
+  na.omit()
+```
+
+## Getting Eigenvalues - PCA 4
+```{r}
+pca4 <- pca4_df %>% 
+  select(-spp_epi, -hydration_epi, -mpa_epi, -location_epi) %>% 
+  prcomp(center = TRUE, scale = TRUE)
+
+print(pca4)
+summary(pca4) #37.7% of variance explained by first two principal components
+```
+
+## Data Visualization - PCA 4
+```{r}
+pca4_prin.comp_df <- as.data.frame(pca4$x)
+ggplot(pca4_prin.comp_df, aes(x = PC1, y = PC2)) +
+  geom_point() +
+  theme_bw() #More scattered than before
+
+ggbiplot(pca4,
+        circle = TRUE, varname.size = 3, alpha = 0.5) +
+  theme_bw()
+
+ggbiplot(pca4, groups = pca4_df$spp_epi, ellipse = TRUE,
+         circle = TRUE, varname.size = 3, alpha = 0.5) +
+  theme_bw() + #by species -- out of curiosity; does look relatively interesting with CECO off to its own side
+  scale_color_brewer(palette = "YlOrRd") 
+
+ggbiplot(pca4, groups = pca4_df$hydration_epi, ellipse = TRUE,
+         varname.size = 3, alpha = 0.5) +
+  theme_bw()+
+  scale_color_manual(values = c("#FFEDA0", "#FD8D3C", "#B10026")) #by hydration status; hmmmmm, not very discrete groups
+```
+
+## Running Same PCA, but adding mpa - PCA 4
+```{r}
+pca4.1 <- pca4_df %>% 
+  select(-spp_epi, -hydration_epi, -location_epi) %>% 
+  prcomp(center = TRUE, scale = TRUE)
+
+summary(pca4.1) #36.3% variance explained by first two principal components
+
+ggbiplot(pca4.1, groups = pca4_df$location_epi, ellipse = TRUE,
+         varname.size = 3, alpha = 0.5) +
+  theme_bw() +
+  scale_color_manual(values = c("#FED976", "#E31A1C"))
+  
+```
+
+## PCA 4 - Table of Eigenvalues
+```{r}
+tab_pca(pca4)
+tab_pca(pca4.1)
+```
+
+# PCA 5 - Taking out PIJE, ABCO, QUKE
+
+## Following PCA 1
+```{r}
+pca_df_notrees <- pca_df %>% 
+  filter(spp != "ABCO", spp != "PIJE", spp != "QUKE") %>% 
+  na.omit()
+
+pca_first_try_notrees <- pca_df_notrees %>% 
+  select(-spp, -model, -location) %>%  #Excluding spp, model, location
+  na.omit() %>%  #Getting rid of NAs
+  prcomp(center = TRUE, scale = TRUE) #Running PCA
+
+ggbiplot(pca_first_try_notrees,
+         groups = pca_df_notrees$model,
+         ellipse = TRUE, circle = TRUE, varname.size = 4, alpha = 0.5) +
+  theme_bw()+
+  scale_color_manual(values = c("#FED976", "#E31A1C"))
+
+ggbiplot(pca_first_try_notrees,
+         groups = pca_df_notrees$spp,
+         ellipse = TRUE, circle = TRUE, varname.size = 4, alpha = 0.5) +
+  theme_bw() +
+  scale_color_manual(values = c("#FFFFCC", "#FEB24C", "#FC4E2A", "#B10026"))
+```
+
+## Following PCA 2 (Flam. Metrics Only)
+```{r}
+flam_df_notrees <- flam_metrics_df %>% 
+  filter(spp != "ABCO", spp != "PIJE", spp != "QUKE") %>% 
+  na.omit()
+
+pca2_notrees <- flam_df_notrees %>% 
+  select(-spp, -model) %>%  #Excluding spp, model, location
+  na.omit() %>%  #Getting rid of NAs
+  prcomp(center = TRUE, scale = TRUE) #Running PCA
+
+ggbiplot(pca2_notrees,
+         groups = flam_df_notrees$model,
+         ellipse = TRUE, circle = TRUE, varname.size = 4, alpha = 0.5) +
+  theme_bw()+
+  scale_color_manual(values = c("#FED976", "#E31A1C"))
+
+ggbiplot(pca2_notrees,
+         groups = flam_df_notrees$spp,
+         ellipse = TRUE, circle = TRUE, varname.size = 4, alpha = 0.5) +
+  theme_bw() +
+  scale_color_manual(values = c("#FFFFCC", "#FEB24C", "#FC4E2A", "#B10026"))
+```
+
+## Following PCA 3 (Normalized by Dry Wt.)
+```{r}
+norm_df_notrees <- pca_df_norm %>% 
+  filter(spp != "ABCO", spp != "PIJE", spp != "QUKE") %>% 
+  na.omit()
+
+pca3_notrees <- norm_df_notrees %>% 
+  select(fh.norm, fd.norm, ttfg.norm, gti.norm, tti.norm, gd.norm, pfg.norm, temp_max.norm, ignition_temp.norm) %>% 
+  prcomp()
+
+ggbiplot(pca3_notrees,
+         groups = norm_df_notrees$model,
+         ellipse = TRUE, circle = TRUE, varname.size = 4, alpha = 0.5) +
+  theme_bw()+
+  scale_color_manual(values = c("#FED976", "#E31A1C"))
+
+ggbiplot(pca3_notrees,
+         groups = norm_df_notrees$spp,
+         ellipse = TRUE, circle = TRUE, varname.size = 4, alpha = 0.5) +
+  theme_bw() +
+  scale_color_manual(values = c("#FFFFCC", "#FEB24C", "#FC4E2A", "#B10026"))
+```
+

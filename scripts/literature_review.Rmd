@@ -1,0 +1,185 @@
+---
+title: "Literature Review"
+author: "Joe Celebrezze"
+date: '2022-08-26'
+output: html_document
+---
+
+Set-up
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+select = dplyr::select
+library(here)
+here = here::here
+library(ggpubr) #to put graphs side by side
+library(sf) #for dealing with shapefiles
+library(gcookbook) #for continuous color palette
+
+data <- read_csv(here('raw-data', 'methods.lit.review.csv'))[1:158,]
+location.data <- read_csv(here('raw-data', 'methods.lit.review.locations.csv'))[1:184,]
+```
+
+Global ignitions datasets
+NOTE: these datasets are very large. They are too large to push to the GitHub in their raw form, so if they are downloaded, they must be deleted from the remote prior to committing and pushing changes to GitHub. If they are left on the remote, an error will pop up saying that the file is too large. Also, (as if that first part wasn't already annoying enough) these urls will expire on October 29, 2022 and then I will need to request them from Global Fire Atlas again to get new urls. These complications unfortunately make this code difficult to distribute.
+```{r}
+# Ignitions (2016) Dataset from global fire atlas
+temp <- tempfile()
+url <- 'https://daac.ornl.gov/orders/a97981aeff140af7f473132ebfc67fde/CMS_Global_Fire_Atlas/data/Global_fire_atlas_V1_ignitions_2016.zip' # Note: this URL may expire after 30 days (in late October)
+download.file(url, temp)
+fire.map2016 <- unzip(zipfile = temp)
+fire.map2016 <- sf::read_sf('Global_fire_atlas_V1_ignitions_2016.shp')
+
+# Ignitions (2015) Dataset from global fire atlas
+temp <- tempfile()
+url <- 'https://daac.ornl.gov/orders/a97981aeff140af7f473132ebfc67fde/CMS_Global_Fire_Atlas/data/Global_fire_atlas_V1_ignitions_2015.zip' # Note: this URL may expire after 30 days (in late October)
+download.file(url, temp)
+fire.map2015 <- unzip(zipfile = temp)
+fire.map2015 <- sf::read_sf('Global_fire_atlas_V1_ignitions_2015.shp')
+
+# Combining two datasets above
+fire.map <- rbind(fire.map2016, fire.map2015)
+```
+
+# Bar Graph
+Setting up dataframe
+```{r}
+group <- c('Epiradiator', 'Wind Tunnel',	'Muffle Furnace',	'MLC',	'Xylene Lattice',	'Fire Bench',	'Grill',	'Oxygen Bomb',	'Steel Ring',	'Tray',	'Flat-Flame Burner',	'FPA Calorimeter',	'Cone Calorimeter',	'Direct Flame',	'Other',	'Intermediate\n Scale Calorimeter')
+value <- c(rep(NaN, 16))
+data.summary <- data.frame(group, value)
+
+for(i in c(1:16)) {
+  data.summary$value[i] <- sum(data[,i+7])/nrow(data)
+  data.summary$count[i] <- sum(data[,i+7])
+}
+
+data.summary$group <- factor(data.summary$group, levels = c('Epiradiator', 'Grill', 'Muffle Furnace', 'Cone Calorimeter', 'MLC', 'Oxygen Bomb','Steel Ring', 'Wind Tunnel', 'Fire Bench', 'Xylene Lattice', 'Direct Flame', 'Tray', 'FPA Calorimeter', 'Flat-Flame Burner',	'Intermediate\n Scale Calorimeter', 'Other'))
+```
+
+Visualization
+```{r}
+ggplot(data.summary, aes(x=group, y=value, fill=group)) +
+  geom_bar(stat="identity", width=1, color="white") +
+  labs(y = 'Proportion of Experiments Using Method') +
+  theme_bw() +
+  theme(legend.position = 'none',
+        axis.title.x = element_blank(),
+        axis.title.y = element_text(face = 'bold'),
+        axis.text.x = element_text(face = 'bold', angle = 90, hjust = 1,vjust = 0.4, size = 12))
+```
+
+```{r}
+ggplot(data.summary, aes(x=group, y=count, fill=group)) +
+  geom_bar(stat="identity", width=1, color="white") +
+  labs(y = 'Number of Experiments Using Method') +
+  theme_bw() +
+  ylim(c(0, 46.5)) +
+  annotate('text', x = 1, y = 44, label = 'b', size = 14, fontface = 'bold') +
+  theme(legend.position = 'none',
+        axis.title.x = element_blank(),
+        axis.title.y = element_text(face = 'bold', size = 14),
+        axis.text.x = element_text(face = 'bold', angle = 90, hjust = 1,vjust = 0.4, size = 20))
+
+ggsave('figures/lit.review.barplot.jpg', height = 7, width = 12.64)
+```
+
+# Comparing Weights
+## Epiradiator Only
+```{r}
+data %>% filter(model == 'EPI') %>% 
+ggplot(aes(x = sample.weight)) +
+  labs(x = "Sample Weight (g)", y = "Density", title = "Epiradiator Flammability Tests") +
+  geom_density() +
+  scale_x_continuous(trans = 'log10') +
+  theme_bw() +
+  theme(axis.title = element_text(face = 'bold'))
+
+ggsave('figures/lit.review.epi.weights.jpg', height = 5, width = 7.5)
+```
+
+## All Models
+```{r}
+ggplot(data = data, aes(x = sample.weight)) +
+  labs(x = "Sample Weight (g)", y = "Density") +
+  geom_density(size = 1.2) +
+  scale_x_continuous(trans = 'log10', breaks = c(0.1, 1, 10, 100, 1000), labels = c(0.1, 1, 10, 100, 1000)) +
+  theme_bw() +
+  theme(axis.title = element_text(face = 'bold', size = 14),
+        axis.text = element_text(size = 12))
+
+ggsave('figures/lit.review.all.methods.weights.jpg', height = 5, width = 7.5)
+```
+
+# Map!
+Cleaning up dataframes
+```{r}
+location.data.clean <- location.data %>% 
+  select(-`location notes`, -study) %>% 
+  na.omit()
+
+# Focusing on Class F and G fires (defined by the National Wildfire Coordinating Group as fires 1000 acres or larger)
+large.fire.map <- fire.map %>% 
+  filter(size > 4.04686)
+
+# Focusing on Class G fires (defined by the National Wildfire Coordinating Group as fires 5000 acres or larger)
+v.large.fire.map <- fire.map %>% 
+  filter(size > 20.23428)
+```
+
+## All Ignitions
+```{r}
+world <- map_data("world")
+
+ggplot(data = world) +
+  geom_map(data = world, map = world, aes(x = long, y = lat, map_id = region), fill = 'white') +
+  ylim(-55,90) +
+  geom_point(data = fire.map, aes(x = longitude, y = latitude, color = size), alpha = 0.025, size = 0.01) +
+  labs(color = "Fire Size (km2)") +
+  scale_color_gradient(low = '#FFC55B', high = '#EA2B1F', trans = 'log', breaks = c(1, 5, 25, 125, 625, 3000, 9000)) +
+  geom_point(data = location.data.clean, aes(x = longitude, y = latitude), color = 'black', size = 1.25, alpha = 0.7) +
+  annotate('text', x = -172, y = 85, label = 'a', size = 14, fontface = 'bold')+
+  theme_void() +
+  theme(panel.background = element_rect(fill = '#0AA3CF'),
+        legend.position = c(0.13, 0.2),
+        legend.title = element_text(face = 'bold', size = 14),
+        legend.text = element_text (size = 11))
+
+ggsave('figures/lit.review.locations.all.ignitions.jpg', height = 7, width = 12.64)
+```
+
+## Ignitions for Large Fires (Classes F and G)
+```{r}
+ggplot(data = world) +
+  geom_map(data = world, map = world, aes(x = long, y = lat, map_id = region), fill = 'white') +
+  ylim(-55,90) +
+  geom_point(data = large.fire.map, aes(x = longitude, y = latitude, color = size), alpha = 0.05, size = 0.05) +
+  labs(color = "Fire Size (km2)") +
+  scale_color_gradient(low = '#EFA00B', high = '#CA3C25', trans = 'log', breaks = c(5, 25, 125, 625, 3000, 9000)) +
+  geom_point(data = location.data.clean, aes(x = longitude, y = latitude), color = 'black', size = 1.25, alpha = 0.7) +
+  theme_void() +
+  theme(panel.background = element_rect(fill = '#0AA3CF'),
+        legend.position = c(0.13, 0.2),
+        legend.title = element_text(face = 'bold', size = 14),
+        legend.text = element_text (size = 12))
+
+ggsave('figures/lit.review.locations.FG.ignitions.jpg', height = 7, width = 12.64)
+```
+
+## Ignitions for Large Fires (Class G)
+```{r}
+ggplot(data = world) +
+  geom_map(data = world, map = world, aes(x = long, y = lat, map_id = region), fill = 'white') +
+  ylim(-55,90) +
+  geom_point(data = v.large.fire.map, aes(x = longitude, y = latitude, color = size), alpha = 0.05, size = 0.05) +
+  labs(color = "Fire Size (km2)") +
+  scale_color_gradient(low = '#EFA00B', high = '#CA3C25', trans = 'log', breaks = c(25, 125, 625, 3000, 9000)) +
+  geom_point(data = location.data.clean, aes(x = longitude, y = latitude), color = 'black', size = 1.25, alpha = 0.7) +
+  theme_void() + 
+  theme(panel.background = element_rect(fill = '#0AA3CF'),
+        legend.position = c(0.13, 0.2),
+        legend.title = element_text(face = 'bold', size = 14),
+        legend.text = element_text (size = 12))
+
+ggsave('figures/lit.review.locations.G.ignitions.jpg', height = 7, width = 12.64)
+```
+

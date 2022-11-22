@@ -1,0 +1,2590 @@
+---
+title: "Species Differences"
+author: "Joe Celebrezze"
+date: "8/2/2022"
+output: html_document
+---
+
+# Set-up
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(here)
+library(lme4) # mixed effects models
+library(performance)
+library(cowplot)
+library(gridExtra)
+library(remef)
+library(grid)
+library(car) # for qqPlot()
+library(sjPlot) #for table for MEM
+here = here::here
+select = dplyr::select
+col3 = hcl.colors(10, "YlOrRd", rev = TRUE) #color scale to use for consistency 
+```
+
+Reading in dataframe
+```{r}
+paired_methods_long <- read.csv(here("processed-data", "compiled-datasets", "METHODS", "bothm_bothl_manual_ignitions_in.csv"))
+
+paired_methods_long <- paired_methods_long %>% 
+   mutate(Species = case_when(
+    spp == "ADFA" ~ "A. fasciculatum", 
+    spp == "CEME" ~ "C. megacarpus",
+    spp == "CECO" ~ "C. cordulatus",
+    spp == "ARPA" ~ "A. patula"
+  ))
+
+epi.df <- paired_methods_long %>% 
+  filter(model == "EPI" & ignition == 1) # n = 96
+
+hp.df <- paired_methods_long %>% 
+  filter(model == "HP" & ignition == 1) # n = 83
+```
+
+Selecting species with n > 20 that ignited
+```{r}
+epi.df.limited <- epi.df %>% 
+  filter(spp == "ADFA" | spp == "CECO")
+
+hp.df.limited <- hp.df %>% 
+  filter(spp == "ADFA" | spp == "CEME")
+```
+
+# --------------------------------
+Looking at species with n>10 ignitions (including ARPA)
+```{r}
+epi.df2 <- epi.df %>% 
+  filter(spp == "ADFA" | spp == "CECO" | spp == "ARPA") %>% 
+  mutate(Model = case_when(model == "HP" ~ "Hot Plate",
+                           model == "EPI" ~ "Epiradiator"))
+
+hp.df2 <- hp.df %>% 
+  filter(spp == "ADFA" | spp == "CEME" | spp == "ARPA") %>% 
+  mutate(Model = case_when(model == "HP" ~ "Hot Plate",
+                           model == "EPI" ~ "Epiradiator"))
+```
+
+# Epiradiator
+## Dry Weight Plots
+### TTI
+Model:
+```{r}
+tti.dw.epi <- lmer(tti ~ dw_flam_sample*spp + site + year_month + (1|individual), data = epi.df2)
+summary(tti.dw.epi)
+```
+
+Plot:
+```{r}
+tde.plot <- epi.df2 %>%
+  ggplot(aes(x = dw_flam_sample, y = tti, color = spp)) +
+  labs(x = "Dry Weight (g)", y = "Time to Ignition (s)", color = "Species") +
+  geom_point(size = 1, alpha = 0.8) +
+  geom_abline(slope = -10.230, intercept = 45.707, color = "#FC5130", cex = 1, alpha = 0.8) +
+  geom_abline(slope = 12.061, intercept = 27.582, color = "#F7B801", cex = 1, alpha = 0.8) +
+  geom_abline(slope = -4.456, intercept = 37.135, color = "#0B032D", cex = 1, alpha = 0.8) +
+  facet_wrap(~Model) +
+  theme_bw() +
+  scale_color_manual(values = c("#FC5130","#F7B801","#0B032D")) +
+  theme(axis.title.y = element_text(face = 'bold', size = 12),
+        axis.title.x = element_blank(),
+        legend.position = 'none',
+        strip.text = element_text(face = "bold"))
+tde.plot
+```
+ 
+### FH
+Model:
+```{r}
+fh.dw.epi <- lmer(fh ~ dw_flam_sample*spp + site + year_month + (1|individual), data = epi.df2)
+summary(fh.dw.epi)
+```
+
+Plot:
+```{r}
+fde.plot <- epi.df2 %>%
+  ggplot(aes(x = dw_flam_sample, y = fh, color = spp)) +
+  labs(x = "Dry Weight (g)", y = "Flame Height (cm)", color = "Species") +
+  geom_point(size = 1, alpha = 0.6) +
+  geom_abline(slope = 3.4767, intercept = 7.3372, color = "#FC5130", cex = 1, alpha = 0.8) +
+  geom_abline(slope = 1.4888, intercept = 7.7242, color = "#F7B801", cex = 1, alpha = 0.8) +
+  geom_abline(slope = 8.8525, intercept = 1.6612, color = "#0B032D", cex = 1, alpha = 0.8) +
+  facet_wrap(~Model) +
+  theme_bw() +
+  scale_color_manual(values = c("#FC5130","#F7B801","#0B032D")) +
+  theme(axis.title.y = element_text(face = 'bold', size = 12),
+        axis.title.x = element_blank(),
+        legend.position = 'none',
+        strip.text = element_text(face = "bold"))
+fde.plot
+```
+
+### GD
+Model:
+```{r}
+gd.dw.epi <- lmer(gd ~ dw_flam_sample*spp + site + year_month + (1|individual), data = epi.df2)
+summary(gd.dw.epi)
+```
+
+Plot:
+```{r}
+gde.plot <- epi.df2 %>%
+  ggplot(aes(x = dw_flam_sample, y = gd, color = spp)) +
+  labs(x = "Dry Weight (g)", y = "Glow Duration (s)", color = "Species") +
+  geom_point(size = 1, alpha = 0.6) +
+  geom_abline(slope = 37.0565, intercept = 88.2909, color = "#FC5130", cex = 1, alpha = 0.8) +
+  geom_abline(slope = 12.8873, intercept = 73.6645, color = "#F7B801", cex = 1, alpha = 0.8) +
+  geom_abline(slope = 66.6342, intercept = 82.4029, color = "#0B032D", cex = 1, alpha = 0.8) +
+  facet_wrap(~Model) +
+  theme_bw() +
+  scale_color_manual(values = c("#FC5130","#F7B801","#0B032D")) +
+  theme(axis.title.y = element_text(face = 'bold', size = 12),
+        axis.title.x = element_blank(),
+        legend.position = 'none',
+        strip.text = element_text(face = "bold"))
+gde.plot
+```
+
+## LFM Plots
+### TTI
+Model:
+```{r}
+tti.lfm.epi <- lmer(tti ~ lfm*spp + site + year_month + (1|individual), data = epi.df2)
+summary(tti.lfm.epi)
+```
+
+Plot:
+```{r}
+tle.plot <- epi.df2 %>%
+  ggplot(aes(x = lfm, y = tti, color = spp)) +
+  labs(x = "Live Fuel Moisture (%)", y = "Time to Ignition (s)", color = "Species") +
+  geom_point(size = 1, alpha = 0.6) +
+  geom_abline(slope = 0.20413, intercept = 23.51471, color = "#FC5130", cex = 1, alpha = 0.8) +
+  geom_abline(slope = -0.03597, intercept = 38.87841, color = "#F7B801", cex = 1, alpha = 0.8) +
+  geom_abline(slope = 0.12135, intercept = 24.69503, color = "#0B032D", cex = 1, alpha = 0.8) +
+  facet_wrap(~Model) +
+  theme_bw() +
+  scale_color_manual(values = c("#FC5130","#F7B801","#0B032D")) +
+  theme(axis.title.y = element_text(face = 'bold', size = 12),
+      axis.title.x = element_blank(),
+      legend.position = 'none',
+      strip.text = element_text(face = "bold"))
+tle.plot
+```
+ 
+### FH
+Model:
+```{r}
+fh.lfm.epi <- lmer(fh ~ lfm*spp + site + year_month + (1|individual), data = epi.df2)
+summary(fh.lfm.epi)
+```
+
+Plot:
+```{r}
+fle.plot <- epi.df2 %>%
+  ggplot(aes(x = lfm, y = fh, color = spp)) +
+  labs(x = "Live Fuel Moisture (%)", y = "Flame Height (cm)", color = "Species") +
+  geom_point(size = 1, alpha = 0.6) +
+  geom_abline(slope = -0.05006, intercept = 13.48238, color = "#FC5130", cex = 1, alpha = 0.8) +
+  geom_abline(slope = -0.00511, intercept = 9.35427, color = "#F7B801", cex = 1, alpha = 0.8) +
+  geom_abline(slope = -0.08142, intercept = 14.48917, color = "#0B032D", cex = 1, alpha = 0.8) +
+  facet_wrap(~Model) +
+  theme_bw() +
+  scale_color_manual(values = c("#FC5130","#F7B801","#0B032D")) +
+  theme(axis.title.y = element_text(face = 'bold', size = 12),
+        axis.title.x = element_blank(),
+        legend.position = 'none',
+        strip.text = element_text(face = "bold"))
+fle.plot
+```
+
+### GD
+Model:
+```{r}
+gd.lfm.epi <- lmer(gd ~ lfm*spp + site + year_month + (1|individual), data = epi.df2)
+summary(gd.lfm.epi)
+```
+
+Plot:
+```{r}
+gle.plot <- epi.df2 %>%
+  ggplot(aes(x = lfm, y = gd, color = spp)) +
+  labs(x = "Live Fuel Moisture (%)", y = "Glow Duration (s)", color = "Species") +
+  geom_point(size = 1, alpha = 0.6) +
+  geom_abline(slope = -0.1775, intercept = 128.7751, color = "#FC5130", cex = 1, alpha = 0.8) +
+  geom_abline(slope = -0.033, intercept = 87.5507, color = "#F7B801", cex = 1, alpha = 0.8) +
+  geom_abline(slope = -0.3211, intercept = 156.4526, color = "#0B032D", cex = 1, alpha = 0.8) +
+  facet_wrap(~Model) +
+  theme_bw() +
+  scale_color_manual(values = c("#FC5130","#F7B801","#0B032D")) +
+  theme(axis.title.y = element_text(face = 'bold', size = 12),
+        axis.title.x = element_blank(),
+        legend.position = 'none',
+        strip.text = element_text(face = "bold"))
+gle.plot
+```
+
+# Hot Plate
+## Dry Weight Plots
+### TTI
+Model:
+```{r}
+tti.dw.hp <- lmer(tti ~ dw_flam_sample*spp + site + (1|individual), data = hp.df2)
+summary(tti.dw.hp)
+```
+
+Plot:
+```{r}
+tdh.plot <- hp.df2 %>%
+  ggplot(aes(x = dw_flam_sample, y = tti, color = spp)) +
+  labs(x = "Dry Weight (g)", y = "Time to Ignition (s)", color = "Species") +
+  geom_point(size = 1, alpha = 0.6) +
+  geom_abline(slope = 12.9279, intercept = 65.8715, color = "#FC5130", cex = 1, alpha = 0.8) +
+  geom_abline(slope = -0.781, intercept = 58.1903, color = "#F7B801", cex = 1, alpha = 0.8) +
+  geom_abline(slope = 19.3816, intercept = 66.8618, color = "#5F758E", cex = 1, alpha = 0.8) +
+  facet_wrap(~Model) +
+  theme_bw() +
+  scale_color_manual(values = c("#FC5130","#F7B801","#5F758E")) +
+  theme(axis.title = element_blank(),
+        legend.position = 'none',
+        strip.text = element_text(face = "bold"))
+tdh.plot
+```
+ 
+### FH
+Model:
+```{r}
+fh.dw.hp <- lmer(fh ~ dw_flam_sample*spp + site + (1|individual), data = hp.df2)
+summary(fh.dw.hp)
+```
+
+Plot:
+```{r}
+fdh.plot <- hp.df2 %>%
+  ggplot(aes(x = dw_flam_sample, y = fh, color = spp)) +
+  labs(x = "Dry Weight (g)", y = "Flame Height (cm)", color = "Species") +
+  geom_point(size = 1, alpha = 0.6) +
+  geom_abline(slope = 3.2370, intercept = 13.689, color = "#FC5130", cex = 1, alpha = 0.8) +
+  geom_abline(slope = 1.18, intercept = 23.113, color = "#F7B801", cex = 1, alpha = 0.8) +
+  geom_abline(slope = 1.286, intercept = 16.552, color = "#5F758E", cex = 1, alpha = 0.8) +
+  facet_wrap(~Model) +
+  theme_bw() +
+  scale_color_manual(values = c("#FC5130","#F7B801","#5F758E")) +
+  theme(axis.title = element_blank(),
+        legend.position = 'none',
+        strip.text = element_text(face = "bold"))
+fdh.plot
+```
+
+### GD
+Model:
+```{r}
+gd.dw.hp <- lmer(gd ~ dw_flam_sample*spp + site + (1|individual), data = hp.df2)
+summary(gd.dw.hp)
+```
+
+Plot:
+```{r}
+gdh.plot <- hp.df2 %>%
+  ggplot(aes(x = dw_flam_sample, y = gd, color = spp)) +
+  labs(x = "Dry Weight (g)", y = "Glow Duration (s)", color = "Species") +
+  geom_point(size = 1, alpha = 0.6) +
+  geom_abline(slope = 33.23, intercept = 72.45, color = "#FC5130", cex = 1, alpha = 0.8) +
+  geom_abline(slope = -27.01, intercept = 310.09, color = "#F7B801", cex = 1, alpha = 0.8) +
+  geom_abline(slope = 7.18, intercept = 170.44, color = "#5F758E", cex = 1, alpha = 0.8) +
+  facet_wrap(~Model) +
+  theme_bw() +
+  scale_color_manual(values = c("#FC5130","#F7B801","#5F758E")) +
+  theme(axis.title = element_blank(),
+        legend.position = 'none',
+        strip.text = element_text(face = "bold"))
+gdh.plot
+```
+
+## LFM Plots
+### TTI
+Model:
+```{r}
+tti.lfm.hp <- lmer(tti ~ lfm*spp + site + (1|individual), data = hp.df2)
+summary(tti.lfm.hp)
+```
+
+Plot:
+```{r}
+tlh.plot <- hp.df2 %>%
+  ggplot(aes(x = lfm, y = tti, color = spp)) +
+  labs(x = "Live Fuel Moisture (%)", y = "Time to Ignition (s)", color = "Species") +
+  geom_point(size = 1, alpha = 0.6) +
+  geom_abline(slope = 0.6345, intercept = 52.4854, color = "#FC5130", cex = 1, alpha = 0.8) +
+  geom_abline(slope = 0.0384, intercept = 51.0348, color = "#F7B801", cex = 1, alpha = 0.8) +
+  geom_abline(slope = -0.8458, intercept = 188.102, color = "#5F758E", cex = 1, alpha = 0.8) +
+  facet_wrap(~Model) +
+  theme_bw() +
+  scale_color_manual(values = c("#FC5130","#F7B801","#5F758E")) +
+  theme(axis.title = element_blank(),
+        legend.position = 'none',
+        strip.text = element_text(face = "bold"))
+tlh.plot
+```
+ 
+### FH
+Model:
+```{r}
+fh.lfm.hp <- lmer(fh ~ lfm*spp + site + (1|individual), data = hp.df2)
+summary(fh.lfm.hp)
+```
+
+Plot:
+```{r}
+flh.plot <- hp.df2 %>%
+  ggplot(aes(x = lfm, y = fh, color = spp)) +
+  labs(x = "Live Fuel Moisture (%)", y = "Flame Height (cm)", color = "Species") +
+  geom_point(size = 1, alpha = 0.6) +
+  geom_abline(slope = -0.028165, intercept = 23.410702, color = "#FC5130", cex = 1, alpha = 0.8) +
+  geom_abline(slope = -0.021529, intercept = 30.51514, color = "#F7B801", cex = 1, alpha = 0.8) +
+  geom_abline(slope = -0.025327, intercept = 21.57434, color = "#5F758E", cex = 1, alpha = 0.8) +
+  facet_wrap(~Model) +
+  theme_bw() +
+  scale_color_manual(values = c("#FC5130","#F7B801","#5F758E")) +
+  theme(axis.title = element_blank(),
+        legend.position = 'none',
+        strip.text = element_text(face = "bold"))
+flh.plot
+```
+
+### GD
+Model:
+```{r}
+gd.lfm.hp <- lmer(gd ~ lfm*spp + site + (1|individual), data = hp.df2)
+summary(gd.lfm.hp)
+```
+
+Plot:
+```{r}
+glh.plot <- hp.df2 %>%
+  ggplot(aes(x = lfm, y = gd, color = spp)) +
+  labs(x = "Live Fuel Moisture (%)", y = "Glow Duration (s)", color = "Species") +
+  geom_point(size = 1, alpha = 0.6) +
+  geom_abline(slope = 1.4273, intercept = 51.1513, color = "#FC5130", cex = 1, alpha = 0.8) +
+  geom_abline(slope = 0.8728, intercept = 104.9197, color = "#F7B801", cex = 1, alpha = 0.8) +
+  geom_abline(slope = 0.4012, intercept = 154.5735, color = "#5F758E", cex = 1, alpha = 0.8) +
+  facet_wrap(~Model) +
+  theme_bw() +
+  scale_color_manual(values = c("#FC5130","#F7B801","#5F758E")) +
+  theme(axis.title = element_blank(),
+        legend.position = 'none',
+        strip.text = element_text(face = "bold"))
+glh.plot
+```
+# Summary of Models
+```{r}
+tab_model(tti.dw.epi, tti.dw.hp, fh.dw.epi, fh.dw.hp, gd.dw.epi, gd.dw.hp, tti.lfm.epi, tti.lfm.hp, fh.lfm.epi, fh.lfm.hp, gd.lfm.epi, gd.lfm.hp,
+          show.reflvl = FALSE, 
+          digits = 3, 
+          show.aic = TRUE, 
+          show.ci = FALSE,
+          show.icc = FALSE,
+         string.pred = "Coeffcient", 
+        dv.labels = c("TTI vs. DW (EPI)", "TTI vs. DW (HP)",
+                      "FH vs. DW (EPI)", "FH vs. DW (HP)",
+                      "GD vs. DW (EPI)", "GD vs. DW (HP)",
+                      "TTI vs. LFM (EPI)", "TTI vs. LFM (HP)",
+                      "FH vs. LFM (EPI)", "FH vs. LFM (HP)",
+                      "GD vs. LFM (EPI)", "GD vs. LFM (HP)"),
+         title = "Species Differences Model Table",
+  string.p = "P-Value", 
+  p.style = "stars")
+```
+
+# Arranging Dry Weight Plots
+```{r}
+spp.legend <- get_legend(
+  # create some space to the top of the legend
+  ggplot() + 
+  geom_point(data = epi.df, aes(x = tti, y = dw_flam_sample, color = Species), size = 3, alpha = .8) +
+    labs(color = "Species") +
+    scale_color_manual(values=c("#FC5130","#F7B801","#0B032D","#5F758E")) +
+    theme(legend.box.margin = margin(0, 0, 0, 0),
+          legend.position = "right",
+          legend.title = element_text(face = 'bold', size = 14),
+          legend.text = element_text(size = 12, face = 'italic'),
+          legend.key = element_rect(fill = "white"))
+)
+
+epi.plots <- cowplot::plot_grid(ncol = 1, 
+                       tde.plot + theme(plot.margin = unit(c(0.25, 0.25, 0.25, 0.25), "cm")),
+                       fde.plot + theme(plot.margin = unit(c(0.25, 0.25, 0.25, 0.25), "cm")),
+                       gde.plot + theme(plot.margin = unit(c(0.25, 0.25, 0.25, 0.25), "cm")))
+epi.plots
+
+hp.plots <- cowplot::plot_grid(ncol = 1, 
+                       tdh.plot + theme(plot.margin = unit(c(0.25, 0.25, 0.25, 0.25), "cm")),
+                       fdh.plot + theme(plot.margin = unit(c(0.25, 0.25, 0.25, 0.25), "cm")),
+                       gdh.plot + theme(plot.margin = unit(c(0.25, 0.25, 0.25, 0.25), "cm")))
+hp.plots
+
+dw.grob <- textGrob("Dry Weight (g)", 
+                   gp=gpar(fontface="bold", 
+                           col="black", 
+                           fontsize=20)) 
+
+dw.plots <- cowplot::plot_grid(epi.plots, hp.plots, ncol = 2)
+dw.plots2 <- gridExtra::grid.arrange(arrangeGrob(dw.plots, bottom = dw.grob))
+
+main.dw.plot <- cowplot::plot_grid(dw.plots2, spp.legend, ncol = 2, rel_widths = c(2.4,1))
+main.dw.plot
+
+ggsave("figures/dw.species.plot.jpg", plot = main.dw.plot, height = 8, width = 7)
+```
+
+# Arranging LFM Plots
+```{r}
+epi.plots <- cowplot::plot_grid(ncol = 1, 
+                       tle.plot + theme(plot.margin = unit(c(0.25, 0.25, 0.25, 0.25), "cm")),
+                       fle.plot + theme(plot.margin = unit(c(0.25, 0.25, 0.25, 0.25), "cm")),
+                       gle.plot + theme(plot.margin = unit(c(0.25, 0.25, 0.25, 0.25), "cm")))
+epi.plots
+
+hp.plots <- cowplot::plot_grid(ncol = 1, 
+                       tlh.plot + theme(plot.margin = unit(c(0.25, 0.25, 0.25, 0.25), "cm")),
+                       flh.plot + theme(plot.margin = unit(c(0.25, 0.25, 0.25, 0.25), "cm")),
+                       glh.plot + theme(plot.margin = unit(c(0.25, 0.25, 0.25, 0.25), "cm")))
+hp.plots
+
+lfm.grob <- textGrob("Live Fuel Moisture (%)", 
+                   gp=gpar(fontface="bold", 
+                           col="black", 
+                           fontsize=20)) 
+
+lfm.plots <- cowplot::plot_grid(epi.plots, hp.plots, ncol = 2)
+lfm.plots2 <- gridExtra::grid.arrange(arrangeGrob(lfm.plots, bottom = lfm.grob))
+
+main.lfm.plot <- cowplot::plot_grid(lfm.plots2, spp.legend, ncol = 2, rel_widths = c(2.4,1))
+main.lfm.plot
+
+ggsave("figures/lfm.species.plot.jpg", plot = main.lfm.plot, height = 8, width = 7)
+```
+
+# ---------------------------------
+# *REMEF*
+```{r}
+# Epiradiator
+id.epi <- c(1:88)
+epi.df2.remef <- data.frame(id.epi)
+# Adding/removing columns necessary/unnecessary to plot
+epi.df2.remef$spp <- epi.df2$spp
+epi.df2.remef$dw_flam_sample <- epi.df2$dw_flam_sample
+epi.df2.remef$lfm <- epi.df2$lfm
+epi.df2.remef$mpa <- epi.df2$mpa
+epi.df2.remef$Model <- epi.df2$Model
+epi.df2.remef <- epi.df2.remef %>% 
+  select(-id.epi)
+
+# Hot Plate
+id.hp <- c(1:83)
+hp.df2.remef <- data.frame(id.hp)
+# Adding/removing columns necessary/unnecessary to plot
+hp.df2.remef$spp <- hp.df2$spp
+hp.df2.remef$dw_flam_sample <- hp.df2$dw_flam_sample
+hp.df2.remef$lfm <- hp.df2$lfm
+hp.df2.remef$mpa <- hp.df2$mpa
+hp.df2.remef$Model <- hp.df2$Model
+hp.df2.remef <- hp.df2.remef %>% 
+  select(-id.hp)
+```
+
+# Epiradiator
+## Dry Weight Plots
+### TTI
+Model/Remef:
+```{r}
+tti.dw.epi <- lmer(tti ~ dw_flam_sample*spp + site + year_month + (1|individual), data = epi.df2)
+
+epi.df2.remef$r_dw_tti <- remef(tti.dw.epi, fix = c('site2', 'sitePainted Caves'),  ran = "all", keep.intercept = FALSE)
+```
+
+Plot:
+```{r, fig.width = 2, fig.height = 3}
+tde.plotR <- epi.df2.remef %>%
+  ggplot(aes(x = dw_flam_sample, y = r_dw_tti, color = spp)) +
+  labs(x = "Dry Weight (g)", y = "Time to Ignition", color = "Species") +
+  geom_point(size = 1, alpha = 0.8) +
+  geom_smooth(method = 'lm', se = F, fullrange = T, alpha = 0.7, size = 0.7) +
+  facet_wrap(~Model) +
+  theme_bw() +
+  scale_color_manual(values = c("#FC5130","#F7B801","#0B032D")) +
+  annotate('text', x = 0.17, y = 17.97, label = 'a', size = 11) +
+  theme(axis.title.y = element_text(face = 'bold', size = 14),
+        axis.title.x = element_blank(),
+        axis.text.x = element_blank(),
+        legend.position = 'none',
+        strip.text = element_text(face = "bold", size = 14))
+tde.plotR
+```
+ 
+### FH
+Model/remef:
+```{r}
+fh.dw.epi <- lmer(fh ~ dw_flam_sample*spp + site + year_month + (1|individual), data = epi.df2)
+
+epi.df2.remef$r_dw_fh <- remef(fh.dw.epi, fix = c('site2', 'sitePainted Caves'),  ran = "all", keep.intercept = FALSE)
+```
+
+Plot:
+```{r, fig.width = 2, fig.height = 3}
+fhde.plotR <- epi.df2.remef %>%
+  ggplot(aes(x = dw_flam_sample, y = r_dw_fh, color = spp)) +
+  labs(x = "Dry Weight (g)", y = "Flame Height", color = "Species") +
+  geom_point(size = 1, alpha = 0.6) +
+  geom_smooth(method = 'lm', se = F, fullrange = T, alpha = 0.7, size = 0.7) +
+  theme_bw() +
+  scale_color_manual(values = c("#FC5130","#F7B801","#0B032D")) +
+  annotate('text', x = 0.17, y = 12.7, label = 'c', size = 11) +
+  theme(axis.title.y = element_text(face = 'bold', size = 14, margin = margin(r = 9)),
+        axis.title.x = element_blank(),
+        axis.text.x = element_blank(),
+        legend.position = 'none',
+        strip.text = element_text(face = "bold"))
+fhde.plotR
+```
+
+### GD
+Model:
+```{r}
+gd.dw.epi <- lmer(gd ~ dw_flam_sample*spp + site + year_month + (1|individual), data = epi.df2)
+
+epi.df2.remef$r_dw_gd <- remef(gd.dw.epi, fix = c('site2', 'sitePainted Caves'),  ran = "all", keep.intercept = FALSE)
+```
+
+Plot:
+```{r, fig.width = 2, fig.height = 3}
+gde.plotR <- epi.df2.remef %>%
+  ggplot(aes(x = dw_flam_sample, y = r_dw_gd, color = spp)) +
+  labs(x = "Dry Weight (g)", y = "Glow Duration", color = "Species") +
+  geom_point(size = 1, alpha = 0.6) +
+  geom_smooth(method = 'lm', se = F, fullrange = T, alpha = 0.7, size = 0.7) +
+  theme_bw() +
+  scale_color_manual(values = c("#FC5130","#F7B801","#0B032D")) +
+  annotate('text', x = 0.17, y = 133, label = 'e', size = 11) +
+  theme(axis.title.y = element_text(face = 'bold', size = 14),
+        axis.title.x = element_blank(),
+        axis.text.x = element_blank(),
+        legend.position = 'none',
+        strip.text = element_text(face = "bold"))
+gde.plotR
+```
+
+### FD
+Model:
+```{r}
+fd.dw.epi <- lmer(fd ~ dw_flam_sample*spp + site + year_month + (1|individual), data = epi.df2)
+
+epi.df2.remef$r_dw_fd <- remef(fd.dw.epi, fix = c('site2', 'sitePainted Caves'),  ran = "all", keep.intercept = FALSE)
+```
+
+Plot:
+```{r, fig.width = 2, fig.height = 3}
+fdde.plotR <- epi.df2.remef %>%
+  ggplot(aes(x = dw_flam_sample, y = r_dw_fd, color = spp)) +
+  labs(x = "Dry Weight (g)", y = "Flame Duration", color = "Species") +
+  geom_point(size = 1, alpha = 0.6) +
+  geom_smooth(method = 'lm', se = F, fullrange = T, alpha = 0.7, size = 0.7) +
+  theme_bw() +
+  scale_color_manual(values = c("#FC5130","#F7B801","#0B032D")) +  
+  annotate('text', x = 0.17, y = 10.72, label = 'g', size = 11) +
+  theme(axis.title.y = element_text(face = 'bold', size = 14, margin = margin(r = 9)),
+        axis.title.x = element_blank(),
+        legend.position = 'none',
+        strip.text = element_text(face = "bold"))
+fdde.plotR
+```
+
+## LFM Plots
+### TTI
+Model:
+```{r}
+tti.lfm.epi <- lmer(tti ~ lfm*spp + site + year_month + (1|individual), data = epi.df2)
+
+epi.df2.remef$r_lfm_tti <- remef(tti.lfm.epi, fix = c('site2', 'sitePainted Caves'),  ran = "all", keep.intercept = FALSE)
+```
+
+Plot:
+```{r}
+tle.plotR <- epi.df2.remef %>%
+  ggplot(aes(x = lfm, y = r_lfm_tti, color = spp)) +
+  labs(x = "Live Fuel Moisture (%)", y = "Time to Ignition", color = "Species") +
+  geom_point(size = 1, alpha = 0.6) +
+  geom_smooth(method = "lm", se = F, fullrange = T, alpha = 0.7, size = 0.7) +
+  facet_wrap(~Model) +
+  theme_bw() +
+  scale_color_manual(values = c("#FC5130","#F7B801","#0B032D")) +
+  annotate('text', x = 43, y = 38, label = 'a', size = 11) +
+  theme(axis.title.y = element_text(face = 'bold', size = 14, margin = margin(r = 9)),
+      axis.title.x = element_blank(),
+      axis.text.x = element_blank(),
+      legend.position = 'none',
+      strip.text = element_text(face = "bold", size = 13))
+tle.plotR
+```
+ 
+### FH
+Model/remef:
+```{r}
+fh.lfm.epi <- lmer(fh ~ lfm*spp + site + year_month + (1|individual), data = epi.df2)
+
+epi.df2.remef$r_lfm_fh <- remef(fh.lfm.epi, fix = c('site2', 'sitePainted Caves'),  ran = "all", keep.intercept = FALSE)
+```
+
+Plot:
+```{r}
+fhle.plotR <- epi.df2.remef %>%
+  ggplot(aes(x = lfm, y = r_lfm_fh, color = spp)) +
+  labs(x = "Live Fuel Moisture (%)", y = "Flame Height", color = "Species") +
+  geom_point(size = 1, alpha = 0.6) +
+  geom_smooth(method = 'lm', se = F, fullrange = T, alpha = 0.7, size = 0.7) +
+  theme_bw() +
+  scale_color_manual(values = c("#FC5130","#F7B801","#0B032D")) +
+  annotate('text', x = 43, y = 6.2, label = 'c', size = 11) +
+  theme(axis.title.y = element_text(face = 'bold', size = 14, margin = margin(r = 6)),
+        axis.title.x = element_blank(),
+        axis.text.x = element_blank(),
+        legend.position = 'none',
+        strip.text = element_text(face = "bold"))
+fhle.plotR
+```
+
+### GD
+Model/remef:
+```{r}
+gd.lfm.epi <- lmer(gd ~ lfm*spp + site + year_month + (1|individual), data = epi.df2)
+
+epi.df2.remef$r_lfm_gd <- remef(gd.lfm.epi, fix = c('site2', 'sitePainted Caves'),  ran = "all", keep.intercept = FALSE)
+```
+
+Plot:
+```{r}
+gle.plotR <- epi.df2.remef %>%
+  ggplot(aes(x = lfm, y = r_lfm_gd, color = spp)) +
+  labs(x = "Live Fuel Moisture (%)", y = "Glow Duration", color = "Species") +
+  geom_point(size = 1, alpha = 0.6) +
+  geom_smooth(method = "lm", se = F, fullrange = T, alpha = 0.7, size = 0.7) +
+  theme_bw() +
+  scale_color_manual(values = c("#FC5130","#F7B801","#0B032D")) +
+  annotate('text', x = 42.5, y = 73, label = 'e', size = 11) +
+  theme(axis.title.y = element_text(face = 'bold', size = 14),
+        axis.title.x = element_blank(),
+        axis.text.x = element_blank(),
+        legend.position = 'none',
+        strip.text = element_text(face = "bold"))
+gle.plotR
+```
+
+### FD
+Model/remef:
+```{r}
+fd.lfm.epi <- lmer(fd ~ lfm*spp + site + year_month + (1|individual), data = epi.df2)
+
+epi.df2.remef$r_lfm_fd <- remef(fd.lfm.epi, fix = c('site2', 'sitePainted Caves'),  ran = "all", keep.intercept = FALSE)
+```
+
+Plot:
+```{r}
+fdle.plotR <- epi.df2.remef %>%
+  ggplot(aes(x = lfm, y = r_lfm_fd, color = spp)) +
+  labs(x = "Live Fuel Moisture (%)", y = "Flame Duration", color = "Species") +
+  geom_point(size = 1, alpha = 0.6) +
+  geom_smooth(method = "lm", se = F, fullrange = T, alpha = 0.7, size = 0.7) +
+  theme_bw() +
+  scale_color_manual(values = c("#FC5130","#F7B801","#0B032D")) +
+  annotate('text', x = 43, y = 15, label = 'g', size = 11) +
+  theme(axis.title.y = element_text(face = 'bold', size = 14, margin = margin(r = 10)),
+        axis.title.x = element_blank(),
+        legend.position = 'none',
+        strip.text = element_text(face = "bold"))
+fdle.plotR
+```
+
+
+## MPa Plots
+### TTI
+Model:
+```{r}
+tti.mpa.epi <- lmer(tti ~ mpa*spp + site + year_month + (1|individual), data = epi.df2)
+
+epi.df2.remef$r_mpa_tti <- remef(tti.mpa.epi, fix = c('site2', 'sitePainted Caves'),  ran = "all", keep.intercept = FALSE)
+```
+
+Plot:
+```{r}
+twe.plotR <- epi.df2.remef %>%
+  ggplot(aes(x = mpa, y = r_mpa_tti, color = spp)) +
+  labs(x = "Water Potential (MPa)", y = "Time to Ignition", color = "Species") +
+  geom_point(size = 1, alpha = 0.6) +
+  geom_smooth(method = "lm", se = F, fullrange = T, alpha = 0.7, size = 0.7) +
+  facet_wrap(~Model) +
+  theme_bw() +
+  scale_color_manual(values = c("#FC5130","#F7B801","#0B032D")) +
+  annotate('text', x = -9.5, y = 17.7, label = 'a', size = 11) +
+  theme(axis.title.y = element_text(face = 'bold', size = 14),
+      axis.title.x = element_blank(),
+      axis.text.x = element_blank(),
+      legend.position = 'none',
+      strip.text = element_text(face = "bold", size = 13))
+twe.plotR
+```
+ 
+### FH
+Model/remef:
+```{r}
+fh.mpa.epi <- lmer(fh ~ mpa*spp + site + year_month + (1|individual), data = epi.df2)
+
+epi.df2.remef$r_mpa_fh <- remef(fh.mpa.epi, fix = c('site2', 'sitePainted Caves'),  ran = "all", keep.intercept = FALSE)
+```
+
+Plot:
+```{r}
+fhwe.plotR <- epi.df2.remef %>%
+  ggplot(aes(x = mpa, y = r_mpa_fh, color = spp)) +
+  labs(x = "Water Potential (MPa)", y = "Flame Height", color = "Species") +
+  geom_point(size = 1, alpha = 0.6) +
+  geom_smooth(method = 'lm', se = F, fullrange = T, alpha = 0.7, size = 0.7) +
+  theme_bw() +
+  scale_color_manual(values = c("#FC5130","#F7B801","#0B032D")) +
+  annotate('text', x = -9.5, y = 10.5, label = 'c', size = 11) +
+  theme(axis.title.y = element_text(face = 'bold', size = 14, margin = margin(r = 8)),
+        axis.title.x = element_blank(),
+        axis.text.x = element_blank(),
+        legend.position = 'none',
+        strip.text = element_text(face = "bold"))
+fhwe.plotR
+```
+
+### GD
+Model/remef:
+```{r}
+gd.mpa.epi <- lmer(gd ~ mpa*spp + site + year_month + (1|individual), data = epi.df2)
+
+epi.df2.remef$r_mpa_gd <- remef(gd.mpa.epi, fix = c('site2', 'sitePainted Caves'),  ran = "all", keep.intercept = FALSE)
+```
+
+Plot:
+```{r}
+gwe.plotR <- epi.df2.remef %>%
+  ggplot(aes(x = mpa, y = r_mpa_gd, color = spp)) +
+  labs(x = "Water Potential (MPa)", y = "Glow Duration", color = "Species") +
+  geom_point(size = 1, alpha = 0.6) +
+  geom_smooth(method = "lm", se = F, fullrange = T, alpha = 0.7, size = 0.7) +
+  theme_bw() +
+  scale_color_manual(values = c("#FC5130","#F7B801","#0B032D")) +
+  annotate('text', x = -9.5, y = 90, label = 'e', size = 11) +
+  theme(axis.title.y = element_text(face = 'bold', size = 14),
+        axis.title.x = element_blank(),
+        axis.text.x = element_blank(),
+        legend.position = 'none',
+        strip.text = element_text(face = "bold"))
+gwe.plotR
+```
+
+### FD
+Model/remef:
+```{r}
+fd.mpa.epi <- lmer(fd ~ mpa*spp + site + year_month + (1|individual), data = epi.df2)
+
+epi.df2.remef$r_mpa_fd <- remef(fd.mpa.epi, fix = c('site2', 'sitePainted Caves'),  ran = "all", keep.intercept = FALSE)
+```
+
+Plot:
+```{r}
+fdwe.plotR <- epi.df2.remef %>%
+  ggplot(aes(x = mpa, y = r_mpa_fd, color = spp)) +
+  labs(x = "Water Potential (MPa)", y = "Flame Duration", color = "Species") +
+  geom_point(size = 1, alpha = 0.6) +
+  geom_smooth(method = "lm", se = F, fullrange = T, alpha = 0.7, size = 0.7) +
+  theme_bw() +
+  scale_color_manual(values = c("#FC5130","#F7B801","#0B032D")) +
+  annotate('text', x = -9.5, y = 12, label = 'g', size = 11) +
+  theme(axis.title.y = element_text(face = 'bold', size = 14, margin = margin(r = 8)),
+        axis.title.x = element_blank(),
+        legend.position = 'none',
+        strip.text = element_text(face = "bold"))
+fdwe.plotR
+```
+# Hot Plate
+## Dry Weight Plots
+### TTI
+Model/remef:
+```{r}
+tti.dw.hp <- lmer(tti ~ dw_flam_sample*spp + site + (1|individual), data = hp.df2)
+
+hp.df2.remef$r_dw_tti <- remef(tti.dw.hp, fix = c('site2', 'sitePainted Caves'),  ran = "all", keep.intercept = FALSE)
+```
+
+Plot:
+```{r, fig.width = 2, fig.height = 3}
+tdh.plotR <- hp.df2.remef %>%
+  ggplot(aes(x = dw_flam_sample, y = r_dw_tti, color = spp)) +
+  labs(x = "Dry Weight (g)", y = "Time to Ignition", color = "Species") +
+  geom_point(size = 1, alpha = 0.6) +
+  geom_smooth(method = "lm", se = F, fullrange = T, alpha = 0.7, size = 0.7) +
+  facet_wrap(~Model) +
+  theme_bw() +
+  scale_color_manual(values = c("#FC5130","#F7B801","#5F758E")) +  
+  annotate('text', x = 0.7, y = 122.5, label = 'b', size = 11) +
+  theme(axis.title = element_blank(),
+        axis.text.x = element_blank(),
+        legend.position = 'none',
+        strip.text = element_text(face = "bold", size = 14))
+tdh.plotR
+```
+ 
+### FH
+Model/remef:
+```{r}
+fh.dw.hp <- lmer(fh ~ dw_flam_sample*spp + site + (1|individual), data = hp.df2)
+
+hp.df2.remef$r_dw_fh <- remef(fh.dw.hp, fix = c('site2', 'sitePainted Caves'),  ran = "all", keep.intercept = FALSE)
+```
+
+Plot:
+```{r, fig.width = 2, fig.height = 3}
+fhdh.plotR <- hp.df2.remef %>%
+  ggplot(aes(x = dw_flam_sample, y = r_dw_fh, color = spp)) +
+  labs(x = "Dry Weight (g)", y = "Flame Height", color = "Species") +
+  geom_point(size = 1, alpha = 0.6) +
+  geom_smooth(method = "lm", se = F, fullrange = T, alpha = 0.7, size = 0.7) +
+  theme_bw() +
+  scale_color_manual(values = c("#FC5130","#F7B801","#5F758E")) +
+  annotate('text', x = 0.7, y = 22.25, label = 'd', size = 11) +
+  theme(axis.title = element_blank(),
+        axis.text.x = element_blank(),
+        legend.position = 'none',
+        strip.text = element_text(face = "bold"))
+fhdh.plotR
+```
+
+### GD
+Model/remef:
+```{r}
+gd.dw.hp <- lmer(gd ~ dw_flam_sample*spp + site + (1|individual), data = hp.df2)
+
+hp.df2.remef$r_dw_gd <- remef(gd.dw.hp, fix = c('site2', 'sitePainted Caves'),  ran = "all", keep.intercept = FALSE)
+```
+
+Plot:
+```{r, fig.width = 2, fig.height = 3}
+gdh.plotR <- hp.df2.remef %>%
+  ggplot(aes(x = dw_flam_sample, y = r_dw_gd, color = spp)) +
+  labs(x = "Dry Weight (g)", y = "Glow Duration", color = "Species") +
+  geom_point(size = 1, alpha = 0.6) +
+  geom_smooth(se = F, method = "lm", fullrange = T, alpha = 0.7, size = 0.7) +
+  theme_bw() +
+  scale_color_manual(values = c("#FC5130","#F7B801","#5F758E")) +
+  annotate('text', x = 0.7, y = 295, label = 'f', size = 11) +
+  theme(axis.title = element_blank(),
+        axis.text.x = element_blank(),
+        legend.position = 'none',
+        strip.text = element_text(face = "bold"))
+gdh.plotR
+```
+
+### FD
+Model/remef:
+```{r}
+fd.dw.hp <- lmer(fd ~ dw_flam_sample*spp + site + (1|individual), data = hp.df2)
+
+hp.df2.remef$r_dw_fd <- remef(fd.dw.hp, fix = c('site2', 'sitePainted Caves'),  ran = "all", keep.intercept = FALSE)
+```
+
+Plot:
+```{r, fig.width = 2, fig.height = 3}
+fddh.plotR <- hp.df2.remef %>%
+  ggplot(aes(x = dw_flam_sample, y = r_dw_fd, color = spp)) +
+  labs(x = "Dry Weight (g)", y = "Flame Duration", color = "Species") +
+  geom_point(size = 1, alpha = 0.6) +
+  geom_smooth(se = F, method = "lm", fullrange = T, alpha = 0.7, size = 0.7) +
+  theme_bw() +
+  scale_color_manual(values = c("#FC5130","#F7B801","#5F758E")) +
+  annotate('text', x = 0.7, y = 26.2, label = 'h', size = 11) +
+  theme(axis.title = element_blank(),
+        legend.position = 'none',
+        strip.text = element_text(face = "bold"))
+fddh.plotR
+```
+
+## LFM Plots
+### TTI
+Model/remef:
+```{r}
+tti.lfm.hp <- lmer(tti ~ lfm*spp + site + (1|individual), data = hp.df2)
+
+hp.df2.remef$r_lfm_tti <- remef(tti.lfm.hp, fix = c('site2', 'sitePainted Caves'),  ran = "all", keep.intercept = FALSE)
+```
+
+Plot:
+```{r}
+tlh.plotR <- hp.df2.remef %>%
+  ggplot(aes(x = lfm, y = r_lfm_tti, color = spp)) +
+  labs(x = "Live Fuel Moisture (%)", y = "Time to Ignition", color = "Species") +
+  geom_point(size = 1, alpha = 0.6) +
+  geom_smooth(method = "lm", se = F, fullrange = T, alpha = 0.7, size = 0.7) +
+  facet_wrap(~Model) +
+  theme_bw() +
+  scale_color_manual(values = c("#FC5130","#F7B801","#5F758E")) +
+  annotate('text', x = 45, y = 125, label = 'b', size = 11) +
+  theme(axis.title = element_blank(),
+        axis.text.x = element_blank(),
+        legend.position = 'none',
+        strip.text = element_text(face = "bold", size = 12))
+tlh.plotR
+```
+ 
+### FH
+Model/remef:
+```{r}
+fh.lfm.hp <- lmer(fh ~ lfm*spp + site + (1|individual), data = hp.df2)
+
+hp.df2.remef$r_lfm_fh <- remef(fh.lfm.hp, fix = c('site2', 'sitePainted Caves'),  ran = "all", keep.intercept = FALSE)
+```
+
+Plot:
+```{r}
+fhlh.plotR <- hp.df2.remef %>%
+  ggplot(aes(x = lfm, y = r_lfm_fh, color = spp)) +
+  labs(x = "Live Fuel Moisture (%)", y = "Flame Height", color = "Species") +
+  geom_point(size = 1, alpha = 0.6) +
+  geom_smooth(method = "lm", se = F, fullrange = T, alpha = 0.7, size = 0.7) +
+  theme_bw() +
+  scale_color_manual(values = c("#FC5130","#F7B801","#5F758E")) +
+  annotate('text', x = 45, y = 15.25, label = 'd', size = 11) +
+  theme(axis.title = element_blank(),
+        axis.text.x = element_blank(),
+        legend.position = 'none',
+        strip.text = element_text(face = "bold"))
+fhlh.plotR
+```
+
+### GD
+Model/remef:
+```{r}
+gd.lfm.hp <- lmer(gd ~ lfm*spp + site + (1|individual), data = hp.df2)
+
+hp.df2.remef$r_lfm_gd <- remef(gd.lfm.hp, fix = c('site2', 'sitePainted Caves'),  ran = "all", keep.intercept = FALSE)
+```
+
+Plot:
+```{r}
+glh.plotR <- hp.df2.remef %>%
+  ggplot(aes(x = lfm, y = r_lfm_gd, color = spp)) +
+  labs(x = "Live Fuel Moisture (%)", y = "Glow Duration", color = "Species") +
+  geom_point(size = 1, alpha = 0.6) +
+  geom_smooth(method = 'lm', se = F, fullrange = T, alpha = 0.7, size = 0.7) +
+  theme_bw() +
+  scale_color_manual(values = c("#FC5130","#F7B801","#5F758E")) +
+  annotate('text', x = 45, y = 260, label = 'f', size = 11) +
+  theme(axis.title = element_blank(),
+        axis.text.x = element_blank(),
+        legend.position = 'none',
+        strip.text = element_text(face = "bold"))
+glh.plotR
+```
+
+### FD
+Model/remef:
+```{r}
+fd.lfm.hp <- lmer(fd ~ lfm*spp + site + (1|individual), data = hp.df2)
+
+hp.df2.remef$r_lfm_fd <- remef(fd.lfm.hp, fix = c('site2', 'sitePainted Caves'),  ran = "all", keep.intercept = FALSE)
+```
+
+Plot:
+```{r}
+fdlh.plotR <- hp.df2.remef %>%
+  ggplot(aes(x = lfm, y = r_lfm_fd, color = spp)) +
+  labs(x = "Live Fuel Moisture (%)", y = "Flame Duration", color = "Species") +
+  geom_point(size = 1, alpha = 0.6) +
+  geom_smooth(method = 'lm', se = F, fullrange = T, alpha = 0.7, size = 0.7) +
+  theme_bw() +
+  scale_color_manual(values = c("#FC5130","#F7B801","#5F758E")) +
+  annotate('text', x = 45, y = 18.5, label = 'h', size = 11) +
+  theme(axis.title = element_blank(),
+        legend.position = 'none',
+        strip.text = element_text(face = "bold"))
+fdlh.plotR
+```
+
+
+## MPa Plots
+### TTI
+Model/remef:
+```{r}
+tti.mpa.hp <- lmer(tti ~ mpa*spp + site + (1|individual), data = hp.df2)
+
+hp.df2.remef$r_mpa_tti <- remef(tti.mpa.hp, fix = c('site2', 'sitePainted Caves'),  ran = "all", keep.intercept = FALSE)
+```
+
+Plot:
+```{r}
+twh.plotR <- hp.df2.remef %>%
+  ggplot(aes(x = mpa, y = r_mpa_tti, color = spp)) +
+  labs(x = "Water Potential (MPa)", y = "Time to Ignition", color = "Species") +
+  geom_point(size = 1, alpha = 0.6) +
+  geom_smooth(method = "lm", se = F, fullrange = T, alpha = 0.7, size = 0.7) +
+  facet_wrap(~Model) +
+  theme_bw() +
+  scale_color_manual(values = c("#FC5130","#F7B801","#5F758E")) +
+  annotate('text', x = -9.5, y = 68.5, label = 'b', size = 11) +
+  theme(axis.title = element_blank(),
+        axis.text.x = element_blank(),
+        legend.position = 'none',
+        strip.text = element_text(face = "bold", size = 12))
+twh.plotR
+```
+ 
+### FH
+Model/remef:
+```{r}
+fh.mpa.hp <- lmer(fh ~ mpa*spp + site + (1|individual), data = hp.df2)
+
+hp.df2.remef$r_mpa_fh <- remef(fh.mpa.hp, fix = c('site2', 'sitePainted Caves'),  ran = "all", keep.intercept = FALSE)
+```
+
+Plot:
+```{r}
+fhwh.plotR <- hp.df2.remef %>%
+  ggplot(aes(x = mpa, y = r_mpa_fh, color = spp)) +
+  labs(x = "Water Potential (MPa)", y = "Flame Height", color = "Species") +
+  geom_point(size = 1, alpha = 0.6) +
+  geom_smooth(method = "lm", se = F, fullrange = T, alpha = 0.7, size = 0.7) +
+  theme_bw() +
+  scale_color_manual(values = c("#FC5130","#F7B801","#5F758E")) +
+  annotate('text', x = -9.5, y = 17, label = 'd', size = 11) +
+  theme(axis.title = element_blank(),
+        axis.text.x = element_blank(),
+        legend.position = 'none',
+        strip.text = element_text(face = "bold"))
+fhwh.plotR
+```
+
+### GD
+Model/remef:
+```{r}
+gd.mpa.hp <- lmer(gd ~ mpa*spp + site + (1|individual), data = hp.df2)
+
+hp.df2.remef$r_mpa_gd <- remef(gd.mpa.hp, fix = c('site2', 'sitePainted Caves'),  ran = "all", keep.intercept = FALSE)
+```
+
+Plot:
+```{r}
+gwh.plotR <- hp.df2.remef %>%
+  ggplot(aes(x = mpa, y = r_mpa_gd, color = spp)) +
+  labs(x = "Water Potential (MPa)", y = "Glow Duration", color = "Species") +
+  geom_point(size = 1, alpha = 0.6) +
+  geom_smooth(method = 'lm', se = F, fullrange = T, alpha = 0.7, size = 0.7) +
+  theme_bw() +
+  scale_color_manual(values = c("#FC5130","#F7B801","#5F758E")) +
+  annotate('text', x = -9.5, y = 137.5, label = 'f', size = 11) +
+  theme(axis.title = element_blank(),
+        axis.text.x = element_blank(),
+        legend.position = 'none',
+        strip.text = element_text(face = "bold"))
+gwh.plotR
+```
+
+### FD
+Model/remef:
+```{r}
+fd.mpa.hp <- lmer(fd ~ mpa*spp + site + (1|individual), data = hp.df2)
+
+hp.df2.remef$r_mpa_fd <- remef(fd.mpa.hp, fix = c('site2', 'sitePainted Caves'),  ran = "all", keep.intercept = FALSE)
+```
+
+Plot:
+```{r}
+fdwh.plotR <- hp.df2.remef %>%
+  ggplot(aes(x = mpa, y = r_mpa_fd, color = spp)) +
+  labs(x = "Water Potential (MPa)", y = "Flame Duration", color = "Species") +
+  geom_point(size = 1, alpha = 0.6) +
+  geom_smooth(method = 'lm', se = F, fullrange = T, alpha = 0.7, size = 0.7) +
+  theme_bw() +
+  scale_color_manual(values = c("#FC5130","#F7B801","#5F758E")) +
+  annotate('text', x = -9.5, y = 25, label = 'h', size = 11) +
+  theme(axis.title = element_blank(),
+        legend.position = 'none',
+        strip.text = element_text(face = "bold"))
+fdwh.plotR
+```
+
+# Summary of Models
+```{r}
+tab_model(tti.dw.epi, tti.dw.hp, fh.dw.epi, fh.dw.hp, gd.dw.epi, gd.dw.hp, fd.dw.epi, fd.dw.hp, tti.lfm.epi, tti.lfm.hp, fh.lfm.epi, fh.lfm.hp, gd.lfm.epi, gd.lfm.hp, fd.lfm.epi, fd.lfm.hp,
+          show.reflvl = FALSE, 
+          digits = 3, 
+          show.aic = TRUE, 
+          show.ci = FALSE,
+          show.icc = FALSE,
+         string.pred = "Coeffcient", 
+        dv.labels = c("TTI vs. DW (EPI)", "TTI vs. DW (HP)",
+                      "FH vs. DW (EPI)", "FH vs. DW (HP)",
+                      "GD vs. DW (EPI)", "GD vs. DW (HP)",
+                      "FD vs. DW (EPI)", "FD vs. DW (HP)",
+                      "TTI vs. LFM (EPI)", "TTI vs. LFM (HP)",
+                      "FH vs. LFM (EPI)", "FH vs. LFM (HP)",
+                      "GD vs. LFM (EPI)", "GD vs. LFM (HP)",
+                      "FD vs. LFM (EPI)", "FD vs. LFM (HP)"),
+         title = "Species Differences Model Table",
+  string.p = "P-Value", 
+  p.style = "stars")
+```
+
+# Arranging Dry Weight Plots
+```{r}
+spp.legend <- get_legend(
+  # create some space to the top of the legend
+  ggplot() + 
+  geom_point(data = epi.df, aes(x = tti, y = dw_flam_sample, color = Species), size = 3, alpha = .8) +
+    labs(color = "Species") +
+    scale_color_manual(values=c("#FC5130","#F7B801","#0B032D","#5F758E")) +
+    theme(legend.box.margin = margin(0, 0, 0, 0),
+          legend.position = "right",
+          legend.title = element_text(face = 'bold', size = 14),
+          legend.text = element_text(size = 12, face = 'italic'),
+          legend.key = element_rect(fill = "white"))
+)
+
+epi.plotsR <- cowplot::plot_grid(ncol = 1, 
+                       tde.plotR + theme(plot.margin = unit(c(0.1, 0.2, 0.1, 0.2), "cm")),
+                       fhde.plotR + theme(plot.margin = unit(c(0.1, 0.2, 0.1, 0.2), "cm")),
+                       gde.plotR + theme(plot.margin = unit(c(0.1, 0.2, 0.1, 0.2), "cm")),
+                       fdde.plotR + theme(plot.margin = unit(c(0.1, 0.2, 0.25, 0.2), "cm")),
+                       rel_heights = c(1,1,1,1), rel_widths = c(1,1,1,1))
+epi.plotsR
+
+hp.plotsR <- cowplot::plot_grid(ncol = 1, 
+                       tdh.plotR + theme(plot.margin = unit(c(0.1, 0.2, 0.1, 0.2), "cm")),
+                       fhdh.plotR + theme(plot.margin = unit(c(0.1, 0.2, 0.1, 0.4), "cm")),
+                       gdh.plotR + theme(plot.margin = unit(c(0.1, 0.2, 0.1, 0.2), "cm")),
+                       fddh.plotR + theme(plot.margin = unit(c(0.1, 0.2, 0.25, 0.4), "cm")),
+                       rel_heights = c(1,1,1,1), rel_widths = c(1,1,1,1))
+hp.plotsR
+
+dw.plotsR <- cowplot::plot_grid(epi.plotsR, hp.plotsR, ncol = 2, rel_widths = c(1.1,1))
+dw.plotsR2 <- gridExtra::grid.arrange(arrangeGrob(dw.plotsR, bottom = dw.grob))
+
+main.dw.plotR <- cowplot::plot_grid(dw.plotsR2, spp.legend, ncol = 2, rel_widths = c(2.4,1))
+main.dw.plotR
+
+ggsave("figures/dw.species.plot.REMEF.jpg", plot = main.dw.plotR, height = 11, width = 7)
+```
+
+# Arranging LFM Plots
+```{r}
+epi.plotsR <- cowplot::plot_grid(ncol = 1, 
+                       tle.plotR + theme(plot.margin = unit(c(0.1, 0.2, 0.1, 0.2), "cm")),
+                       fhle.plotR + theme(plot.margin = unit(c(0.1, 0.2, 0.1, 0.2), "cm")),
+                       gle.plotR + theme(plot.margin = unit(c(0.1, 0.2, 0.1, 0.2), "cm")),
+                       fdle.plotR + theme(plot.margin = unit(c(0.1, 0.2, 0.25, 0.2), "cm")),
+                       rel_heights = c(1,1,1,1), rel_widths = c(1,1,1,1))
+epi.plotsR
+
+hp.plotsR <- cowplot::plot_grid(ncol = 1, 
+                       tlh.plotR + theme(plot.margin = unit(c(0.1, 0.2, 0.1, 0.2), "cm")),
+                       fhlh.plotR + theme(plot.margin = unit(c(0.1, 0.2, 0.1, 0.3), "cm")),
+                       glh.plotR + theme(plot.margin = unit(c(0.1, 0.2, 0.1, 0.2), "cm")),
+                       fdlh.plotR + theme(plot.margin = unit(c(0.1, 0.2, 0.25, 0.3), "cm")),
+                       rel_heights = c(1,1,1,1), rel_widths = c(1,1,1,1))
+hp.plotsR
+
+lfm.grob <- textGrob("Live Fuel Moisture (%)", 
+                   gp=gpar(fontface="bold", 
+                           col="black", 
+                           fontsize=20)) 
+
+lfm.plotsR <- cowplot::plot_grid(epi.plotsR, hp.plotsR, ncol = 2,  rel_widths = c(1.1,1))
+lfm.plotsR2 <- gridExtra::grid.arrange(arrangeGrob(lfm.plotsR, bottom = lfm.grob))
+
+main.lfm.plotR <- cowplot::plot_grid(lfm.plotsR2, spp.legend, ncol = 2, rel_widths = c(2.4,1))
+main.lfm.plotR
+
+ggsave("figures/lfm.species.plot.REMEF.jpg", plot = main.lfm.plotR, height = 11, width = 7)
+```
+
+# Arranging MPa Plots
+```{r}
+epi.plotsR <- cowplot::plot_grid(ncol = 1, 
+                       twe.plotR + theme(plot.margin = unit(c(0.1, 0.2, 0.1, 0.2), "cm")),
+                       fhwe.plotR + theme(plot.margin = unit(c(0.1, 0.2, 0.1, 0.2), "cm")),
+                       gwe.plotR + theme(plot.margin = unit(c(0.1, 0.2, 0.1, 0.2), "cm")),
+                       fdwe.plotR + theme(plot.margin = unit(c(0.1, 0.2, 0.25, 0.2), "cm")),
+                       rel_heights = c(1,1,1,1), rel_widths = c(1,1,1,1))
+epi.plotsR
+
+hp.plotsR <- cowplot::plot_grid(ncol = 1, 
+                       twh.plotR + theme(plot.margin = unit(c(0.1, 0.2, 0.1, 0.2), "cm")),
+                       fhwh.plotR + theme(plot.margin = unit(c(0.1, 0.2, 0.1, 0.3), "cm")),
+                       gwh.plotR + theme(plot.margin = unit(c(0.1, 0.2, 0.1, 0.2), "cm")),
+                       fdwh.plotR + theme(plot.margin = unit(c(0.1, 0.2, 0.25, 0.3), "cm")),
+                       rel_heights = c(1,1,1,1), rel_widths = c(1,1,1,1))
+hp.plotsR
+
+mpa.grob <- textGrob("Water Potential (MPa)", 
+                   gp=gpar(fontface="bold", 
+                           col="black", 
+                           fontsize=20)) 
+
+mpa.plotsR <- cowplot::plot_grid(epi.plotsR, hp.plotsR, ncol = 2,  rel_widths = c(1.1,1))
+mpa.plotsR2 <- gridExtra::grid.arrange(arrangeGrob(mpa.plotsR, bottom = mpa.grob))
+
+main.mpa.plotR <- cowplot::plot_grid(mpa.plotsR2, spp.legend, ncol = 2, rel_widths = c(2.4,1))
+main.mpa.plotR
+
+ggsave("figures/mpa.species.plot.REMEF.jpg", plot = main.mpa.plotR, height = 11, width = 7)
+```
+
+# -----------------------------
+# ANOVA
+Does the inclusion of species improve models?
+## Dry Weight
+```{r}
+# Epiradiator
+# TTI
+tti.dw.epi
+tti.dw.epi.wos <- lmer(tti ~ dw_flam_sample + site + year_month + (1|individual), data = epi.df2)
+anova(tti.dw.epi, tti.dw.epi.wos)
+
+# FH
+fh.dw.epi
+fh.dw.epi.wos <- lmer(fh ~ dw_flam_sample + site + year_month + (1|individual), data = epi.df2)
+anova(fh.dw.epi, fh.dw.epi.wos)
+
+# GD
+gd.dw.epi
+gd.dw.epi.wos <- lmer(gd ~ dw_flam_sample + site + year_month + (1|individual), data = epi.df2)
+anova(gd.dw.epi, gd.dw.epi.wos)
+
+# FD
+fd.dw.epi
+fd.dw.epi.wos <- lmer(fd ~ dw_flam_sample + site + year_month + (1|individual), data = epi.df2)
+anova(fd.dw.epi, fd.dw.epi.wos)
+
+# Max Temp
+temp.dw.epi <- lmer(temp_max ~ dw_flam_sample*spp + site + year_month + (1|individual), data = epi.df2)
+temp.dw.epi.wos <- lmer(temp_max ~ dw_flam_sample + site + year_month + (1|individual), data = epi.df2)
+anova(temp.dw.epi, temp.dw.epi.wos)
+
+# GTI
+gti.dw.epi <- lmer(gti ~ dw_flam_sample*spp + site + year_month + (1|individual), data = epi.df2)
+gti.dw.epi.wos <- lmer(gti ~ dw_flam_sample + site + year_month + (1|individual), data = epi.df2)
+anova(gti.dw.epi, gti.dw.epi.wos) # Sig diff.
+
+#PFG
+pfg.dw.epi <- lmer(pfg ~ dw_flam_sample*spp + site + year_month + (1|individual), data = epi.df2)
+pfg.dw.epi.wos <- lmer(pfg ~ dw_flam_sample + site + year_month + (1|individual), data = epi.df2)
+anova(pfg.dw.epi, pfg.dw.epi.wos) # Sig. diff.
+
+# TTFG
+ttfg.dw.epi <- lmer(ttfg ~ dw_flam_sample*spp + site + year_month + (1|individual), data = epi.df2)
+ttfg.dw.epi.wos <- lmer(ttfg ~ dw_flam_sample + site + year_month + (1|individual), data = epi.df2)
+anova(ttfg.dw.epi, ttfg.dw.epi.wos)
+
+# Hot Plate
+# TTI
+tti.dw.hp
+tti.dw.hp.wos <- lmer(tti ~ dw_flam_sample + site + (1|individual), data = hp.df2)
+anova(tti.dw.hp, tti.dw.hp.wos)
+
+# FH
+fh.dw.hp
+fh.dw.hp.wos <- lmer(fh ~ dw_flam_sample + site + (1|individual), data = hp.df2)
+anova(fh.dw.hp, fh.dw.hp.wos)
+
+# GD
+gd.dw.hp
+gd.dw.hp.wos <- lmer(gd ~ dw_flam_sample + site + (1|individual), data = hp.df2)
+anova(gd.dw.hp, gd.dw.hp.wos)
+
+# FD
+fd.dw.hp
+fd.dw.hp.wos <- lmer(fd ~ dw_flam_sample + site + (1|individual), data = hp.df2)
+anova(fd.dw.hp, fd.dw.hp.wos)
+
+# Max Temp
+temp.dw.hp <- lmer(temp_max ~ dw_flam_sample*spp + site + year_month + (1|individual), data = hp.df2)
+temp.dw.hp.wos <- lmer(temp_max ~ dw_flam_sample + site + year_month + (1|individual), data = hp.df2)
+anova(temp.dw.hp, temp.dw.hp.wos)
+
+# GTI
+gti.dw.hp <- lmer(gti ~ dw_flam_sample*spp + site + year_month + (1|individual), data = hp.df2)
+gti.dw.hp.wos <- lmer(gti ~ dw_flam_sample + site + year_month + (1|individual), data = hp.df2)
+anova(gti.dw.hp, gti.dw.hp.wos)
+
+#PFG
+pfg.dw.hp <- lmer(pfg ~ dw_flam_sample*spp + site + year_month + (1|individual), data = hp.df2)
+pfg.dw.hp.wos <- lmer(pfg ~ dw_flam_sample + site + year_month + (1|individual), data = hp.df2)
+anova(pfg.dw.hp, pfg.dw.hp.wos) # Sig. diff.
+
+# TTFG
+ttfg.dw.hp <- lmer(ttfg ~ dw_flam_sample*spp + site + year_month + (1|individual), data = hp.df2)
+ttfg.dw.hp.wos <- lmer(ttfg ~ dw_flam_sample + site + year_month + (1|individual), data = hp.df2)
+anova(ttfg.dw.hp, ttfg.dw.hp.wos)
+```
+
+## LFM
+```{r}
+# Epiradiator
+# TTI
+tti.lfm.epi
+tti.lfm.epi.wos <- lmer(tti ~ lfm + site + year_month + (1|individual), data = epi.df2)
+anova(tti.lfm.epi, tti.lfm.epi.wos)
+
+# FH
+fh.lfm.epi
+fh.lfm.epi.wos <- lmer(fh ~ lfm + site + year_month + (1|individual), data = epi.df2)
+anova(fh.lfm.epi, fh.lfm.epi.wos)
+
+# GD
+gd.lfm.epi
+gd.lfm.epi.wos <- lmer(gd ~ lfm + site + year_month + (1|individual), data = epi.df2)
+anova(gd.lfm.epi, gd.lfm.epi.wos)
+
+# FD
+fd.lfm.epi
+fd.lfm.epi.wos <- lmer(fd ~ lfm + site + year_month + (1|individual), data = epi.df2)
+anova(fd.lfm.epi, fd.lfm.epi.wos)
+
+# Max Temp
+temp.lfm.epi <- lmer(temp_max ~ lfm*spp + site + year_month + (1|individual), data = epi.df2)
+temp.lfm.epi.wos <- lmer(temp_max ~ lfm + site + year_month + (1|individual), data = epi.df2)
+anova(temp.lfm.epi, temp.lfm.epi.wos)
+
+# GTI
+gti.lfm.epi <- lmer(gti ~ lfm*spp + site + year_month + (1|individual), data = epi.df2)
+gti.lfm.epi.wos <- lmer(gti ~ lfm + site + year_month + (1|individual), data = epi.df2)
+anova(gti.lfm.epi, gti.lfm.epi.wos) 
+
+#PFG
+pfg.lfm.epi <- lmer(pfg ~ lfm*spp + site + year_month + (1|individual), data = epi.df2)
+pfg.lfm.epi.wos <- lmer(pfg ~ lfm + site + year_month + (1|individual), data = epi.df2)
+anova(pfg.lfm.epi, pfg.lfm.epi.wos) # Sig. diff.
+
+# TTFG
+ttfg.lfm.epi <- lmer(ttfg ~ lfm*spp + site + year_month + (1|individual), data = epi.df2)
+ttfg.lfm.epi.wos <- lmer(ttfg ~ lfm + site + year_month + (1|individual), data = epi.df2)
+anova(ttfg.lfm.epi, ttfg.lfm.epi.wos)
+
+# Hot Plate
+# TTI
+tti.lfm.hp
+tti.lfm.hp.wos <- lmer(tti ~ lfm + site + (1|individual), data = hp.df2)
+anova(tti.lfm.hp, tti.lfm.hp.wos)
+
+# FH
+fh.lfm.hp
+fh.lfm.hp.wos <- lmer(fh ~ lfm + site + (1|individual), data = hp.df2)
+anova(fh.lfm.hp, fh.lfm.hp.wos)
+
+# GD
+gd.lfm.hp
+gd.lfm.hp.wos <- lmer(gd ~ lfm + site + (1|individual), data = hp.df2)
+anova(gd.lfm.hp, gd.lfm.hp.wos)
+
+# FD
+fd.lfm.hp
+fd.lfm.hp.wos <- lmer(fd ~ lfm + site + (1|individual), data = hp.df2)
+anova(fd.lfm.hp, fd.lfm.hp.wos)
+
+# Max Temp
+temp.lfm.hp <- lmer(temp_max ~ lfm*spp + site + year_month + (1|individual), data = hp.df2)
+temp.lfm.hp.wos <- lmer(temp_max ~ lfm + site + year_month + (1|individual), data = hp.df2)
+anova(temp.lfm.hp, temp.lfm.hp.wos)
+
+# GTI
+gti.lfm.hp <- lmer(gti ~ lfm*spp + site + year_month + (1|individual), data = hp.df2)
+gti.lfm.hp.wos <- lmer(gti ~ lfm + site + year_month + (1|individual), data = hp.df2)
+anova(gti.lfm.hp, gti.lfm.hp.wos) # Sig diff.
+
+#PFG
+pfg.lfm.hp <- lmer(pfg ~ lfm*spp + site + year_month + (1|individual), data = hp.df2)
+pfg.lfm.hp.wos <- lmer(pfg ~ lfm + site + year_month + (1|individual), data = hp.df2)
+anova(pfg.lfm.hp, pfg.lfm.hp.wos) # Sig. diff.
+
+# TTFG
+ttfg.lfm.hp <- lmer(ttfg ~ lfm*spp + site + year_month + (1|individual), data = hp.df2)
+ttfg.lfm.hp.wos <- lmer(ttfg ~ lfm + site + year_month + (1|individual), data = hp.df2)
+anova(ttfg.lfm.hp, ttfg.lfm.hp.wos) # Sig. diff.
+```
+
+## Water Potential
+```{r}
+# Epiradiator
+# TTI
+tti.mpa.epi <- lmer(tti ~ mpa*spp + site + year_month + (1|individual), data = epi.df2)
+tti.mpa.epi.wos <- lmer(tti ~ mpa + site + year_month + (1|individual), data = epi.df2)
+anova(tti.mpa.epi, tti.mpa.epi.wos)
+
+# FH
+fh.mpa.epi <- lmer(fh ~ mpa*spp + site + year_month + (1|individual), data = epi.df2)
+fh.mpa.epi.wos <- lmer(fh ~ mpa + site + year_month + (1|individual), data = epi.df2)
+anova(fh.mpa.epi, fh.mpa.epi.wos)
+
+# GD
+gd.mpa.epi <- lmer(gd ~ mpa*spp + site + year_month + (1|individual), data = epi.df2)
+gd.mpa.epi.wos <- lmer(gd ~ mpa + site + year_month + (1|individual), data = epi.df2)
+anova(gd.mpa.epi, gd.mpa.epi.wos)
+
+# FD
+fd.mpa.epi <- lmer(fd ~ mpa*spp + site + year_month + (1|individual), data = epi.df2)
+fd.mpa.epi.wos <- lmer(fd ~ mpa + site + year_month + (1|individual), data = epi.df2)
+anova(fd.mpa.epi, fd.mpa.epi.wos)
+
+# Max Temp
+temp.mpa.epi <- lmer(temp_max ~ mpa*spp + site + year_month + (1|individual), data = epi.df2)
+temp.mpa.epi.wos <- lmer(temp_max ~ mpa + site + year_month + (1|individual), data = epi.df2)
+anova(temp.mpa.epi, temp.mpa.epi.wos)
+
+# GTI
+gti.mpa.epi <- lmer(gti ~ mpa*spp + site + year_month + (1|individual), data = epi.df2)
+gti.mpa.epi.wos <- lmer(gti ~ mpa + site + year_month + (1|individual), data = epi.df2)
+anova(gti.mpa.epi, gti.mpa.epi.wos)
+
+#PFG
+pfg.mpa.epi <- lmer(pfg ~ mpa*spp + site + year_month + (1|individual), data = epi.df2)
+pfg.mpa.epi.wos <- lmer(pfg ~ mpa + site + year_month + (1|individual), data = epi.df2)
+anova(pfg.mpa.epi, pfg.mpa.epi.wos) # Sig. diff.
+
+# TTFG
+ttfg.mpa.epi <- lmer(ttfg ~ mpa*spp + site + year_month + (1|individual), data = epi.df2)
+ttfg.mpa.epi.wos <- lmer(ttfg ~ mpa + site + year_month + (1|individual), data = epi.df2)
+anova(ttfg.mpa.epi, ttfg.mpa.epi.wos)
+
+# Hot Plate
+# TTI
+tti.mpa.hp <- lmer(tti ~ mpa*spp + site + (1|individual), data = hp.df2)
+tti.mpa.hp.wos <- lmer(tti ~ mpa + site + (1|individual), data = hp.df2)
+anova(tti.mpa.hp, tti.mpa.hp.wos)
+
+# FH
+fh.mpa.hp <- lmer(fh ~ mpa*spp + site + (1|individual), data = hp.df2)
+fh.mpa.hp.wos <- lmer(fh ~ mpa + site + (1|individual), data = hp.df2)
+anova(fh.mpa.hp, fh.mpa.hp.wos)
+
+# GD
+gd.mpa.hp <- lmer(gd ~ mpa*spp + site + (1|individual), data = hp.df2)
+gd.mpa.hp.wos <- lmer(gd ~ mpa + site + (1|individual), data = hp.df2)
+anova(gd.mpa.hp, gd.mpa.hp.wos)
+
+# FD
+fd.mpa.hp <- lmer(fd ~ mpa*spp + site + (1|individual), data = hp.df2)
+fd.mpa.hp.wos <- lmer(fd ~ mpa + site + (1|individual), data = hp.df2)
+anova(fd.mpa.hp, fd.mpa.hp.wos)
+
+# Max Temp
+temp.mpa.hp <- lmer(temp_max ~ mpa*spp + site + year_month + (1|individual), data = hp.df2)
+temp.mpa.hp.wos <- lmer(temp_max ~ mpa + site + year_month + (1|individual), data = hp.df2)
+anova(temp.mpa.hp, temp.mpa.hp.wos)
+
+# GTI
+gti.mpa.hp <- lmer(gti ~ mpa*spp + site + year_month + (1|individual), data = hp.df2)
+gti.mpa.hp.wos <- lmer(gti ~ mpa + site + year_month + (1|individual), data = hp.df2)
+anova(gti.mpa.hp, gti.mpa.hp.wos)
+
+#PFG
+pfg.mpa.hp <- lmer(pfg ~ mpa*spp + site + year_month + (1|individual), data = hp.df2)
+pfg.mpa.hp.wos <- lmer(pfg ~ mpa + site + year_month + (1|individual), data = hp.df2)
+anova(pfg.mpa.hp, pfg.mpa.hp.wos) # Sig. diff.
+
+# TTFG
+ttfg.mpa.hp <- lmer(ttfg ~ mpa*spp + site + year_month + (1|individual), data = hp.df2)
+ttfg.mpa.hp.wos <- lmer(ttfg ~ mpa + site + year_month + (1|individual), data = hp.df2)
+anova(ttfg.mpa.hp, ttfg.mpa.hp.wos)
+```
+
+# -----------------------------
+# Boxplots
+## REMEF (dw)
+### Setup
+First, scaling all of the metrics so that they plot onto the boxplot nicely
+```{r}
+epi.df2.remef.scaled <- epi.df2.remef %>% 
+  mutate(tti = scale(r_dw_tti),
+         fd = scale(r_dw_fd),
+         fh = scale(r_dw_fh),
+         gd = scale(r_dw_gd))
+
+hp.df2.remef.scaled <- hp.df2.remef %>% 
+  mutate(tti = scale(r_dw_tti),
+         fd = scale(r_dw_fd),
+         fh = scale(r_dw_fh),
+         gd = scale(r_dw_gd))
+
+dfR.boxplot.wide <- rbind(epi.df2.remef.scaled, hp.df2.remef.scaled)
+```
+
+Next, making a dataframe in the orientation we want it with all of the data we want
+```{r}
+dfR.boxplot.wide <- dfR.boxplot.wide %>% 
+  select(Model, spp, tti, fd, fh, gd)
+
+dfR.boxplot.long <- dfR.boxplot.wide %>% 
+  pivot_longer(!c(spp, Model), names_to = "metric", values_to = "value") %>% 
+  mutate(metric = case_when(metric == "tti" ~ "Time to Ignition",
+                            metric == "fd" ~ "Flame Duration",
+                            metric == "fh" ~ "Flame Height",
+                            metric == "gd" ~ "Glow Duration")) %>% 
+  mutate(Species = case_when(spp == "ADFA" ~ "A. fasciculatum", 
+                             spp == "CEME" ~ "C. megacarpus",
+                             spp == "CECO" ~ "C. cordulatus",
+                             spp == "ARPA" ~ "A. patula")) %>% 
+  filter(spp != "CEME")
+```
+
+Lastly, setting up a dataframe to annotate the panels for the figure (a and b)
+```{r}
+col1 <- c('a','b')
+Model <- c('Epiradiator', 'Hot Plate')
+annotate.df <- data.frame(col1, Model)
+```
+
+
+### Visualization
+```{r}
+ggplot() +
+  geom_boxplot(data = dfR.boxplot.long, aes(x = metric, y = value, fill = Species)) +
+  facet_wrap(ncol = 1, ~Model) +
+  theme_bw() +
+  scale_fill_manual(values = c("#FC5130","#F7B801","#5F758E")) +
+  geom_text(data = annotate.df, aes(label = col1), x = 0.6, y = 2.7, size = 9, fontface = 'bold') +
+  theme(legend.text = element_text(face = 'italic', size = 12),
+        legend.title = element_text(face = 'bold', size = 14),
+        axis.text.x = element_text(face = 'bold', size = 12),
+        axis.title = element_blank(),
+        strip.text = element_text(face = 'bold', size = 14))
+
+ggsave('figures/species.differences.boxplot.jpg', height = 7, width = 11)
+```
+
+
+## Raw Metrics
+### Setup
+Only comparing ADFA and ARPA
+```{r}
+epi.df3 <- epi.df2 %>% 
+  filter(spp == "ADFA" | spp == "ARPA")
+
+hp.df3 <- hp.df2 %>% 
+  filter(spp == "ADFA" | spp == "ARPA")
+```
+
+First, scaling all of the metrics so that they plot onto the boxplot nicely
+```{r}
+epi.df3.scaled <- epi.df3 %>% 
+  mutate(tti = scale(tti),
+         fd = scale(fd),
+         fh = scale(fh),
+         gd = scale(gd))
+
+hp.df3.scaled <- hp.df3 %>% 
+  mutate(tti = scale(tti),
+         fd = scale(fd),
+         fh = scale(fh),
+         gd = scale(gd))
+
+df.boxplot.wide <- rbind(epi.df3.scaled, hp.df3.scaled)
+```
+
+Next, making a dataframe in the orientation we want it with all of the data we want
+```{r}
+df.boxplot.wide <- df.boxplot.wide %>% 
+  select(spp, Model, tti, fd, fh, gd)
+
+df.boxplot.long <- df.boxplot.wide %>% 
+  pivot_longer(!c(spp, Model), names_to = "metric", values_to = "value") %>% 
+  mutate(metric = case_when(metric == "tti" ~ "Time to Ignition",
+                            metric == "fd" ~ "Flame Duration",
+                            metric == "fh" ~ "Flame Height",
+                            metric == "gd" ~ "Glow Duration")) %>% 
+  mutate(Species = case_when(spp == "ADFA" ~ "A. fasciculatum",
+                             spp == "ARPA" ~ "A. patula"))
+```
+
+### Visualization
+```{r}
+epi.box <- df.boxplot.long %>% 
+  filter(Model == "Epiradiator") %>% 
+  ggplot() +
+  geom_boxplot(aes(x = metric, y = value, fill = Species)) +
+  facet_wrap(~Model) +
+  theme_bw() +
+  scale_fill_manual(values = c("#FC5130","#F7B801")) +
+  annotate('text', x = 0.7, y = 3, label = 'a', fontface = 'bold', size = 12) +
+  annotate('text', x = 1, y = 2.45, label = '*', size = 12) +
+  annotate('text', x = 3, y = 2.45, label = '***', size = 12) +
+  theme(legend.text = element_text(face = 'italic', size = 12),
+        legend.title = element_text(face = 'bold', size = 14),
+        axis.text.x = element_blank(),
+        axis.title = element_blank(),
+        axis.ticks.x = element_blank(),
+        strip.text = element_text(face = 'bold', size = 14))
+epi.box
+
+hp.box <- df.boxplot.long %>% 
+  filter(Model == "Hot Plate") %>% 
+  ggplot() +
+  geom_boxplot(aes(x = metric, y = value, fill = Species)) +
+  facet_wrap(~Model) +
+  theme_bw() +
+  scale_fill_manual(values = c("#FC5130","#F7B801")) +
+  scale_y_continuous(breaks = c(-2, 0, 2)) +
+  annotate('text', x = 0.7, y = 2.55, label = 'b', fontface = 'bold', size = 12) +
+  annotate('text', x = 2, y = 2.15, label = '*', size = 12) +
+  annotate('text', x = 4, y = 2.15, label = '***', size = 12) +
+  theme(legend.text = element_text(face = 'italic', size = 12),
+        legend.title = element_text(face = 'bold', size = 14),
+        axis.text.x = element_text(face = 'bold', size = 12),
+        axis.title = element_blank(),
+        strip.text = element_text(face = 'bold', size = 14))
+hp.box
+
+ggarrange(epi.box, hp.box, ncol = 1, common.legend = TRUE, legend = 'right', heights = c(1,1))
+
+ggsave('figures/species.differences.boxplot.rawmetrics.jpg', height = 7, width = 11)
+```
+
+## Statistical Test - T Test
+### Normality Checks
+```{r}
+epi.adfa <- epi.df3 %>% 
+  filter(spp == "ADFA")
+qqPlot(epi.adfa$tti)
+qqPlot(epi.adfa$fh)
+qqPlot(epi.adfa$fd)
+qqPlot(epi.adfa$gd)
+
+epi.arpa <- epi.df3 %>% 
+  filter(spp == "ARPA")
+qqPlot(epi.arpa$tti)
+qqPlot(epi.arpa$fh)
+qqPlot(epi.arpa$fd)
+qqPlot(epi.arpa$gd)
+
+hp.adfa <- hp.df3 %>% 
+  filter(spp == "ADFA")
+qqPlot(hp.adfa$tti)
+qqPlot(hp.adfa$fh)
+qqPlot(hp.adfa$fd)
+qqPlot(hp.adfa$gd)
+
+hp.arpa <- hp.df3 %>% 
+  filter(spp == "ARPA")
+qqPlot(hp.arpa$tti)
+qqPlot(hp.arpa$fh)
+qqPlot(hp.arpa$fd)
+qqPlot(hp.arpa$gd)
+```
+There are a couple of outliers here and there, but nothing major to be concerned about with the (maybe) exception of one of the TTI values for HP, ARPA
+
+### Variance Checks
+Sticking with ADFA and ARPA for these
+```{r}
+var.test(data = epi.df3, tti ~ spp)
+var.test(data = epi.df3, fh ~ spp)
+var.test(data = epi.df3, fd ~ spp)
+var.test(data = epi.df3, gd ~ spp)
+
+var.test(data = hp.df3, tti ~ spp)
+var.test(data = hp.df3, fh ~ spp)
+var.test(data = hp.df3, fd ~ spp)
+var.test(data = hp.df3, gd ~ spp)
+```
+For a few of the flam. metrics, the variances are sig. different between ADFA and ARPA which signifies to us that we should use Welch's t test
+
+### Welch's T Test
+```{r}
+t.test(data = epi.df3, tti ~ spp, var.equal = F)
+t.test(data = epi.df3, fd ~ spp, var.equal = F)
+t.test(data = epi.df3, fh ~ spp, var.equal = F)
+t.test(data = epi.df3, gd ~ spp, var.equal = F)
+
+t.test(data = hp.df3, tti ~ spp, var.equal = F)
+t.test(data = hp.df3, fd ~ spp, var.equal = F)
+t.test(data = hp.df3, fh ~ spp, var.equal = F)
+t.test(data = hp.df3, gd ~ spp, var.equal = F)
+```
+
+# ===================
+# Model Selection to Inform Visualization
+```{r}
+# Epiradiator
+id.epi <- c(1:88)
+epi.df2.remef <- data.frame(id.epi)
+# Adding/removing columns necessary/unnecessary to plot
+epi.df2.remef$spp <- epi.df2$spp
+epi.df2.remef$dw_flam_sample <- epi.df2$dw_flam_sample
+epi.df2.remef$lfm <- epi.df2$lfm
+epi.df2.remef$mpa <- epi.df2$mpa
+epi.df2.remef$Model <- epi.df2$Model
+epi.df2.remef <- epi.df2.remef %>% 
+  select(-id.epi)
+
+# Hot Plate
+id.hp <- c(1:83)
+hp.df2.remef <- data.frame(id.hp)
+# Adding/removing columns necessary/unnecessary to plot
+hp.df2.remef$spp <- hp.df2$spp
+hp.df2.remef$dw_flam_sample <- hp.df2$dw_flam_sample
+hp.df2.remef$lfm <- hp.df2$lfm
+hp.df2.remef$mpa <- hp.df2$mpa
+hp.df2.remef$Model <- hp.df2$Model
+hp.df2.remef <- hp.df2.remef %>% 
+  select(-id.hp)
+```
+
+# Epiradiator
+## TTI
+Model selection:
+```{r}
+mpa <- lmer(tti ~ mpa*spp + site + sample_wt + year_month + (1|individual), data = epi.df2)
+dw <- lmer(tti ~ dw_flam_sample*spp + site + year_month + (1|individual), data = epi.df2)
+lfm <- lmer(tti ~ lfm*spp + sample_wt + site + year_month + (1|individual), data = epi.df2)
+MPA.lfm <- lmer(tti ~ mpa*spp + lfm + site + sample_wt + year_month + (1|individual), data = epi.df2)
+LFM.mpa <- lmer(tti ~ lfm*spp + mpa + site + sample_wt + year_month + (1|individual), data = epi.df2)
+DW.lfm <- lmer(tti ~ dw_flam_sample*spp + lfm + site + year_month + (1|individual), data = epi.df2)
+LFM.dw <- lmer(tti ~ lfm*spp + dw_flam_sample + site + year_month + (1|individual), data = epi.df2)
+DW.mpa <- lmer(tti ~ dw_flam_sample*spp + mpa + site + year_month + (1|individual), data = epi.df2)
+MPA.dw <- lmer(tti ~ mpa*spp + dw_flam_sample + site + year_month + (1|individual), data = epi.df2)
+LFM.mpa.dw <- lmer(tti ~ lfm*spp + mpa + dw_flam_sample + site + year_month + (1|individual), data = epi.df2)
+MPA.lfm.dw <- lmer(tti ~ mpa*spp + lfm + dw_flam_sample + site + year_month + (1|individual), data = epi.df2)
+DW.mpa.lfm <- lmer(tti ~ dw_flam_sample*spp + mpa + lfm + site + year_month + (1|individual), data = epi.df2)
+# From the above models, DW + mpa performed the best
+
+tab_model(mpa, dw, lfm, MPA.lfm, LFM.mpa, DW.lfm, LFM.dw, DW.mpa, MPA.dw, LFM.mpa.dw, MPA.lfm.dw, DW.mpa.lfm,
+          show.reflvl = FALSE, 
+          digits = 3, 
+          show.aic = TRUE, 
+          show.ci = FALSE,
+          show.icc = FALSE, 
+         string.pred = "Coeffcient", 
+        dv.labels = c("MPa", "DW", "LFM", "MPA and lfm", "LFM and mpa", "DW and lfm", "LFM and dw", "DW and mpa", "MPA and dw", "LFM, mpa and dw", "MPA, lfm and dw", "DW, lfm and mpa"),
+         title = "tti: Chooosing model for visualization",
+  string.p = "P-Value", 
+  p.style = "stars")
+```
+
+Remef:
+```{r}
+tti.top.epi <- lmer(tti ~ dw_flam_sample*spp + mpa + site + year_month + (1|individual), data = epi.df2)
+
+epi.df2.remef$r_top_tti <- remef(tti.top.epi, fix = c('site2', 'sitePainted Caves', 'mpa'),  ran = "all", keep.intercept = FALSE)
+```
+
+Plot:
+```{r}
+tti.e.top.plotR <- epi.df2.remef %>%
+  ggplot(aes(x = dw_flam_sample, y = r_top_tti, color = spp)) +
+  xlim(0.2, 1.5) +
+  labs(x = "Dry Weight (g)", y = "Time to Ignition", color = "Species") +
+  geom_point(size = 1, alpha = 0.8) +
+  geom_smooth(method = 'lm', se = F, fullrange = T, alpha = 0.7, size = 0.7) +
+  facet_wrap(~Model) +
+  theme_bw() +
+  scale_color_manual(values = c("#FC5130","#F7B801","#0B032D")) +
+  theme(axis.title = element_text(face = 'bold', size = 12),
+        legend.position = 'none',
+        strip.text = element_text(face = "bold"))
+tti.e.top.plotR
+```
+ 
+## FH
+Model selection:
+```{r}
+mpa <- lmer(fh ~ mpa*spp + site + sample_wt + year_month + (1|individual), data = epi.df2)
+dw <- lmer(fh ~ dw_flam_sample*spp + site + year_month + (1|individual), data = epi.df2)
+lfm <- lmer(fh ~ lfm*spp + sample_wt + site + year_month + (1|individual), data = epi.df2)
+MPA.lfm <- lmer(fh ~ mpa*spp + lfm + site + sample_wt + year_month + (1|individual), data = epi.df2)
+LFM.mpa <- lmer(fh ~ lfm*spp + mpa + site + sample_wt + year_month + (1|individual), data = epi.df2)
+DW.lfm <- lmer(fh ~ dw_flam_sample*spp + lfm + site + year_month + (1|individual), data = epi.df2)
+LFM.dw <- lmer(fh ~ lfm*spp + dw_flam_sample + site + year_month + (1|individual), data = epi.df2)
+DW.mpa <- lmer(fh ~ dw_flam_sample*spp + mpa + site + year_month + (1|individual), data = epi.df2)
+MPA.dw <- lmer(fh ~ mpa*spp + dw_flam_sample + site + year_month + (1|individual), data = epi.df2)
+LFM.mpa.dw <- lmer(fh ~ lfm*spp + mpa + dw_flam_sample + site + year_month + (1|individual), data = epi.df2)
+MPA.lfm.dw <- lmer(fh ~ mpa*spp + lfm + dw_flam_sample + site + year_month + (1|individual), data = epi.df2)
+DW.mpa.lfm <- lmer(fh ~ dw_flam_sample*spp + mpa + lfm + site + year_month + (1|individual), data = epi.df2)
+# From the above models, DW + mpa performed the best
+
+tab_model(mpa, dw, lfm, MPA.lfm, LFM.mpa, DW.lfm, LFM.dw, DW.mpa, MPA.dw, LFM.mpa.dw, MPA.lfm.dw, DW.mpa.lfm,
+          show.reflvl = FALSE, 
+          digits = 3, 
+          show.aic = TRUE, 
+          show.ci = FALSE,
+          show.icc = FALSE, 
+         string.pred = "Coeffcient", 
+        dv.labels = c("MPa", "DW", "LFM", "MPA and lfm", "LFM and mpa", "DW and lfm", "LFM and dw", "DW and mpa", "MPA and dw", "LFM, mpa and dw", "MPA, lfm and dw", "DW, lfm and mpa"),
+         title = "fh: Chooosing model for visualization",
+  string.p = "P-Value", 
+  p.style = "stars")
+```
+
+Remef:
+```{r}
+fh.top.epi <- lmer(fh ~ dw_flam_sample*spp + mpa + site + year_month + (1|individual), data = epi.df2)
+
+epi.df2.remef$r_top_fh <- remef(fh.top.epi, fix = c('site2', 'sitePainted Caves', 'mpa'),  ran = "all", keep.intercept = FALSE)
+```
+
+Plot:
+```{r}
+fh.e.top.plotR <- epi.df2.remef %>%
+  ggplot(aes(x = dw_flam_sample, y = r_top_fh, color = spp)) +
+  xlim(0.2, 1.5) +
+  labs(x = "Dry Weight (g)", y = "Flame Height", color = "Species") +
+  geom_point(size = 1, alpha = 0.6) +
+  geom_smooth(method = 'lm', se = F, fullrange = T, alpha = 0.7, size = 0.7) +
+  theme_bw() +
+  scale_color_manual(values = c("#FC5130","#F7B801","#0B032D")) +
+  theme(axis.title = element_text(face = 'bold', size = 12),
+        legend.position = 'none',
+        strip.text = element_text(face = "bold"))
+fh.e.top.plotR
+```
+
+## GD
+Model selection:
+```{r}
+mpa <- lmer(gd ~ mpa*spp + site + sample_wt + year_month + (1|individual), data = epi.df2)
+dw <- lmer(gd ~ dw_flam_sample*spp + site + year_month + (1|individual), data = epi.df2)
+lfm <- lmer(gd ~ lfm*spp + sample_wt + site + year_month + (1|individual), data = epi.df2)
+MPA.lfm <- lmer(gd ~ mpa*spp + lfm + site + sample_wt + year_month + (1|individual), data = epi.df2)
+LFM.mpa <- lmer(gd ~ lfm*spp + mpa + site + sample_wt + year_month + (1|individual), data = epi.df2)
+DW.lfm <- lmer(gd ~ dw_flam_sample*spp + lfm + site + year_month + (1|individual), data = epi.df2)
+LFM.dw <- lmer(gd ~ lfm*spp + dw_flam_sample + site + year_month + (1|individual), data = epi.df2)
+DW.mpa <- lmer(gd ~ dw_flam_sample*spp + mpa + site + year_month + (1|individual), data = epi.df2)
+MPA.dw <- lmer(gd ~ mpa*spp + dw_flam_sample + site + year_month + (1|individual), data = epi.df2)
+LFM.mpa.dw <- lmer(gd ~ lfm*spp + mpa + dw_flam_sample + site + year_month + (1|individual), data = epi.df2)
+MPA.lfm.dw <- lmer(gd ~ mpa*spp + lfm + dw_flam_sample + site + year_month + (1|individual), data = epi.df2)
+DW.mpa.lfm <- lmer(gd ~ dw_flam_sample*spp + mpa + lfm + site + year_month + (1|individual), data = epi.df2)
+# From the above models, DW + lfm + mpa performed the best
+
+tab_model(mpa, dw, lfm, MPA.lfm, LFM.mpa, DW.lfm, LFM.dw, DW.mpa, MPA.dw, LFM.mpa.dw, MPA.lfm.dw, DW.mpa.lfm,
+          show.reflvl = FALSE, 
+          digits = 3, 
+          show.aic = TRUE, 
+          show.ci = FALSE,
+          show.icc = FALSE, 
+         string.pred = "Coeffcient", 
+        dv.labels = c("MPa", "DW", "LFM", "MPA and lfm", "LFM and mpa", "DW and lfm", "LFM and dw", "DW and mpa", "MPA and dw", "LFM, mpa and dw", "MPA, lfm and dw", "DW, lfm and mpa"),
+         title = "gd: Chooosing model for visualization",
+  string.p = "P-Value", 
+  p.style = "stars")
+```
+
+Remef:
+```{r}
+gd.top.epi <- lmer(gd ~ dw_flam_sample*spp + mpa + lfm + site + year_month + (1|individual), data = epi.df2)
+
+epi.df2.remef$r_top_gd <- remef(gd.top.epi, fix = c('site2', 'sitePainted Caves', 'mpa', 'lfm'),  ran = "all", keep.intercept = FALSE)
+```
+
+Plot:
+```{r}
+gd.e.top.plotR <- epi.df2.remef %>%
+  ggplot(aes(x = dw_flam_sample, y = r_top_gd, color = spp)) +
+  xlim(0.2, 1.5) +
+  labs(x = "Dry Weight (g)", y = "Glow Duration", color = "Species") +
+  geom_point(size = 1, alpha = 0.6) +
+  geom_smooth(method = 'lm', se = F, fullrange = T, alpha = 0.7, size = 0.7) +
+  theme_bw() +
+  scale_color_manual(values = c("#FC5130","#F7B801","#0B032D")) +
+  theme(axis.title = element_text(face = 'bold', size = 12),
+        legend.position = 'none',
+        strip.text = element_text(face = "bold"))
+gd.e.top.plotR
+```
+
+## FD
+Model selection:
+```{r}
+mpa <- lmer(fd ~ mpa*spp + site + sample_wt + year_month + (1|individual), data = epi.df2)
+dw <- lmer(fd ~ dw_flam_sample*spp + site + year_month + (1|individual), data = epi.df2)
+lfm <- lmer(fd ~ lfm*spp + sample_wt + site + year_month + (1|individual), data = epi.df2)
+MPA.lfm <- lmer(fd ~ mpa*spp + lfm + site + sample_wt + year_month + (1|individual), data = epi.df2)
+LFM.mpa <- lmer(fd ~ lfm*spp + mpa + site + sample_wt + year_month + (1|individual), data = epi.df2)
+DW.lfm <- lmer(fd ~ dw_flam_sample*spp + lfm + site + year_month + (1|individual), data = epi.df2)
+LFM.dw <- lmer(fd ~ lfm*spp + dw_flam_sample + site + year_month + (1|individual), data = epi.df2)
+DW.mpa <- lmer(fd ~ dw_flam_sample*spp + mpa + site + year_month + (1|individual), data = epi.df2)
+MPA.dw <- lmer(fd ~ mpa*spp + dw_flam_sample + site + year_month + (1|individual), data = epi.df2)
+LFM.mpa.dw <- lmer(fd ~ lfm*spp + mpa + dw_flam_sample + site + year_month + (1|individual), data = epi.df2)
+MPA.lfm.dw <- lmer(fd ~ mpa*spp + lfm + dw_flam_sample + site + year_month + (1|individual), data = epi.df2)
+DW.mpa.lfm <- lmer(fd ~ dw_flam_sample*spp + mpa + lfm + site + year_month + (1|individual), data = epi.df2)
+# From the above models, DW performed the best
+
+tab_model(mpa, dw, lfm, MPA.lfm, LFM.mpa, DW.lfm, LFM.dw, DW.mpa, MPA.dw, LFM.mpa.dw, MPA.lfm.dw, DW.mpa.lfm,
+          show.reflvl = FALSE, 
+          digits = 3, 
+          show.aic = TRUE, 
+          show.ci = FALSE,
+          show.icc = FALSE, 
+         string.pred = "Coeffcient", 
+        dv.labels = c("MPa", "DW", "LFM", "MPA and lfm", "LFM and mpa", "DW and lfm", "LFM and dw", "DW and mpa", "MPA and dw", "LFM, mpa and dw", "MPA, lfm and dw", "DW, lfm and mpa"),
+         title = "fd: Chooosing model for visualization",
+  string.p = "P-Value", 
+  p.style = "stars")
+```
+
+Remef:
+```{r}
+fd.top.epi <- lmer(fd ~ dw_flam_sample*spp + site + year_month + (1|individual), data = epi.df2)
+
+epi.df2.remef$r_top_fd <- remef(fd.top.epi, fix = c('site2', 'sitePainted Caves'),  ran = "all", keep.intercept = FALSE)
+```
+
+Plot:
+```{r}
+fd.e.top.plotR <- epi.df2.remef %>%
+  ggplot(aes(x = dw_flam_sample, y = r_top_fd, color = spp)) +
+  xlim(0.2, 1.5) +
+  labs(x = "Dry Weight (g)", y = "Flame Duration", color = "Species") +
+  geom_point(size = 1, alpha = 0.6) +
+  geom_smooth(method = 'lm', se = F, fullrange = T, alpha = 0.7, size = 0.7) +
+  theme_bw() +
+  scale_color_manual(values = c("#FC5130","#F7B801","#0B032D")) +
+  theme(axis.title = element_text(face = 'bold', size = 12),
+        legend.position = 'none',
+        strip.text = element_text(face = "bold"))
+fd.e.top.plotR
+```
+
+# Hot Plate
+## TTI
+Model selection:
+```{r}
+mpa <- lmer(tti ~ mpa*spp + site + sample_wt + year_month + (1|individual), data = hp.df2)
+dw <- lmer(tti ~ dw_flam_sample*spp + site + year_month + (1|individual), data = hp.df2)
+lfm <- lmer(tti ~ lfm*spp + sample_wt + site + year_month + (1|individual), data = hp.df2)
+MPA.lfm <- lmer(tti ~ mpa*spp + lfm + site + sample_wt + year_month + (1|individual), data = hp.df2)
+LFM.mpa <- lmer(tti ~ lfm*spp + mpa + site + sample_wt + year_month + (1|individual), data = hp.df2)
+DW.lfm <- lmer(tti ~ dw_flam_sample*spp + lfm + site + year_month + (1|individual), data = hp.df2)
+LFM.dw <- lmer(tti ~ lfm*spp + dw_flam_sample + site + year_month + (1|individual), data = hp.df2)
+DW.mpa <- lmer(tti ~ dw_flam_sample*spp + mpa + site + year_month + (1|individual), data = hp.df2)
+MPA.dw <- lmer(tti ~ mpa*spp + dw_flam_sample + site + year_month + (1|individual), data = hp.df2)
+LFM.mpa.dw <- lmer(tti ~ lfm*spp + mpa + dw_flam_sample + site + year_month + (1|individual), data = hp.df2)
+MPA.lfm.dw <- lmer(tti ~ mpa*spp + lfm + dw_flam_sample + site + year_month + (1|individual), data = hp.df2)
+DW.mpa.lfm <- lmer(tti ~ dw_flam_sample*spp + mpa + lfm + site + year_month + (1|individual), data = hp.df2)
+# From the above models, mpa performed the best
+
+tab_model(mpa, dw, lfm, MPA.lfm, LFM.mpa, DW.lfm, LFM.dw, DW.mpa, MPA.dw, LFM.mpa.dw, MPA.lfm.dw, DW.mpa.lfm,
+          show.reflvl = FALSE, 
+          digits = 3, 
+          show.aic = TRUE, 
+          show.ci = FALSE,
+          show.icc = FALSE, 
+         string.pred = "Coeffcient", 
+        dv.labels = c("MPa", "DW", "LFM", "MPA and lfm", "LFM and mpa", "DW and lfm", "LFM and dw", "DW and mpa", "MPA and dw", "LFM, mpa and dw", "MPA, lfm and dw", "DW, lfm and mpa"),
+         title = "tti: Chooosing model for visualization",
+  string.p = "P-Value", 
+  p.style = "stars")
+```
+
+Model/remef:
+```{r}
+tti.top.hp <- lmer(tti ~ mpa*spp + site + sample_wt + year_month + (1|individual), data = hp.df2)
+
+hp.df2.remef$r_top_tti <- remef(tti.top.hp, fix = c('site2', 'sitePainted Caves', 'sample_wt'),  ran = "all", keep.intercept = FALSE)
+```
+
+Plot:
+```{r}
+tti.h.top.plotR <- hp.df2.remef %>%
+  ggplot(aes(x = mpa, y = r_top_tti, color = spp)) +
+  labs(x = "Water Potential (MPa)", y = "Time to Ignition", color = "Species") +
+  geom_point(size = 1, alpha = 0.6) +
+  geom_smooth(method = "lm", se = F, fullrange = T, alpha = 0.7, size = 0.7) +
+  facet_wrap(~Model) +
+  theme_bw() +
+  scale_color_manual(values = c("#FC5130","#F7B801","#5F758E")) +
+  theme(axis.title = element_text(face = 'bold', size = 12),
+        legend.position = 'none',
+        strip.text = element_text(face = "bold"))
+tti.h.top.plotR
+```
+ 
+## FH
+Model selection:
+```{r}
+mpa <- lmer(fh ~ mpa*spp + site + sample_wt + year_month + (1|individual), data = hp.df2)
+dw <- lmer(fh ~ dw_flam_sample*spp + site + year_month + (1|individual), data = hp.df2)
+lfm <- lmer(fh ~ lfm*spp + sample_wt + site + year_month + (1|individual), data = hp.df2)
+MPA.lfm <- lmer(fh ~ mpa*spp + lfm + site + sample_wt + year_month + (1|individual), data = hp.df2)
+LFM.mpa <- lmer(fh ~ lfm*spp + mpa + site + sample_wt + year_month + (1|individual), data = hp.df2)
+DW.lfm <- lmer(fh ~ dw_flam_sample*spp + lfm + site + year_month + (1|individual), data = hp.df2)
+LFM.dw <- lmer(fh ~ lfm*spp + dw_flam_sample + site + year_month + (1|individual), data = hp.df2)
+DW.mpa <- lmer(fh ~ dw_flam_sample*spp + mpa + site + year_month + (1|individual), data = hp.df2)
+MPA.dw <- lmer(fh ~ mpa*spp + dw_flam_sample + site + year_month + (1|individual), data = hp.df2)
+LFM.mpa.dw <- lmer(fh ~ lfm*spp + mpa + dw_flam_sample + site + year_month + (1|individual), data = hp.df2)
+MPA.lfm.dw <- lmer(fh ~ mpa*spp + lfm + dw_flam_sample + site + year_month + (1|individual), data = hp.df2)
+DW.mpa.lfm <- lmer(fh ~ dw_flam_sample*spp + mpa + lfm + site + year_month + (1|individual), data = hp.df2)
+# From the above models, DW + mpa performed the best
+
+tab_model(mpa, dw, lfm, MPA.lfm, LFM.mpa, DW.lfm, LFM.dw, DW.mpa, MPA.dw, LFM.mpa.dw, MPA.lfm.dw, DW.mpa.lfm,
+          show.reflvl = FALSE, 
+          digits = 3, 
+          show.aic = TRUE, 
+          show.ci = FALSE,
+          show.icc = FALSE, 
+         string.pred = "Coeffcient", 
+        dv.labels = c("MPa", "DW", "LFM", "MPA and lfm", "LFM and mpa", "DW and lfm", "LFM and dw", "DW and mpa", "MPA and dw", "LFM, mpa and dw", "MPA, lfm and dw", "DW, lfm and mpa"),
+         title = "fh: Chooosing model for visualization",
+  string.p = "P-Value", 
+  p.style = "stars")
+```
+
+Remef:
+```{r}
+fh.top.hp <- lmer(fh ~ dw_flam_sample*spp + mpa + site + year_month + (1|individual), data = hp.df2)
+
+hp.df2.remef$r_top_fh <- remef(fh.top.hp, fix = c('site2', 'sitePainted Caves', 'mpa'),  ran = "all", keep.intercept = FALSE)
+```
+
+Plot:
+```{r}
+fh.h.top.plotR <- hp.df2.remef %>%
+  ggplot(aes(x = dw_flam_sample, y = r_top_fh, color = spp)) +
+  labs(x = "Dry Weight (g)", y = "Flame Height", color = "Species") +
+  geom_point(size = 1, alpha = 0.6) +
+  geom_smooth(method = "lm", se = F, fullrange = T, alpha = 0.7, size = 0.7) +
+  theme_bw() +
+  scale_color_manual(values = c("#FC5130","#F7B801","#5F758E")) +
+  theme(axis.title = element_text(face = 'bold', size = 12),
+        legend.position = 'none',
+        strip.text = element_text(face = "bold"))
+fh.h.top.plotR
+```
+
+## GD
+Model selection:
+```{r}
+mpa <- lmer(gd ~ mpa*spp + site + sample_wt + year_month + (1|individual), data = hp.df2)
+dw <- lmer(gd ~ dw_flam_sample*spp + site + year_month + (1|individual), data = hp.df2)
+lfm <- lmer(gd ~ lfm*spp + sample_wt + site + year_month + (1|individual), data = hp.df2)
+MPA.lfm <- lmer(gd ~ mpa*spp + lfm + site + sample_wt + year_month + (1|individual), data = hp.df2)
+LFM.mpa <- lmer(gd ~ lfm*spp + mpa + site + sample_wt + year_month + (1|individual), data = hp.df2)
+DW.lfm <- lmer(gd ~ dw_flam_sample*spp + lfm + site + year_month + (1|individual), data = hp.df2)
+LFM.dw <- lmer(gd ~ lfm*spp + dw_flam_sample + site + year_month + (1|individual), data = hp.df2)
+DW.mpa <- lmer(gd ~ dw_flam_sample*spp + mpa + site + year_month + (1|individual), data = hp.df2)
+MPA.dw <- lmer(gd ~ mpa*spp + dw_flam_sample + site + year_month + (1|individual), data = hp.df2)
+LFM.mpa.dw <- lmer(gd ~ lfm*spp + mpa + dw_flam_sample + site + year_month + (1|individual), data = hp.df2)
+MPA.lfm.dw <- lmer(gd ~ mpa*spp + lfm + dw_flam_sample + site + year_month + (1|individual), data = hp.df2)
+DW.mpa.lfm <- lmer(gd ~ dw_flam_sample*spp + mpa + lfm + site + year_month + (1|individual), data = hp.df2)
+# From the above models, DW + mpa + lfm performed the best
+
+tab_model(mpa, dw, lfm, MPA.lfm, LFM.mpa, DW.lfm, LFM.dw, DW.mpa, MPA.dw, LFM.mpa.dw, MPA.lfm.dw, DW.mpa.lfm,
+          show.reflvl = FALSE, 
+          digits = 3, 
+          show.aic = TRUE, 
+          show.ci = FALSE,
+          show.icc = FALSE, 
+         string.pred = "Coeffcient", 
+        dv.labels = c("MPa", "DW", "LFM", "MPA and lfm", "LFM and mpa", "DW and lfm", "LFM and dw", "DW and mpa", "MPA and dw", "LFM, mpa and dw", "MPA, lfm and dw", "DW, lfm and mpa"),
+         title = "gd: Chooosing model for visualization",
+  string.p = "P-Value", 
+  p.style = "stars")
+```
+
+Remef:
+```{r}
+gd.top.hp <- lmer(gd ~ dw_flam_sample*spp + mpa + lfm + site + year_month + (1|individual), data = hp.df2)
+
+hp.df2.remef$r_top_gd <- remef(gd.top.hp, fix = c('site2', 'sitePainted Caves', 'mpa', 'lfm'),  ran = "all", keep.intercept = FALSE)
+```
+
+Plot:
+```{r}
+gd.h.top.plotR <- hp.df2.remef %>%
+  ggplot(aes(x = dw_flam_sample, y = r_top_gd, color = spp)) +
+  labs(x = "Dry Weight (g)", y = "Glow Duration", color = "Species") +
+  geom_point(size = 1, alpha = 0.6) +
+  geom_smooth(se = F, method = "lm", fullrange = T, alpha = 0.7, size = 0.7) +
+  theme_bw() +
+  scale_color_manual(values = c("#FC5130","#F7B801","#5F758E")) +
+  theme(axis.title = element_text(face = 'bold', size = 12),
+        legend.position = 'none',
+        strip.text = element_text(face = "bold"))
+gd.h.top.plotR
+```
+
+## FD
+Model selection:
+```{r}
+mpa <- lmer(fd ~ mpa*spp + site + sample_wt + year_month + (1|individual), data = hp.df2)
+dw <- lmer(fd ~ dw_flam_sample*spp + site + year_month + (1|individual), data = hp.df2)
+lfm <- lmer(fd ~ lfm*spp + sample_wt + site + year_month + (1|individual), data = hp.df2)
+MPA.lfm <- lmer(fd ~ mpa*spp + lfm + site + sample_wt + year_month + (1|individual), data = hp.df2)
+LFM.mpa <- lmer(fd ~ lfm*spp + mpa + site + sample_wt + year_month + (1|individual), data = hp.df2)
+DW.lfm <- lmer(fd ~ dw_flam_sample*spp + lfm + site + year_month + (1|individual), data = hp.df2)
+LFM.dw <- lmer(fd ~ lfm*spp + dw_flam_sample + site + year_month + (1|individual), data = hp.df2)
+DW.mpa <- lmer(fd ~ dw_flam_sample*spp + mpa + site + year_month + (1|individual), data = hp.df2)
+MPA.dw <- lmer(fd ~ mpa*spp + dw_flam_sample + site + year_month + (1|individual), data = hp.df2)
+LFM.mpa.dw <- lmer(fd ~ lfm*spp + mpa + dw_flam_sample + site + year_month + (1|individual), data = hp.df2)
+MPA.lfm.dw <- lmer(fd ~ mpa*spp + lfm + dw_flam_sample + site + year_month + (1|individual), data = hp.df2)
+DW.mpa.lfm <- lmer(fd ~ dw_flam_sample*spp + mpa + lfm + site + year_month + (1|individual), data = hp.df2)
+# From the above models, DW performed the best
+
+tab_model(mpa, dw, lfm, MPA.lfm, LFM.mpa, DW.lfm, LFM.dw, DW.mpa, MPA.dw, LFM.mpa.dw, MPA.lfm.dw, DW.mpa.lfm,
+          show.reflvl = FALSE, 
+          digits = 3, 
+          show.aic = TRUE, 
+          show.ci = FALSE,
+          show.icc = FALSE, 
+         string.pred = "Coeffcient", 
+        dv.labels = c("MPa", "DW", "LFM", "MPA and lfm", "LFM and mpa", "DW and lfm", "LFM and dw", "DW and mpa", "MPA and dw", "LFM, mpa and dw", "MPA, lfm and dw", "DW, lfm and mpa"),
+         title = "fd: Chooosing model for visualization",
+  string.p = "P-Value", 
+  p.style = "stars")
+```
+
+Remef:
+```{r}
+fd.top.hp <- lmer(fd ~ dw_flam_sample*spp + site + year_month + (1|individual), data = hp.df2)
+
+hp.df2.remef$r_top_fd <- remef(fd.top.hp, fix = c('site2', 'sitePainted Caves'),  ran = "all", keep.intercept = FALSE)
+```
+
+Plot:
+```{r}
+fd.h.top.plotR <- hp.df2.remef %>%
+  ggplot(aes(x = dw_flam_sample, y = r_top_fd, color = spp)) +
+  labs(x = "Dry Weight (g)", y = "Flame Duration", color = "Species") +
+  geom_point(size = 1, alpha = 0.6) +
+  geom_smooth(method = 'lm', se = F, fullrange = T, alpha = 0.7, size = 0.7) +
+  theme_bw() +
+  scale_color_manual(values = c("#FC5130","#F7B801","#0B032D")) +
+  theme(axis.title = element_text(face = 'bold', size = 12),
+        legend.position = 'none',
+        strip.text = element_text(face = "bold"))
+fd.h.top.plotR
+```
+
+# Summary of Models
+```{r}
+tab_model(tti.top.epi, tti.top.hp, fh.top.epi, fh.top.hp, gd.top.epi, gd.top.hp, fd.top.epi, fd.top.hp,
+          show.reflvl = FALSE, 
+          digits = 3, 
+          show.aic = TRUE, 
+          show.ci = FALSE,
+          show.icc = FALSE,
+         string.pred = "Coeffcient", 
+        dv.labels = c("TTI (EPI)", "TTI (HP)",
+                      "FH (EPI)", "FH (HP)",
+                      "GD (EPI)", "GD (HP)",
+                      "FD (EPI)", "FD (HP)"),
+         title = "Species Differences Model Table: Top Models",
+  string.p = "P-Value", 
+  p.style = "stars")
+```
+
+# Arranging Plots
+```{r}
+epi.plotsR <- cowplot::plot_grid(ncol = 1, 
+                       tti.e.top.plotR + theme(plot.margin = unit(c(0.1, 0.2, 0.1, 0.1), "cm")),
+                       fd.e.top.plotR + theme(plot.margin = unit(c(0.1, 0.2, 0.1, 0.1), "cm")),
+                       gd.e.top.plotR + theme(plot.margin = unit(c(0.1, 0.2, 0.1, 0.1), "cm")),
+                       fh.e.top.plotR + theme(plot.margin = unit(c(0.1, 0.2, 0.1, 0.1), "cm")),
+                       rel_heights = c(1,1,1,1), rel_widths = c(1,1,1,1))
+epi.plotsR
+
+hp.plotsR <- cowplot::plot_grid(ncol = 1, 
+                       tti.h.top.plotR + theme(plot.margin = unit(c(0.1, 0.1, 0.1, 0.2), "cm")),
+                       fd.h.top.plotR + theme(plot.margin = unit(c(0.1, 0.1, 0.1, 0.2), "cm")),
+                       gd.h.top.plotR + theme(plot.margin = unit(c(0.1, 0.1, 0.1, 0.2), "cm")),
+                       fh.h.top.plotR + theme(plot.margin = unit(c(0.1, 0.1, 0.1, 0.2), "cm")),
+                       rel_heights = c(1,1,1,1), rel_widths = c(1,1,1,1))
+hp.plotsR
+
+plotsR <- cowplot::plot_grid(epi.plotsR, hp.plotsR, ncol = 2, rel_widths = c(1.1,1))
+
+main.plotR <- cowplot::plot_grid(plotsR, spp.legend, ncol = 2, rel_widths = c(2.4,1))
+main.plotR
+
+ggsave("figures/top.models.species.plot.REMEF.jpg", plot = main.plotR, height = 10, width = 7)
+```
+
+# ---------------------------------
+# Only n>20 Species
+
+Epiradiator
+Dry Weight Plots
+TTI
+Model:
+```{r}
+tti.dw.epi <- lmer(tti ~ dw_flam_sample*spp + site + year_month + (1|individual), data = epi.df.limited)
+summary(tti.dw.epi)
+```
+
+Plot:
+```{r}
+tde.plot <- epi.df.limited %>%
+  ggplot(aes(x = dw_flam_sample, y = tti, color = spp)) +
+  labs(x = "Dry Weight (g)", y = "Time to Ignition (s)", color = "Species") +
+  geom_point(size = 1, alpha = 0.6) +
+  geom_abline(slope = -10.767, intercept = 46.087, color = "#F5A400", cex = 1, alpha = 0.8) +
+  geom_abline(slope = -4.729, intercept = 37.374, color = "#7D0025", cex = 1, alpha = 0.8) +
+  facet_wrap(~model) +
+  theme_bw() +
+  scale_color_manual(values = c("#F5A400", "#7D0025")) +
+  theme(axis.title.y = element_text(face = 'bold', size = 12),
+        axis.title.x = element_blank(),
+        legend.position = 'none',
+        strip.text = element_text(face = "bold"))
+tde.plot
+```
+ 
+FH
+Model:
+```{r}
+fh.dw.epi <- lmer(fh ~ dw_flam_sample*spp + site + year_month + (1|individual), data = epi.df.limited)
+summary(fh.dw.epi)
+```
+
+Plot:
+```{r}
+fde.plot <- epi.df.limited %>%
+  ggplot(aes(x = dw_flam_sample, y = fh, color = spp)) +
+  labs(x = "Dry Weight (g)", y = "Flame Height (cm)", color = "Species") +
+  geom_point(size = 1, alpha = 0.6) +
+  geom_abline(slope = 3.4767, intercept = 7.3372, color = "#F5A400", cex = 1, alpha = 0.8) +
+  geom_abline(slope = 9.7361, intercept = 0.684, color = "#7D0025", cex = 1, alpha = 0.8) +
+  facet_wrap(~model) +
+  theme_bw() +
+  scale_color_manual(values = c("#F5A400", "#7D0025")) +
+  theme(axis.title.y = element_text(face = 'bold', size = 12),
+        axis.title.x = element_blank(),
+        legend.position = 'none',
+        strip.text = element_text(face = "bold"))
+fde.plot
+```
+
+GD
+Model:
+```{r}
+gd.dw.epi <- lmer(gd ~ dw_flam_sample*spp + site + year_month + (1|individual), data = epi.df.limited)
+summary(gd.dw.epi)
+```
+
+Plot:
+```{r}
+gde.plot <- epi.df.limited %>%
+  ggplot(aes(x = dw_flam_sample, y = gd, color = spp)) +
+  labs(x = "Dry Weight (g)", y = "Glow Duration (s)", color = "Species") +
+  geom_point(size = 1, alpha = 0.6) +
+  geom_abline(slope = 37.1568, intercept = 88.1947, color = "#F5A400", cex = 1, alpha = 0.8) +
+  geom_abline(slope = 62.1903, intercept = 87.7604, color = "#7D0025", cex = 1, alpha = 0.8) +
+  facet_wrap(~model) +
+  theme_bw() +
+  scale_color_manual(values = c("#F5A400", "#7D0025")) +
+  theme(axis.title.y = element_text(face = 'bold', size = 12),
+        axis.title.x = element_blank(),
+        legend.position = 'none',
+        strip.text = element_text(face = "bold"))
+```
+
+LFM Plots
+TTI
+Model:
+```{r}
+tti.lfm.epi <- lmer(tti ~ lfm*spp + site + year_month + (1|individual), data = epi.df.limited)
+summary(tti.lfm.epi)
+```
+
+Plot:
+```{r}
+tle.plot <- epi.df.limited %>%
+  ggplot(aes(x = lfm, y = tti, color = spp)) +
+  labs(x = "Live Fuel Moisture (%)", y = "Time to Ignition (s)", color = "Species") +
+  geom_point(size = 1, alpha = 0.6) +
+  geom_abline(slope = 0.20719, intercept = 23.26725, color = "#F5A400", cex = 1, alpha = 0.8) +
+  geom_abline(slope = 0.12145, intercept = 24.58894, color = "#7D0025", cex = 1, alpha = 0.8) +
+  facet_wrap(~model) +
+  theme_bw() +
+  scale_color_manual(values = c("#F5A400", "#7D0025")) +
+  theme(axis.title.y = element_text(face = 'bold', size = 12),
+      axis.title.x = element_blank(),
+      legend.position = 'none',
+      strip.text = element_text(face = "bold"))
+```
+ 
+FH
+Model:
+```{r}
+fh.lfm.epi <- lmer(fh ~ lfm*spp + site + year_month + (1|individual), data = epi.df.limited)
+summary(fh.lfm.epi)
+```
+
+Plot:
+```{r}
+fle.plot <- epi.df.limited %>%
+  ggplot(aes(x = lfm, y = fh, color = spp)) +
+  labs(x = "Live Fuel Moisture (%)", y = "Flame Height (cm)", color = "Species") +
+  geom_point(size = 1, alpha = 0.6) +
+  geom_abline(slope = -0.05006, intercept = 13.48238, color = "#F5A400", cex = 1, alpha = 0.8) +
+  geom_abline(slope = -0.08636, intercept = 14.61083, color = "#7D0025", cex = 1, alpha = 0.8) +
+  facet_wrap(~model) +
+  theme_bw() +
+  scale_color_manual(values = c("#F5A400", "#7D0025")) +
+  theme(axis.title.y = element_text(face = 'bold', size = 12),
+        axis.title.x = element_blank(),
+        legend.position = 'none',
+        strip.text = element_text(face = "bold"))
+```
+
+GD
+Model:
+```{r}
+gd.lfm.epi <- lmer(gd ~ lfm*spp + site + year_month + (1|individual), data = epi.df.limited)
+summary(gd.lfm.epi)
+```
+
+Plot:
+```{r}
+gle.plot <- epi.df.limited %>%
+  ggplot(aes(x = lfm, y = gd, color = spp)) +
+  labs(x = "Live Fuel Moisture (%)", y = "Glow Duration (s)", color = "Species") +
+  geom_point(size = 1, alpha = 0.6) +
+  geom_abline(slope = -0.1776, intercept = 128.7790, color = "#F5A400", cex = 1, alpha = 0.8) +
+  geom_abline(slope = -0.2789, intercept = 156.2427, color = "#7D0025", cex = 1, alpha = 0.8) +
+  facet_wrap(~model) +
+  theme_bw() +
+  scale_color_manual(values = c("#F5A400", "#7D0025")) +
+  theme(axis.title.y = element_text(face = 'bold', size = 12),
+        axis.title.x = element_blank(),
+        legend.position = 'none',
+        strip.text = element_text(face = "bold"))
+```
+
+Hot Plate
+Dry Weight Plots
+TTI
+Model:
+```{r}
+tti.dw.hp <- lmer(tti ~ dw_flam_sample*spp + site + (1|individual), data = hp.df.limited)
+summary(tti.dw.hp)
+```
+
+Plot:
+```{r}
+tdh.plot <- hp.df.limited %>%
+  ggplot(aes(x = dw_flam_sample, y = tti, color = spp)) +
+  labs(x = "Dry Weight (g)", y = "Time to Ignition (s)", color = "Species") +
+  geom_point(size = 1, alpha = 0.6) +
+  geom_abline(slope = 12.9279, intercept = 73.0506, color = "#F5A400", cex = 1, alpha = 0.8) +
+  geom_abline(slope = 19.3816, intercept = 74.0409, color = "#1165C1", cex = 1, alpha = 0.8) +
+  facet_wrap(~model) +
+  theme_bw() +
+  scale_color_manual(values = c("#F5A400", "#1165C1")) +
+  theme(axis.title = element_blank(),
+        legend.position = 'none',
+        strip.text = element_text(face = "bold"))
+tdh.plot
+```
+ 
+FH
+Model:
+```{r}
+fh.dw.hp <- lmer(fh ~ dw_flam_sample*spp + site + (1|individual), data = hp.df.limited)
+summary(fh.dw.hp)
+```
+
+Plot:
+```{r}
+fdh.plot <- hp.df.limited %>%
+  ggplot(aes(x = dw_flam_sample, y = fh, color = spp)) +
+  labs(x = "Dry Weight (g)", y = "Flame Height (cm)", color = "Species") +
+  geom_point(size = 1, alpha = 0.6) +
+  geom_abline(slope = 3.2370, intercept = 15.9384, color = "#F5A400", cex = 1, alpha = 0.8) +
+  geom_abline(slope = 1.2864, intercept = 18.8012, color = "#1165C1", cex = 1, alpha = 0.8) +
+  facet_wrap(~model) +
+  theme_bw() +
+  scale_color_manual(values = c("#F5A400", "#1165C1")) +
+  theme(axis.title = element_blank(),
+        legend.position = 'none',
+        strip.text = element_text(face = "bold"))
+```
+
+GD
+Model:
+```{r}
+gd.dw.hp <- lmer(gd ~ dw_flam_sample*spp + site + (1|individual), data = hp.df.limited)
+summary(gd.dw.hp)
+```
+
+Plot:
+```{r}
+gdh.plot <- hp.df.limited %>%
+  ggplot(aes(x = dw_flam_sample, y = gd, color = spp)) +
+  labs(x = "Dry Weight (g)", y = "Glow Duration (s)", color = "Species") +
+  geom_point(size = 1, alpha = 0.6) +
+  geom_abline(slope = 32.99, intercept = 50.28, color = "#F5A400", cex = 1, alpha = 0.8) +
+  geom_abline(slope = 9.6, intercept = 143.4, color = "#1165C1", cex = 1, alpha = 0.8) +
+  facet_wrap(~model) +
+  theme_bw() +
+  scale_color_manual(values = c("#F5A400", "#1165C1")) +
+  theme(axis.title = element_blank(),
+        legend.position = 'none',
+        strip.text = element_text(face = "bold"))
+```
+
+LFM Plots
+TTI
+Model:
+```{r}
+tti.lfm.hp <- lmer(tti ~ lfm*spp + site + (1|individual), data = hp.df.limited)
+summary(tti.lfm.hp)
+```
+
+Plot:
+```{r}
+tlh.plot <- hp.df.limited %>%
+  ggplot(aes(x = lfm, y = tti, color = spp)) +
+  labs(x = "Live Fuel Moisture (%)", y = "Time to Ignition (s)", color = "Species") +
+  geom_point(size = 1, alpha = 0.6) +
+  geom_abline(slope = 0.6345, intercept = 54.8722, color = "#F5A400", cex = 1, alpha = 0.8) +
+  geom_abline(slope = -0.8458, intercept = 190.4888, color = "#1165C1", cex = 1, alpha = 0.8) +
+  facet_wrap(~model) +
+  theme_bw() +
+  scale_color_manual(values = c("#F5A400", "#1165C1")) +
+  theme(axis.title = element_blank(),
+        legend.position = 'none',
+        strip.text = element_text(face = "bold"))
+```
+ 
+FH
+Model:
+```{r}
+fh.lfm.hp <- lmer(fh ~ lfm*spp + site + (1|individual), data = hp.df.limited)
+summary(fh.lfm.hp)
+```
+
+Plot:
+```{r}
+flh.plot <- hp.df.limited %>%
+  ggplot(aes(x = lfm, y = fh, color = spp)) +
+  labs(x = "Live Fuel Moisture (%)", y = "Flame Height (cm)", color = "Species") +
+  geom_point(size = 1, alpha = 0.6) +
+  geom_abline(slope = -0.028165, intercept = 25.685183, color = "#F5A400", cex = 1, alpha = 0.8) +
+  geom_abline(slope = -0.025327, intercept = 23.84882, color = "#1165C1", cex = 1, alpha = 0.8) +
+  facet_wrap(~model) +
+  theme_bw() +
+  scale_color_manual(values = c("#F5A400", "#1165C1")) +
+  theme(axis.title = element_blank(),
+        legend.position = 'none',
+        strip.text = element_text(face = "bold"))
+```
+
+GD
+Model:
+```{r}
+gd.lfm.hp <- lmer(gd ~ lfm*spp + site + (1|individual), data = hp.df.limited)
+summary(gd.lfm.hp)
+```
+
+Plot:
+```{r}
+glh.plot <- hp.df.limited %>%
+  ggplot(aes(x = lfm, y = gd, color = spp)) +
+  labs(x = "Live Fuel Moisture (%)", y = "Glow Duration (s)", color = "Species") +
+  geom_point(size = 1, alpha = 0.6) +
+  geom_abline(slope = 1.4235, intercept = 19.7513, color = "#F5A400", cex = 1, alpha = 0.8) +
+  geom_abline(slope = 0.4047, intercept = 122.723, color = "#1165C1", cex = 1, alpha = 0.8) +
+  facet_wrap(~model) +
+  theme_bw() +
+  scale_color_manual(values = c("#F5A400", "#1165C1")) +
+  theme(axis.title = element_blank(),
+        legend.position = 'none',
+        strip.text = element_text(face = "bold"))
+```
+
+Arranging Dry Weight Plots
+```{r}
+legend.df <- epi.df %>% 
+  filter(spp == "ADFA" | spp == "CECO" | spp == "CEME")
+spp.legend <- get_legend(
+  # create some space to the top of the legend
+  ggplot() + 
+  geom_point(data = legend.df, aes(x = tti, y = dw_flam_sample, color = Species), size = 3, alpha = .8) +
+    labs(color = "Species") +
+    scale_color_manual(values=c("#F5A400","#7D0025","#1165C1")) +
+    theme(legend.box.margin = margin(0, 0, 0, 0),
+          legend.position = "right",
+          legend.title = element_text(face = 'bold', size = 14),
+          legend.text = element_text(size = 12, face = 'italic'),
+          legend.key = element_rect(fill = "white"))
+)
+
+epi.plots <- cowplot::plot_grid(ncol = 1, 
+                       tde.plot + theme(plot.margin = unit(c(0.25, 0.25, 0.25, 0.25), "cm")),
+                       fde.plot + theme(plot.margin = unit(c(0.25, 0.25, 0.25, 0.25), "cm")),
+                       gde.plot + theme(plot.margin = unit(c(0.25, 0.25, 0.25, 0.25), "cm")))
+epi.plots
+
+hp.plots <- cowplot::plot_grid(ncol = 1, 
+                       tdh.plot + theme(plot.margin = unit(c(0.25, 0.25, 0.25, 0.25), "cm")),
+                       fdh.plot + theme(plot.margin = unit(c(0.25, 0.25, 0.25, 0.25), "cm")),
+                       gdh.plot + theme(plot.margin = unit(c(0.25, 0.25, 0.25, 0.25), "cm")))
+hp.plots
+
+dw.grob <- textGrob("Dry Weight (g)", 
+                   gp=gpar(fontface="bold", 
+                           col="black", 
+                           fontsize=20)) 
+
+dw.plots <- cowplot::plot_grid(epi.plots, hp.plots, ncol = 2)
+dw.plots2 <- gridExtra::grid.arrange(arrangeGrob(dw.plots, bottom = dw.grob))
+
+main.dw.plot <- cowplot::plot_grid(dw.plots2, spp.legend, ncol = 2, rel_widths = c(2.4,1))
+main.dw.plot
+
+#ggsave("figures/dw.species.plot.jpg", plot = main.dw.plot, height = 8, width = 7)
+```
+
+Arranging LFM Plots
+```{r}
+epi.plots <- cowplot::plot_grid(ncol = 1, 
+                       tle.plot + theme(plot.margin = unit(c(0.25, 0.25, 0.25, 0.25), "cm")),
+                       fle.plot + theme(plot.margin = unit(c(0.25, 0.25, 0.25, 0.25), "cm")),
+                       gle.plot + theme(plot.margin = unit(c(0.25, 0.25, 0.25, 0.25), "cm")))
+epi.plots
+
+hp.plots <- cowplot::plot_grid(ncol = 1, 
+                       tlh.plot + theme(plot.margin = unit(c(0.25, 0.25, 0.25, 0.25), "cm")),
+                       flh.plot + theme(plot.margin = unit(c(0.25, 0.25, 0.25, 0.25), "cm")),
+                       glh.plot + theme(plot.margin = unit(c(0.25, 0.25, 0.25, 0.25), "cm")))
+hp.plots
+
+lfm.grob <- textGrob("Live Fuel Moisture (%)", 
+                   gp=gpar(fontface="bold", 
+                           col="black", 
+                           fontsize=20)) 
+
+lfm.plots <- cowplot::plot_grid(epi.plots, hp.plots, ncol = 2)
+lfm.plots2 <- gridExtra::grid.arrange(arrangeGrob(lfm.plots, bottom = lfm.grob))
+
+main.lfm.plot <- cowplot::plot_grid(lfm.plots2, spp.legend, ncol = 2, rel_widths = c(2.4,1))
+main.lfm.plot
+
+#ggsave("figures/lfm.species.plot.jpg", plot = main.lfm.plot, height = 8, width = 7)
+```
+
+# --------------------------------
+# Proportion Dry Weight Metric
+To try and gain an understanding of the relative woodiness of the four species
+```{r}
+paired_methods_long <- paired_methods_long %>% 
+  mutate(proportion_dw = dw_flam_sample/sample_wt)
+
+paired_methods_long$Species <- factor(paired_methods_long$Species, levels=c("A. fasciculatum", "C. cordulatus", "C. megacarpus", "A. patula"))
+
+ggplot(data = paired_methods_long, aes(x = Species, y = proportion_dw*100)) +
+  labs(y = "% Dry Weight") +
+  geom_boxplot() +
+  theme_bw() +
+  theme(axis.title = element_text(face = 'bold', size = 16),
+        axis.text.x = element_text(face = 'italic', size = 14))
+```
+

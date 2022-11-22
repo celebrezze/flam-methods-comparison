@@ -1,0 +1,802 @@
+---
+title: "Manual Ignitions for Hot Plate Burns (CECO)"
+author: "Joe Celebrezze"
+date: "8/4/2022"
+output: html_document
+---
+
+# Set-up
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(here)
+library(lme4) # mixed effects models
+library(performance)
+library(cowplot)
+library(gridExtra)
+library(grid)
+library(gghighlight)
+library(ggpubr)
+here = here::here
+select = dplyr::select
+col3 = hcl.colors(10, "YlOrRd", rev = TRUE) #color scale to use for consistency 
+```
+
+Reading in dataframe
+```{r}
+paired_methods_long <- read.csv(here("processed-data", "compiled-datasets", "METHODS", "bothm_bothl_manual_ignitions_in.csv"))
+
+epi.df <- paired_methods_long %>% 
+  filter(model == "EPI" & ignition == 1) # n = 96
+
+hp.df <- paired_methods_long %>% 
+  filter(model == "HP") %>% 
+  filter(ignition == 1 | ignition == 2) # n = 112
+```
+
+# --------------------------------
+
+# CECO Across Models
+
+- Hot plate burns are manual ignitions
+- Epiradiator burns are natural ignitions
+- I must scale and center for each prior to analysis
+
+## Scaling Method 1
+Scaling and centering for only CECO, for each model
+```{r}
+epi.df.ceco <- epi.df %>% 
+  filter(spp == "CECO") %>% 
+  mutate(fh = fh - mean(fh), fd = fd - mean(fd), ttfg = ttfg - mean(ttfg), gti = gti -
+          mean(gti), tti = tti - mean(tti), gd = gd - mean(gd), pfg = pfg - mean(pfg),
+          temp_max = temp_max - mean(temp_max), dw_scaled = dw_flam_sample - mean(dw_flam_sample)) %>%  #centered
+  mutate(fh = scale(fh), fd = scale(fd), ttfg = scale(ttfg), gti = scale(gti), tti =
+           scale(tti), gd = scale(gd), pfg = scale(pfg), temp_max = scale(temp_max), dw_scaled = scale(dw_scaled)) #scaled
+hp.df.ceco <- hp.df %>% 
+  filter(spp == "CECO") %>% 
+  mutate(fh = fh - mean(fh), fd = fd - mean(fd), ttfg = ttfg - mean(ttfg), gti = gti -
+          mean(gti), tti = tti - mean(tti), gd = gd - mean(gd), pfg = pfg - mean(pfg),
+          temp_max = temp_max - mean(temp_max), dw_scaled = dw_flam_sample - mean(dw_flam_sample)) %>%  #centering
+  mutate(fh = scale(fh), fd = scale(fd), ttfg = scale(ttfg), gti = scale(gti), tti =
+           scale(tti), gd = scale(gd), pfg = scale(pfg), temp_max = scale(temp_max), dw_scaled = scale(dw_scaled)) #scaled
+df.ceco <- rbind(epi.df.ceco, hp.df.ceco)
+```
+
+## TTI
+We would expect the time to ignition to have differrent relationships for manual vs. non-manual ignitions. 
+### vs. Dry Weight
+Model:
+```{r}
+tti.dw.noint <- lmer(tti ~ dw_scaled + model + site + (1|individual), data = df.ceco)
+tti.dw.int <- lmer(tti ~ dw_scaled*model + site + (1|individual), data = df.ceco)
+# No interaction performs better
+summary(tti.dw.noint)
+```
+
+```{r}
+tti.dw.plot <- df.ceco %>%
+  ggplot(aes(x = dw_scaled, y = tti, color = model)) +
+  labs(x = "Dry Weight (g)", y = "Time to Ignition (s)", color = "Model") +
+  geom_point(size = 1, alpha = 0.6) +
+  geom_abline(slope = -0.1839, intercept = 0.01746, color = "#F5A400", cex = 0.8, alpha = 0.4) +
+  geom_abline(slope = -0.1839, intercept = 0.0174600000000008657, color = "#7D0025", cex = 0.8, alpha = 0.4) +
+  theme_bw() +
+  scale_color_manual(values = c("#F5A400", "#7D0025")) +
+  theme(axis.title = element_text(face = 'bold'),
+        legend.title = element_text(face = 'bold'),
+        #axis.title.x = element_blank(),
+        legend.position = 'right')
+tti.dw.plot
+```
+
+### vs. LFM
+Model:
+```{r}
+tti.lfm.noint <- lmer(tti ~ lfm + model + site + (1|individual), data = df.ceco)
+tti.lfm.int <- lmer(tti ~ lfm*model + site + (1|individual), data = df.ceco)
+performance(tti.lfm.int)
+# No interaction performs better
+summary(tti.lfm.noint)
+```
+
+```{r}
+tti.lfm.plot <- df.ceco %>%
+  ggplot(aes(x = lfm, y = tti, color = model)) +
+  labs(x = "Live Fuel Moisture", y = "Time to Ignition (s)", color = "Model") +
+  geom_point(size = 1, alpha = 0.6) +
+  geom_abline(slope = 0.01427, intercept = -1.115, color = "#F5A400", cex = 0.8, alpha = 0.4) +
+  geom_abline(slope = 0.01427, intercept = -1.115000000000005011, color = "#7D0025", cex = 0.8, alpha = 0.4) +
+  theme_bw() +
+  scale_color_manual(values = c("#F5A400", "#7D0025")) +
+  theme(axis.title = element_text(face = 'bold'),
+        legend.title = element_text(face = 'bold'),
+        #axis.title.x = element_blank(),
+        legend.position = 'right')
+tti.lfm.plot
+```
+
+### vs. MPa
+Model:
+```{r}
+tti.mpa.noint <- lmer(tti ~ mpa + model + site + (1|individual), data = df.ceco)
+tti.mpa.int <- lmer(tti ~ mpa*model + site + (1|individual), data = df.ceco)
+performance(tti.mpa.noint)
+# No interaction performs better
+summary(tti.mpa.noint)
+```
+
+```{r}
+tti.mpa.plot <- df.ceco %>%
+  ggplot(aes(x = mpa, y = tti, color = model)) +
+  labs(x = "Water Potential (MPa)", y = "Time to Ignition (s)", color = "Model") +
+  geom_point(size = 1, alpha = 0.6) +
+  geom_abline(slope = 0.1172, intercept = 0.5028, color = "#F5A400", cex = 0.8, alpha = 0.4) +
+  geom_abline(slope = 0.1172, intercept = 0.5028, color = "#7D0025", cex = 0.8, alpha = 0.4) +
+  theme_bw() +
+  scale_color_manual(values = c("#F5A400", "#7D0025")) +
+  theme(axis.title = element_text(face = 'bold'),
+        legend.title = element_text(face = 'bold'),
+        #axis.title.x = element_blank(),
+        legend.position = 'right')
+tti.mpa.plot
+```
+
+Hmmmm... I wonder if scaling and centering the metrics prior to splitting the dataset would change the conclusions. I think the species differences analysis may give us some insight into this. For now, I am going to try a different scaling method
+
+## Scaling Method 2
+- Scaling and centering prior to splitting by species
+```{r}
+epi.df1 <- epi.df %>%  
+  mutate(fh = fh - mean(fh), fd = fd - mean(fd), ttfg = ttfg - mean(ttfg), gti = gti -
+          mean(gti), tti = tti - mean(tti), gd = gd - mean(gd), pfg = pfg - mean(pfg),
+          temp_max = temp_max - mean(temp_max), dw_scaled = dw_flam_sample - mean(dw_flam_sample)) %>%  #centered
+  mutate(fh = scale(fh), fd = scale(fd), ttfg = scale(ttfg), gti = scale(gti), tti =
+           scale(tti), gd = scale(gd), pfg = scale(pfg), temp_max = scale(temp_max), dw_scaled = scale(dw_scaled)) #scaled
+hp.df1 <- hp.df %>% 
+  mutate(fh = fh - mean(fh), fd = fd - mean(fd), ttfg = ttfg - mean(ttfg), gti = gti -
+          mean(gti), tti = tti - mean(tti), gd = gd - mean(gd), pfg = pfg - mean(pfg),
+          temp_max = temp_max - mean(temp_max), dw_scaled = dw_flam_sample - mean(dw_flam_sample)) %>%  #centering
+  mutate(fh = scale(fh), fd = scale(fd), ttfg = scale(ttfg), gti = scale(gti), tti =
+           scale(tti), gd = scale(gd), pfg = scale(pfg), temp_max = scale(temp_max), dw_scaled = scale(dw_scaled)) #scaled
+
+hp.df.ceco1 <- hp.df1 %>% 
+  filter(spp == "CECO")
+epi.df.ceco1 <- epi.df1 %>% 
+  filter(spp == "CECO")
+
+df.ceco1 <- rbind(epi.df.ceco1, hp.df.ceco1)
+```
+
+## TTI
+### vs. Dry Weight
+Model:
+```{r}
+tti.dw.noint <- lmer(tti ~ dw_scaled + model + site + (1|individual), data = df.ceco1)
+tti.dw.int <- lmer(tti ~ dw_scaled*model + site + (1|individual), data = df.ceco1)
+performance(tti.dw.int)
+# No interaction performs better
+summary(tti.dw.noint)
+```
+
+```{r}
+tti.dw.plot2 <- df.ceco1 %>%
+  ggplot(aes(x = dw_scaled, y = tti, color = model)) +
+  labs(x = "Dry Weight (g)", y = "Time to Ignition (s)", color = "Model") +
+  geom_point(size = 1, alpha = 0.6) +
+  geom_abline(slope = -0.15851, intercept = -0.36858, color = "#F5A400", cex = 0.8, alpha = 0.8) +
+  geom_abline(slope = -0.15851, intercept = 1.42616, color = "#7D0025", cex = 0.8, alpha = 0.8) +
+  theme_bw() +
+  scale_color_manual(values = c("#F5A400", "#7D0025")) +
+  theme(axis.title = element_text(face = 'bold'),
+        legend.title = element_text(face = 'bold'),
+        #axis.title.x = element_blank(),
+        legend.position = 'right')
+tti.dw.plot2
+```
+
+### vs. LFM
+Model:
+```{r}
+tti.lfm.noint <- lmer(tti ~ lfm + model + site + (1|individual), data = df.ceco1)
+tti.lfm.int <- lmer(tti ~ lfm*model + site + (1|individual), data = df.ceco1)
+performance(tti.lfm.noint)
+# No interaction performs better
+summary(tti.lfm.noint)
+```
+
+```{r}
+tti.lfm.plot2 <- df.ceco1 %>%
+  ggplot(aes(x = lfm, y = tti, color = model)) +
+  labs(x = "Live Fuel Moisture", y = "Time to Ignition (s)", color = "Model") +
+  geom_point(size = 1, alpha = 0.6) +
+  geom_abline(slope = 0.012425, intercept = -1.350994, color = "#F5A400", cex = 0.8, alpha = 0.8) +
+  geom_abline(slope = 0.012425, intercept = 0.504808, color = "#7D0025", cex = 0.8, alpha = 0.8) +
+  theme_bw() +
+  scale_color_manual(values = c("#F5A400", "#7D0025")) +
+  theme(axis.title = element_text(face = 'bold'),
+        legend.title = element_text(face = 'bold'),
+        #axis.title.x = element_blank(),
+        legend.position = 'right')
+tti.lfm.plot2
+```
+
+### vs. MPa
+Model:
+```{r}
+tti.mpa.noint <- lmer(tti ~ mpa + model + site + (1|individual), data = df.ceco1)
+tti.mpa.int <- lmer(tti ~ mpa*model + site + (1|individual), data = df.ceco1)
+performance(tti.mpa.noint)
+# No interaction performs better
+summary(tti.mpa.noint)
+```
+
+```{r}
+tti.mpa.plot2 <- df.ceco1 %>%
+  ggplot(aes(x = mpa, y = tti, color = model)) +
+  labs(x = "Water Potential (MPa)", y = "Time to Ignition (s)", color = "Model") +
+  geom_point(size = 1, alpha = 0.6) +
+  geom_abline(slope = 0.10175, intercept = 0.05654, color = "#F5A400", cex = 0.8, alpha = 0.8) +
+  geom_abline(slope = 0.10175, intercept = 1.91234, color = "#7D0025", cex = 0.8, alpha = 0.8) +
+  theme_bw() +
+  scale_color_manual(values = c("#F5A400", "#7D0025")) +
+  theme(axis.title = element_text(face = 'bold'),
+        legend.title = element_text(face = 'bold'),
+        #axis.title.x = element_blank(),
+        legend.position = 'right')
+tti.mpa.plot2
+```
+
+## FH
+### vs. Dry Weight
+Model:
+```{r}
+fh.dw.noint <- lmer(fh ~ dw_scaled + model + site + (1|individual), data = df.ceco1)
+fh.dw.int <- lmer(fh ~ dw_scaled*model + site + (1|individual), data = df.ceco1)
+performance(fh.dw.noint)
+# No interaction performs better
+summary(fh.dw.noint)
+```
+
+```{r}
+fh.dw.plot2 <- df.ceco1 %>%
+  ggplot(aes(x = dw_scaled, y = fh, color = model)) +
+  labs(x = "Dry Weight (g)", y = "Flame Height (cm)", color = "Model") +
+  geom_point(size = 1, alpha = 0.6) +
+  geom_abline(slope = 0.4774, intercept = -0.2389, color = "#F5A400", cex = 0.8, alpha = 0.8) +
+  geom_abline(slope = 0.4774, intercept = -0.4477, color = "#7D0025", cex = 0.8, alpha = 0.8) +
+  theme_bw() +
+  scale_color_manual(values = c("#F5A400", "#7D0025")) +
+  theme(axis.title = element_text(face = 'bold'),
+        legend.title = element_text(face = 'bold'),
+        #axis.title.x = element_blank(),
+        legend.position = 'right')
+fh.dw.plot2
+```
+
+### vs. LFM
+Model:
+```{r}
+fh.lfm.noint <- lmer(fh ~ lfm + model + site + (1|individual), data = df.ceco1)
+fh.lfm.int <- lmer(fh ~ lfm*model + site + (1|individual), data = df.ceco1)
+performance(fh.lfm.int)
+# No interaction performs better
+summary(fh.lfm.noint)
+```
+
+```{r}
+fh.lfm.plot2 <- df.ceco1 %>%
+  ggplot(aes(x = lfm, y = fh, color = model)) +
+  labs(x = "Live Fuel Moisture", y = "Flame Height (cm)", color = "Model") +
+  geom_point(size = 1, alpha = 0.6) +
+  geom_abline(slope = -0.004855, intercept = 0.247181, color = "#F5A400", cex = 0.8, alpha = 0.8) +
+  geom_abline(slope = -0.004855, intercept = -0.145535, color = "#7D0025", cex = 0.8, alpha = 0.8) +
+  theme_bw() +
+  scale_color_manual(values = c("#F5A400", "#7D0025")) +
+  theme(axis.title = element_text(face = 'bold'),
+        legend.title = element_text(face = 'bold'),
+        #axis.title.x = element_blank(),
+        legend.position = 'right')
+fh.lfm.plot2
+```
+
+### vs. MPa
+Model:
+```{r}
+fh.mpa.noint <- lmer(fh ~ mpa + model + site + (1|individual), data = df.ceco1)
+fh.mpa.int <- lmer(fh ~ mpa*model + site + (1|individual), data = df.ceco1)
+performance(fh.mpa.int)
+# At odds with each other (not sig. difference, lower AIC for interactions, lower BIC for no interactions), will lean towards including interaction term I suppose
+summary(fh.mpa.int)
+```
+
+```{r}
+fh.mpa.plot2 <- df.ceco1 %>%
+  ggplot(aes(x = mpa, y = fh, color = model)) +
+  labs(x = "Water Potential (MPa)", y = "Flame Height (cm)", color = "Model") +
+  geom_point(size = 1, alpha = 0.6) +
+  geom_abline(slope = -0.21028, intercept = -1.01037, color = "#F5A400", cex = 0.8, alpha = 0.8) +
+  geom_abline(slope = 0.0236, intercept = -0.48115, color = "#7D0025", cex = 0.8, alpha = 0.8) +
+  theme_bw() +
+  scale_color_manual(values = c("#F5A400", "#7D0025")) +
+  theme(axis.title = element_text(face = 'bold'),
+        legend.title = element_text(face = 'bold'),
+        #axis.title.x = element_blank(),
+        legend.position = 'right')
+fh.mpa.plot2
+```
+
+## Max Temp.
+### vs. Dry Weight
+Model:
+```{r}
+temp_max.dw.noint <- lmer(temp_max ~ dw_scaled + model + site + (1|individual), data = df.ceco1)
+temp_max.dw.int <- lmer(temp_max ~ dw_scaled*model + site + (1|individual), data = df.ceco1)
+performance(temp_max.dw.int)
+# No interaction performs better
+summary(temp_max.dw.noint)
+```
+
+```{r}
+temp_max.dw.plot2 <- df.ceco1 %>%
+  ggplot(aes(x = dw_scaled, y = temp_max, color = model)) +
+  labs(x = "Dry Weight (g)", y = "Maximum Temperature", color = "Model") +
+  geom_point(size = 1, alpha = 0.6) +
+  geom_abline(slope = -0.01672, intercept = 0.06771, color = "#F5A400", cex = 0.8, alpha = 0.8) +
+  geom_abline(slope = -0.01672, intercept = -0.43875, color = "#7D0025", cex = 0.8, alpha = 0.8) +
+  theme_bw() +
+  scale_color_manual(values = c("#F5A400", "#7D0025")) +
+  theme(axis.title = element_text(face = 'bold'),
+        legend.title = element_text(face = 'bold'),
+        #axis.title.x = element_blank(),
+        legend.position = 'right')
+temp_max.dw.plot2
+```
+
+### vs. LFM
+Model:
+```{r}
+temp_max.lfm.noint <- lmer(temp_max ~ lfm + model + site + (1|individual), data = df.ceco1)
+temp_max.lfm.int <- lmer(temp_max ~ lfm*model + site + (1|individual), data = df.ceco1)
+performance(temp_max.lfm.noint)
+# No interaction performs better
+summary(temp_max.lfm.noint)
+```
+
+```{r}
+temp_max.lfm.plot2 <- df.ceco1 %>%
+  ggplot(aes(x = lfm, y = temp_max, color = model)) +
+  labs(x = "Live Fuel Moisture", y = "Maximum Temperature", color = "Model") +
+  geom_point(size = 1, alpha = 0.6) +
+  geom_abline(slope = 0.006844, intercept = -0.450941, color = "#F5A400", cex = 0.8, alpha = 0.8) +
+  geom_abline(slope = 0.006844, intercept = -0.950961, color = "#7D0025", cex = 0.8, alpha = 0.8) +
+  theme_bw() +
+  scale_color_manual(values = c("#F5A400", "#7D0025")) +
+  theme(axis.title = element_text(face = 'bold'),
+        legend.title = element_text(face = 'bold'),
+        #axis.title.x = element_blank(),
+        legend.position = 'right')
+temp_max.lfm.plot2
+```
+
+### vs. MPa
+Model:
+```{r}
+temp_max.mpa.noint <- lmer(temp_max ~ mpa + model + site + (1|individual), data = df.ceco1)
+temp_max.mpa.int <- lmer(temp_max ~ mpa*model + site + (1|individual), data = df.ceco1)
+performance(temp_max.mpa.noint)
+# Interactions performs better
+summary(temp_max.mpa.int)
+```
+
+```{r}
+temp_max.mpa.plot2 <- df.ceco1 %>%
+  ggplot(aes(x = mpa, y = temp_max, color = model)) +
+  labs(x = "Water Potential (MPa)", y = "Maximum Temperature", color = "Model") +
+  geom_point(size = 1, alpha = 0.6) +
+  geom_abline(slope = -0.09389, intercept = -0.28836, color = "#F5A400", cex = 0.8, alpha = 0.8) +
+  geom_abline(slope = 0.14742, intercept = 0.16285, color = "#7D0025", cex = 0.8, alpha = 0.8) +
+  theme_bw() +
+  scale_color_manual(values = c("#F5A400", "#7D0025")) +
+  theme(axis.title = element_text(face = 'bold'),
+        legend.title = element_text(face = 'bold'),
+        #axis.title.x = element_blank(),
+        legend.position = 'right')
+temp_max.mpa.plot2
+```
+
+## FD
+### vs. Dry Weight
+Model:
+```{r}
+fd.dw.noint <- lmer(fd ~ dw_scaled + model + site + (1|individual), data = df.ceco1)
+fd.dw.int <- lmer(fd ~ dw_scaled*model + site + (1|individual), data = df.ceco1)
+performance(fd.dw.noint)
+# No interaction performs better
+summary(fd.dw.noint)
+```
+
+```{r}
+fd.dw.plot2 <- df.ceco1 %>%
+  ggplot(aes(x = dw_scaled, y = fd, color = model)) +
+  labs(x = "Dry Weight (g)", y = "Flame Duration (s)", color = "Model") +
+  geom_point(size = 1, alpha = 0.6) +
+  geom_abline(slope = 0.2781, intercept = 0.1454, color = "#F5A400", cex = 0.8, alpha = 0.8) +
+  geom_abline(slope = 0.2781, intercept = -0.639, color = "#7D0025", cex = 0.8, alpha = 0.8) +
+  theme_bw() +
+  scale_color_manual(values = c("#F5A400", "#7D0025")) +
+  theme(axis.title = element_text(face = 'bold'),
+        legend.title = element_text(face = 'bold'),
+        #axis.title.x = element_blank(),
+        legend.position = 'right')
+fd.dw.plot2
+```
+
+### vs. LFM
+Model:
+```{r}
+fd.lfm.noint <- lmer(fd ~ lfm + model + site + (1|individual), data = df.ceco1)
+fd.lfm.int <- lmer(fd ~ lfm*model + site + (1|individual), data = df.ceco1)
+performance(fd.lfm.int)
+# No interaction performs better
+summary(fd.lfm.noint)
+```
+
+```{r}
+fd.lfm.plot2 <- df.ceco1 %>%
+  ggplot(aes(x = lfm, y = fd, color = model)) +
+  labs(x = "Live Fuel Moisture", y = "Flame Duration (s)", color = "Model") +
+  geom_point(size = 1, alpha = 0.6) +
+  geom_abline(slope = -0.004964, intercept = 0.594532, color = "#F5A400", cex = 0.8, alpha = 0.8) +
+  geom_abline(slope = -0.004964, intercept = -0.297006, color = "#7D0025", cex = 0.8, alpha = 0.8) +
+  theme_bw() +
+  scale_color_manual(values = c("#F5A400", "#7D0025")) +
+  theme(axis.title = element_text(face = 'bold'),
+        legend.title = element_text(face = 'bold'),
+        #axis.title.x = element_blank(),
+        legend.position = 'right')
+fd.lfm.plot2
+```
+
+### vs. MPa
+Model:
+```{r}
+fd.mpa.noint <- lmer(fd ~ mpa + model + site + (1|individual), data = df.ceco1)
+fd.mpa.int <- lmer(fd ~ mpa*model + site + (1|individual), data = df.ceco1)
+performance(fd.mpa.int)
+# At odds with each other (not sig. difference, lower AIC for interactions, lower BIC for no interactions), will lean towards including interaction term I suppose
+summary(fd.mpa.int)
+```
+
+```{r}
+fd.mpa.plot2 <- df.ceco1 %>%
+  ggplot(aes(x = mpa, y = fd, color = model)) +
+  labs(x = "Water Potential (MPa)", y = "Flame Duration (s)", color = "Model") +
+  geom_point(size = 1, alpha = 0.6) +
+  geom_abline(slope = -0.17857, intercept = -0.54351, color = "#F5A400", cex = 0.8, alpha = 0.8) +
+  geom_abline(slope = -0.00656, intercept = -0.75701, color = "#7D0025", cex = 0.8, alpha = 0.8) +
+  theme_bw() +
+  scale_color_manual(values = c("#F5A400", "#7D0025")) +
+  theme(axis.title = element_text(face = 'bold'),
+        legend.title = element_text(face = 'bold'),
+        #axis.title.x = element_blank(),
+        legend.position = 'right')
+fd.mpa.plot2
+```
+## Arranged
+```{r}
+ggarrange(tti.dw.plot2, tti.lfm.plot2, tti.mpa.plot2, ncol = 1, common.legend = T)
+
+ggarrange(fh.dw.plot2, fh.lfm.plot2, fh.mpa.plot2, ncol = 1, common.legend = T)
+
+ggarrange(temp_max.dw.plot2, temp_max.lfm.plot2, temp_max.mpa.plot2, ncol = 1, common.legend = T)
+
+ggarrange(fd.dw.plot2, fd.lfm.plot2, fd.mpa.plot2, ncol = 1, common.legend = T)
+```
+
+# --------------------------------
+
+# Species Differences: HP
+
+## FH
+### Dry Weight
+```{r}
+fhp1 <- ggplot(aes(x = dw_flam_sample, y = fh, color = spp), data = hp.df) +
+  labs(x = "Dry Weight (g)", y = "Flame Height (cm)", color = "Species") +
+  geom_point(size = 1, alpha = 0.7) +
+  geom_smooth(method = "lm", se = FALSE) +
+  theme_bw() +
+  facet_wrap(~model) +
+  scale_color_manual(values=c("#F5A400","#7D0025","#1165C1", "#EB5500")) +
+  theme(axis.title = element_text(face = 'bold'),
+        legend.title = element_text(face = 'bold'),
+        #axis.title.x = element_blank(),
+        legend.position = 'none')
+fhp1
+```
+
+### LFM
+```{r}
+fhp2 <- ggplot(aes(x = lfm, y = fh, color = spp), data = hp.df) +
+  labs(x = "Live Fuel Moisture (%)", y = "Flame Height (cm)", color = "Species") +
+  geom_point(size = 1, alpha = 0.7) +
+  geom_smooth(method = "lm", se = FALSE) +
+  theme_bw() +
+  facet_wrap(~model) +
+  scale_color_manual(values=c("#F5A400","#7D0025","#1165C1", "#EB5500")) +
+  theme(axis.title = element_text(face = 'bold'),
+        legend.title = element_text(face = 'bold'),
+        #axis.title.x = element_blank(),
+        legend.position = 'none')
+fhp2
+```
+
+### Water Potential
+```{r}
+fhp3 <- ggplot(aes(x = mpa, y = fh, color = spp), data = hp.df) +
+  labs(x = "Water Potential (MPa)", y = "Flame Height (cm)", color = "Species") +
+  geom_point(size = 1, alpha = 0.7) +
+  geom_smooth(method = "lm", se = FALSE) +
+  theme_bw() +
+  facet_wrap(~model) +
+  scale_color_manual(values=c("#F5A400","#7D0025","#1165C1", "#EB5500")) +
+  theme(axis.title = element_text(face = 'bold'),
+        legend.title = element_text(face = 'bold'),
+        #axis.title.x = element_blank(),
+        legend.position = 'none')
+fhp3
+```
+
+## FD
+### Dry Weight
+```{r}
+fdp1 <- ggplot(aes(x = dw_flam_sample, y = fd, color = spp), data = hp.df) +
+  labs(x = "Dry Weight (g)", y = "Flame Duration (s)", color = "Species") +
+  geom_point(size = 1, alpha = 0.7) +
+  geom_smooth(method = "lm", se = FALSE) +
+  theme_bw() +
+  facet_wrap(~model) +
+  scale_color_manual(values=c("#F5A400","#7D0025","#1165C1", "#EB5500")) +
+  theme(axis.title = element_text(face = 'bold'),
+        legend.title = element_text(face = 'bold'),
+        #axis.title.x = element_blank(),
+        legend.position = 'none')
+fdp1
+```
+
+### LFM
+```{r}
+fdp2 <- ggplot(aes(x = lfm, y = fd, color = spp), data = hp.df) +
+  labs(x = "Live Fuel Moisture (%)", y = "Flame Duration (s)", color = "Species") +
+  geom_point(size = 1, alpha = 0.7) +
+  geom_smooth(method = "lm", se = FALSE) +
+  theme_bw() +
+  facet_wrap(~model) +
+  scale_color_manual(values=c("#F5A400","#7D0025","#1165C1", "#EB5500")) +
+  theme(axis.title = element_text(face = 'bold'),
+        legend.title = element_text(face = 'bold'),
+        #axis.title.x = element_blank(),
+        legend.position = 'none')
+fdp2
+```
+
+### Water Potential
+```{r}
+fdp3 <- ggplot(aes(x = mpa, y = fd, color = spp), data = hp.df) +
+  labs(x = "Water Potential (MPa)", y = "Flame Duration (s)", color = "Species") +
+  geom_point(size = 1, alpha = 0.7) +
+  geom_smooth(method = "lm", se = FALSE) +
+  theme_bw() +
+  facet_wrap(~model) +
+  scale_color_manual(values=c("#F5A400","#7D0025","#1165C1", "#EB5500")) +
+  theme(axis.title = element_text(face = 'bold'),
+        legend.title = element_text(face = 'bold'),
+        #axis.title.x = element_blank(),
+        legend.position = 'none')
+fdp3
+```
+
+## Max. Temp.
+### Dry Weight
+```{r}
+mtp1 <- ggplot(aes(x = dw_flam_sample, y = temp_max, color = spp), data = hp.df) +
+  labs(x = "Dry Weight (g)", y = "Maximum Temp.", color = "Species") +
+  geom_point(size = 1, alpha = 0.7) +
+  geom_smooth(method = "lm", se = FALSE) +
+  theme_bw() +
+  facet_wrap(~model) +
+  scale_color_manual(values=c("#F5A400","#7D0025","#1165C1", "#EB5500")) +
+  theme(axis.title = element_text(face = 'bold'),
+        legend.title = element_text(face = 'bold'),
+        #axis.title.x = element_blank(),
+        legend.position = 'none')
+mtp1
+```
+
+### LFM
+```{r}
+mtp2 <- ggplot(aes(x = lfm, y = temp_max, color = spp), data = hp.df) +
+  labs(x = "Live Fuel Moisture (%)", y = "Maximum Temp.", color = "Species") +
+  geom_point(size = 1, alpha = 0.7) +
+  geom_smooth(method = "lm", se = FALSE) +
+  theme_bw() +
+  facet_wrap(~model) +
+  scale_color_manual(values=c("#F5A400","#7D0025","#1165C1", "#EB5500")) +
+  theme(axis.title = element_text(face = 'bold'),
+        legend.title = element_text(face = 'bold'),
+        #axis.title.x = element_blank(),
+        legend.position = 'none')
+mtp2
+```
+
+### Water Potential
+```{r}
+mtp3 <- ggplot(aes(x = mpa, y = temp_max, color = spp), data = hp.df) +
+  labs(x = "Water Potential (MPa)", y = "Maximum Temp.", color = "Species") +
+  geom_point(size = 1, alpha = 0.7) +
+  geom_smooth(method = "lm", se = FALSE) +
+  theme_bw() +
+  facet_wrap(~model) +
+  scale_color_manual(values=c("#F5A400","#7D0025","#1165C1", "#EB5500")) +
+  theme(axis.title = element_text(face = 'bold'),
+        legend.title = element_text(face = 'bold'),
+        #axis.title.x = element_blank(),
+        legend.position = 'none')
+```
+
+# Species Differences: EPI
+## FH
+### Dry Weight
+```{r}
+fhp4 <- ggplot(aes(x = dw_flam_sample, y = fh, color = spp), data = epi.df) +
+  labs(x = "Dry Weight (g)", y = "Flame Height (cm)", color = "Species") +
+  geom_point(size = 1, alpha = 0.7) +
+  geom_smooth(method = "lm", se = FALSE) +
+  theme_bw() +
+  facet_wrap(~model) +
+  scale_color_manual(values=c("#F5A400","#7D0025","#1165C1", "#EB5500")) +
+  theme(axis.title = element_text(face = 'bold'),
+        legend.title = element_text(face = 'bold'),
+        #axis.title.x = element_blank(),
+        legend.position = 'none')
+fhp4
+```
+
+### LFM
+```{r}
+fhp5 <- ggplot(aes(x = lfm, y = fh, color = spp), data = epi.df) +
+  labs(x = "Live Fuel Moisture (%)", y = "Flame Height (cm)", color = "Species") +
+  geom_point(size = 1, alpha = 0.7) +
+  geom_smooth(method = "lm", se = FALSE) +
+  theme_bw() +
+  facet_wrap(~model) +
+  scale_color_manual(values=c("#F5A400","#7D0025","#1165C1", "#EB5500")) +
+  theme(axis.title = element_text(face = 'bold'),
+        legend.title = element_text(face = 'bold'),
+        #axis.title.x = element_blank(),
+        legend.position = 'none')
+fhp5
+```
+
+### Water Potential
+```{r}
+fhp6 <- ggplot(aes(x = mpa, y = fh, color = spp), data = epi.df) +
+  labs(x = "Water Potential (MPa)", y = "Flame Height (cm)", color = "Species") +
+  geom_point(size = 1, alpha = 0.7) +
+  geom_smooth(method = "lm", se = FALSE) +
+  theme_bw() +
+  facet_wrap(~model) +
+  scale_color_manual(values=c("#F5A400","#7D0025","#1165C1", "#EB5500")) +
+  theme(axis.title = element_text(face = 'bold'),
+        legend.title = element_text(face = 'bold'),
+        #axis.title.x = element_blank(),
+        legend.position = 'none')
+fhp6
+```
+
+## FD
+### Dry Weight
+```{r}
+fdp4 <- ggplot(aes(x = dw_flam_sample, y = fd, color = spp), data = epi.df) +
+  labs(x = "Dry Weight (g)", y = "Flame Duration (s)", color = "Species") +
+  geom_point(size = 1, alpha = 0.7) +
+  geom_smooth(method = "lm", se = FALSE) +
+  theme_bw() +
+  facet_wrap(~model) +
+  scale_color_manual(values=c("#F5A400","#7D0025","#1165C1", "#EB5500")) +
+  theme(axis.title = element_text(face = 'bold'),
+        legend.title = element_text(face = 'bold'),
+        #axis.title.x = element_blank(),
+        legend.position = 'none')
+fdp4
+```
+
+### LFM
+```{r}
+fdp5<-ggplot(aes(x = lfm, y = fd, color = spp), data = epi.df) +
+  labs(x = "Live Fuel Moisture (%)", y = "Flame Duration (s)", color = "Species") +
+  geom_point(size = 1, alpha = 0.7) +
+  geom_smooth(method = "lm", se = FALSE) +
+  theme_bw() +
+  facet_wrap(~model) +
+  scale_color_manual(values=c("#F5A400","#7D0025","#1165C1", "#EB5500")) +
+  theme(axis.title = element_text(face = 'bold'),
+        legend.title = element_text(face = 'bold'),
+        #axis.title.x = element_blank(),
+        legend.position = 'none')
+fdp5
+```
+
+### Water Potential
+```{r}
+fdp6 <- ggplot(aes(x = mpa, y = fd, color = spp), data = epi.df) +
+  labs(x = "Water Potential (MPa)", y = "Flame Duration (s)", color = "Species") +
+  geom_point(size = 1, alpha = 0.7) +
+  geom_smooth(method = "lm", se = FALSE) +
+  theme_bw() +
+  facet_wrap(~model) +
+  scale_color_manual(values=c("#F5A400","#7D0025","#1165C1", "#EB5500")) +
+  theme(axis.title = element_text(face = 'bold'),
+        legend.title = element_text(face = 'bold'),
+        #axis.title.x = element_blank(),
+        legend.position = 'none')
+fdp6
+```
+
+## Max. Temp.
+### Dry Weight
+```{r}
+mtp4<-ggplot(aes(x = dw_flam_sample, y = temp_max, color = spp), data = epi.df) +
+  labs(x = "Dry Weight (g)", y = "Maximum Temp.", color = "Species") +
+  geom_point(size = 1, alpha = 0.7) +
+  geom_smooth(method = "lm", se = FALSE) +
+  theme_bw() +
+  facet_wrap(~model) +
+  scale_color_manual(values=c("#F5A400","#7D0025","#1165C1", "#EB5500")) +
+  theme(axis.title = element_text(face = 'bold'),
+        legend.title = element_text(face = 'bold'),
+        #axis.title.x = element_blank(),
+        legend.position = 'none')
+mtp4
+```
+
+### LFM
+```{r}
+mtp5 <- ggplot(aes(x = lfm, y = temp_max, color = spp), data = epi.df) +
+  labs(x = "Live Fuel Moisture (%)", y = "Maximum Temp.", color = "Species") +
+  geom_point(size = 1, alpha = 0.7) +
+  geom_smooth(method = "lm", se = FALSE) +
+  theme_bw() +
+  facet_wrap(~model) +
+  scale_color_manual(values=c("#F5A400","#7D0025","#1165C1", "#EB5500")) +
+  theme(axis.title = element_text(face = 'bold'),
+        legend.title = element_text(face = 'bold'),
+        #axis.title.x = element_blank(),
+        legend.position = 'none')
+mtp5
+```
+
+### Water Potential
+```{r}
+mtp6 <- ggplot(aes(x = mpa, y = temp_max, color = spp), data = epi.df) +
+  labs(x = "Water Potential (MPa)", y = "Maximum Temp.", color = "Species") +
+  geom_point(size = 1, alpha = 0.7) +
+  geom_smooth(method = "lm", se = FALSE) +
+  theme_bw() +
+  facet_wrap(~model) +
+  scale_color_manual(values=c("#F5A400","#7D0025","#1165C1", "#EB5500")) +
+  theme(axis.title = element_text(face = 'bold'),
+        legend.title = element_text(face = 'bold'),
+        #axis.title.x = element_blank(),
+        legend.position = 'none')
+mtp6
+```
+
+
+# Arranging Plots
+```{r}
+ggarrange(fhp1, fhp4, fhp2, fhp5, fhp3, fhp6, common.legend = T, ncol =2, nrow = 3)
+
+ggarrange(fdp1, fdp4, fdp2, fdp5, fdp3, fdp6, common.legend = T, ncol =2, nrow = 3)
+
+ggarrange(mtp1, mtp4, mtp2, mtp5, mtp3, mtp6, common.legend = T, ncol =2, nrow = 3)
+```

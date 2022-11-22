@@ -1,0 +1,2667 @@
+---
+title: "Flam. metrics vs. water content compared across two methods"
+author: "Joe Celebrezze"
+date: "1/12/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE)
+```
+
+# Loading in necessary packages
+```{r, include = FALSE}
+library(tidyverse)
+select = dplyr::select
+library(here)
+here = here::here
+library(ggpubr) # To arrange multiple plots with ggarrange
+library(gtsummary) # For summary tables
+library(gt) # For summary tables
+library(remef) # To remove partial effects for visualization
+library(lme4)
+library(sjPlot)
+library(gridExtra)
+library(grid)
+#Add in packages as necessary so no redundant packages
+```
+
+# Loading in datasets
+```{r, include = FALSE}
+main_df <- read_csv(here("processed-data/compiled-datasets/METHODS/bothmethods_bothlocations_long.csv"))
+wide_df <- read_csv(here("processed-data/compiled-datasets/METHODS/bothmethods_bothlocations_wide.csv"))
+```
+
+# Taking out NA values
+For the two individuals we are taking out -- These have NAs as tti values and keeping these in screws up the data analysis, and we have no way of imputing the data with any sort of confidence
+For the ignition = 0 values, we are only interested in instances when the sample ignited for the following analyses
+```{r}
+main_df <- main_df %>% 
+  filter(individual_round != "2020_September_ADFA_1.2_1") %>% 
+  filter(individual_round != "2020_September_ADFA_2.6_9") %>% 
+  filter(ignition == 1)
+
+wide_df <- wide_df %>% 
+  filter(individual_round != "2020_September_ADFA_1.2_1") %>% 
+  filter(individual_round != "2020_September_ADFA_2.6_9") %>% 
+  filter(ignition_epi == 1)
+```
+
+# Scaling and Centering
+
+Below, I scaled and centered the flam. metrics according to each model. Without separating by model, it scales/centers by the results (i.e. by standard deviations, means) of both models together in one pool which does not make sense when comparing the two models separately.
+
+```{r}
+epi_df <- main_df %>% 
+  filter(model == "EPI")
+hp_df <- main_df %>% 
+  filter(model == "HP")
+
+
+epi_df1 <- epi_df %>% 
+  mutate(fh = fh - mean(fh), fd = fd - mean(fd), ttfg = ttfg - mean(ttfg), gti = gti -
+          mean(gti), tti = tti - mean(tti), gd = gd - mean(gd), pfg = pfg - mean(pfg),
+          temp_max = temp_max - mean(temp_max), sample_wt = sample_wt - mean(sample_wt),
+         dw_flam_sample = dw_flam_sample - mean(dw_flam_sample)) %>%  #centering
+  mutate(fh = scale(fh), fd = scale(fd), ttfg = scale(ttfg), gti = scale(gti), tti =
+           scale(tti), gd = scale(gd), pfg = scale(pfg), temp_max = scale(temp_max),
+           sample_wt = scale(sample_wt), dw_flam_sample = scale(dw_flam_sample)) #scaled
+
+hp_df1 <- hp_df %>% 
+  mutate(fh = fh - mean(fh), fd = fd - mean(fd), ttfg = ttfg - mean(ttfg), gti = gti -
+          mean(gti), tti = tti - mean(tti), gd = gd - mean(gd), pfg = pfg - mean(pfg),
+          temp_max = temp_max - mean(temp_max), sample_wt = sample_wt - mean(sample_wt),
+         dw_flam_sample = dw_flam_sample - mean(dw_flam_sample)) %>%  #centering
+  mutate(fh = scale(fh), fd = scale(fd), ttfg = scale(ttfg), gti = scale(gti), tti =
+           scale(tti), gd = scale(gd), pfg = scale(pfg), temp_max = scale(temp_max),
+           sample_wt = scale(sample_wt), dw_flam_sample = scale(dw_flam_sample)) #scaled
+```
+
+Stitching epi_df1 and hp_df1 together:
+```{r}
+both_df1 <- bind_rows(epi_df1, hp_df1)
+```
+
+# ---------------------------------
+# Water Potential vs Flam. Metrics
+
+## Flame Height (not scaled and centered)
+```{r}
+ggplot(data = main_df, aes(x = mpa, y = fh, color = model)) +
+  geom_point() +
+  geom_smooth(se = FALSE, method = lm) +
+  labs(y ="Flame Height", x = "Water Potential (MPa)", color = "Model") +
+  theme_bw() +
+  scale_color_manual(values = c("grey70", "black"))
+```
+
+## Flame Height (scaled and centered)
+```{r}
+fh1 <- ggplot(data = both_df1, aes(x = mpa, y = fh, color = model)) +
+  geom_point() +
+  geom_smooth(se = FALSE, method = lm) +
+  labs(y ="Flame Height (scaled, centered)", x = "Water Potential (MPa)", color = "Model") +
+  theme_bw()+
+  scale_color_manual(values = c("grey70", "black"))
+fh1
+```
+
+## Flame Duration
+```{r}
+ggplot(data = main_df, aes(x = mpa, y = fd, color = model)) +
+  geom_point() +
+  geom_smooth(se = FALSE, method = lm) +
+  labs(y ="Flame Duration (s)", x = "Water Potential (MPa)", color = "Model", title = "Not Scaled, Centered") +
+  theme_bw()+
+  scale_color_manual(values = c("grey70", "black"))
+
+fd1 <- ggplot(data = both_df1, aes(x = mpa, y = fd, color = model)) +
+  geom_point() +
+  geom_smooth(se = FALSE, method = lm) +
+  labs(y ="Flame Duration (scaled, centered)", x = "Water Potential (MPa)", color = "Model") +
+  theme_bw()+
+  scale_color_manual(values = c("grey70", "black"))
+fd1
+```
+
+## Time to Ignition
+```{r}
+ggplot(data = main_df, aes(x = mpa, y = tti, color = model)) +
+  geom_point() +
+  geom_smooth(se = FALSE, method = lm) +
+  labs(y ="Time to Ignition (s)", x = "Water Potential (MPa)", color = "Model", title = "Not Scaled, Centered") +
+  theme_bw()+
+  scale_color_manual(values = c("grey70", "black"))
+
+tti1 <- ggplot(data = both_df1, aes(x = mpa, y = tti, color = model)) +
+  geom_point() +
+  geom_smooth(se = FALSE, method = lm) +
+  labs(y ="Time to Ignition (scaled, centered)", x = "Water Potential (MPa)", color = "Model") +
+  theme_bw()+
+  scale_color_manual(values = c("grey70", "black"))
+tti1
+```
+
+## Glow Duration
+```{r}
+ggplot(data = main_df, aes(x = mpa, y = gd, color = model)) +
+  geom_point() +
+  geom_smooth(se = FALSE, method = lm) +
+  labs(y ="Glow Duration (s)", x = "Water Potential (MPa)", color = "Model", title = "Not Scaled, Centered") +
+  theme_bw()+
+  scale_color_manual(values = c("grey70", "black"))
+
+gd1 <- ggplot(data = both_df1, aes(x = mpa, y = gd, color = model)) +
+  geom_point() +
+  geom_smooth(se = FALSE, method = lm) +
+  labs(y ="Glow Duration (scaled, centered)", x = "Water Potential (MPa)", color = "Model") +
+  theme_bw()+
+  scale_color_manual(values = c("grey70", "black"))
+gd1
+```
+
+## Time to First Glow
+```{r}
+ggplot(data = main_df, aes(x = mpa, y = ttfg, color = model)) +
+  geom_point() +
+  geom_smooth(se = FALSE, method = lm) +
+  labs(y ="Time to First Glow (s)", x = "Water Potential (MPa)", color = "Model", title = "Not Scaled, Centered") +
+  theme_bw()+
+  scale_color_manual(values = c("grey70", "black"))
+
+ttfg1 <- ggplot(data = both_df1, aes(x = mpa, y = ttfg, color = model)) +
+  geom_point() +
+  geom_smooth(se = FALSE, method = lm) +
+  labs(y ="Time to First Glow (scaled, centered)", x = "Water Potential (MPa)", color = "Model") +
+  theme_bw()+
+  scale_color_manual(values = c("grey70", "black"))
+ttfg1
+```
+
+## Post-Flame Glow
+```{r}
+ggplot(data = main_df, aes(x = mpa, y = pfg, color = model)) +
+  geom_point() +
+  geom_smooth(se = FALSE, method = lm) +
+  labs(y ="Post-Flame Glow (s)", x = "Water Potential (MPa)", color = "Model", title = "Not Scaled, Centered") +
+  theme_bw()+
+  scale_color_manual(values = c("grey70", "black"))
+
+pfg1 <- ggplot(data = both_df1, aes(x = mpa, y = pfg, color = model)) +
+  geom_point() +
+  geom_smooth(se = FALSE, method = lm) +
+  labs(y ="Post-Flame Glow (scaled, centered)", x = "Water Potential (MPa)", color = "Model") +
+  theme_bw()+
+  scale_color_manual(values = c("grey70", "black"))
+pfg1
+```
+
+## Max Temp.
+```{r}
+ggplot(data = main_df, aes(x = mpa, y = temp_max, color = model)) +
+  geom_point() +
+  geom_smooth(se = FALSE, method = lm) +
+  labs(y ="Max. Temp.", x = "Water Potential (MPa)", color = "Model", title = "Not Scaled, Centered") +
+  theme_bw()+
+  scale_color_manual(values = c("grey70", "black"))
+
+temp_max1 <- ggplot(data = both_df1, aes(x = mpa, y = temp_max, color = model)) +
+  geom_point() +
+  geom_smooth(se = FALSE, method = lm) +
+  labs(y ="Max. Temp. (scaled, centered)", x = "Water Potential (MPa)", color = "Model") +
+  theme_bw()+
+  scale_color_manual(values = c("grey70", "black"))
+temp_max1
+```
+
+## All plots together
+```{r}
+ggarrange(tti1, fd1, gd1, fh1, ttfg1, temp_max1, pfg1, ncol = 3, nrow = 3, common.legend = TRUE)
+
+#ggsave("mpa.vs.metrics.jpg", height = 8, width = 10)
+```
+
+# LFM vs Flam. Metrics
+
+## Flame Height
+```{r}
+ggplot(data = main_df, aes(y = fh, x = lfm_outliers_out, color = model)) +
+  geom_point() +
+  geom_smooth(se = FALSE, method = lm) +
+  labs(y ="Flame Height", x = "Live Fuel Moisture", color = "Model") +
+  theme_bw() +
+  scale_color_manual(values = c("grey70", "black"))
+
+fh2 <- ggplot(data = both_df1, aes(y = fh, x = lfm_outliers_out, color = model)) +
+  geom_point() +
+  geom_smooth(se = FALSE, method = lm) +
+  labs(y = "Flame Height (scaled, centered)", x = "Live Fuel Moisture", color = "Model") +
+  theme_bw()+
+  scale_color_manual(values = c("grey70", "black"))
+fh2
+```
+
+## Flame Duration
+```{r}
+ggplot(data = main_df, aes(y = fd, x = lfm_outliers_out, color = model)) +
+  geom_point() +
+  geom_smooth(se = FALSE, method = lm) +
+  labs(y ="Flame Duration (s)", x = "Live Fuel Moisture", color = "Model", title = "Not Scaled, Centered") +
+  theme_bw()+
+  scale_color_manual(values = c("grey70", "black"))
+
+fd2 <- ggplot(data = both_df1, aes(y = fd, x = lfm_outliers_out, color = model)) +
+  geom_point() +
+  geom_smooth(se = FALSE, method = lm) +
+  labs(y ="Flame Duration (scaled, centered)", x = "Live Fuel Moisture", color = "Model") +
+  theme_bw()+
+  scale_color_manual(values = c("grey70", "black"))
+fd2
+```
+
+## Time to Ignition
+```{r}
+ggplot(data = main_df, aes(y = tti, x = lfm_outliers_out, color = model)) +
+  geom_point() +
+  geom_smooth(se = FALSE, method = lm) +
+  labs(y ="Time to Ignition (s)", x = "Live Fuel Moisture", color = "Model", title = "Not Scaled, Centered") +
+  theme_bw()+
+  scale_color_manual(values = c("grey70", "black"))
+
+tti2 <- ggplot(data = both_df1, aes(y = tti, x = lfm_outliers_out, color = model)) +
+  geom_point() +
+  geom_smooth(se = FALSE, method = lm) +
+  labs(y ="Time to Ignition (scaled, centered)", x = "Live Fuel Moisture", color = "Model") +
+  theme_bw()+
+  scale_color_manual(values = c("grey70", "black"))
+tti2
+```
+
+## Glow Duration
+```{r}
+ggplot(data = main_df, aes(y = gd, x = lfm_outliers_out, color = model)) +
+  geom_point() +
+  geom_smooth(se = FALSE, method = lm) +
+  labs(y ="Glow Duration (s)", x = "Live Fuel Moisture", color = "Model", title = "Not Scaled, Centered") +
+  theme_bw()+
+  scale_color_manual(values = c("grey70", "black"))
+
+gd2 <- ggplot(data = both_df1, aes(y = gd, x = lfm_outliers_out, color = model)) +
+  geom_point() +
+  geom_smooth(se = FALSE, method = lm) +
+  labs(y ="Glow Duration (scaled, centered)", x = "Live Fuel Moisture", color = "Model") +
+  theme_bw()+
+  scale_color_manual(values = c("grey70", "black"))
+gd2
+```
+
+## Time to First Glow
+```{r}
+ggplot(data = main_df, aes(y = ttfg, x = lfm_outliers_out, color = model)) +
+  geom_point() +
+  geom_smooth(se = FALSE, method = lm) +
+  labs(y ="Time to First Glow (s)", x = "Live Fuel Moisture", color = "Model", title = "Not Scaled, Centered") +
+  theme_bw()+
+  scale_color_manual(values = c("grey70", "black"))
+
+ttfg2 <- ggplot(data = both_df1, aes(y = ttfg, x = lfm_outliers_out, color = model)) +
+  geom_point() +
+  geom_smooth(se = FALSE, method = lm) +
+  labs(y ="Time to First Glow (scaled, centered)", x = "Live Fuel Moisture", color = "Model") +
+  theme_bw()+
+  scale_color_manual(values = c("grey70", "black"))
+ttfg2
+```
+
+## Post-Flame Glow
+```{r}
+ggplot(data = main_df, aes(y = pfg, x = lfm_outliers_out, color = model)) +
+  geom_point() +
+  geom_smooth(se = FALSE, method = lm) +
+  labs(y ="Post-Flame Glow (s)", x = "Live Fuel Moisture", color = "Model", title = "Not Scaled, Centered") +
+  theme_bw()+
+  scale_color_manual(values = c("grey70", "black"))
+
+pfg2 <- ggplot(data = both_df1, aes(y = pfg, x = lfm_outliers_out, color = model)) +
+  geom_point() +
+  geom_smooth(se = FALSE, method = lm) +
+  labs(y ="Post-Flame Glow (scaled, centered)", x = "Live Fuel Moisture", color = "Model") +
+  theme_bw()+
+  scale_color_manual(values = c("grey70", "black"))
+pfg2
+```
+
+## Max Temp.
+```{r}
+ggplot(data = main_df, aes(y = temp_max, x = lfm_outliers_out, color = model)) +
+  geom_point() +
+  geom_smooth(se = FALSE, method = lm) +
+  labs(y ="Max. Temp.", x = "Water Potential (MPa)", color = "Model", title = "Not Scaled, Centered") +
+  theme_bw()+
+  scale_color_manual(values = c("grey70", "black"))
+
+temp_max2 <- ggplot(data = both_df1, aes(y = temp_max, x = lfm_outliers_out, color = model)) +
+  geom_point() +
+  geom_smooth(se = FALSE, method = lm) +
+  labs(y ="Max. Temp. (scaled, centered)", x = "Live Fuel Moisture", color = "Model") +
+  theme_bw()+
+  scale_color_manual(values = c("grey70", "black"))
+temp_max2
+```
+
+## All plots together
+```{r}
+ggarrange(tti2, fd2, gd2, fh2, ttfg2, temp_max2, pfg2, ncol = 3, nrow = 3, common.legend = TRUE)
+
+#ggsave("lfm.vs.metrics.jpg", height = 8, width = 10)
+```
+
+# Time to Ignition vs. Water Status (more in-depth)
+
+```{r}
+ggplot(both_df1, aes(x = mpa, y = tti, color = spp)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE) +
+  labs(x = "Water Potential (-MPa)", y = "Time to Ignition (scaled, centered)", color = "Species ID") +
+  facet_wrap(~model) +
+  theme_bw() +
+  scale_color_manual(values = c("grey90", "grey70", "grey45", "black"))
+```
+
+```{r}
+ggplot(both_df1, aes(x = mpa, y = tti, color = model)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE) +
+  labs(x = "Water Potential (-MPa)", y = "Time to Ignition (scaled, centered)", color = "Model") +
+  facet_wrap(~spp) +
+  theme_bw() +
+  scale_color_manual(values = c("grey70", "black"))
+```
+
+
+# Pre- and Post- TLP Comparisons
+
+## Data Wrangling
+
+First, adding TLPs to the dataframe we are using and taking out species we don't care about:
+```{r}
+main_df$tlp <- rep(NaN, nrow(main_df))
+
+for(i in 1:nrow(main_df)){
+  if(main_df$spp[i] == "ADFA") {
+  main_df$tlp[i] <- 3.213685
+}
+else if(main_df$spp[i] == "ARPA") {
+  main_df$tlp[i] <- 2.231741
+}
+else if(main_df$spp[i] == "CECO") {
+  main_df$tlp[i] <- 2.714490
+}
+else if(main_df$spp[i] == "CEME") {
+  main_df$tlp[i] <- 2.784244
+}
+else{main_df$tlp[i] <- NaN}
+}
+```
+
+Separating dataset into pre- and post- TLP for given species:
+```{r}
+for(i in 1:nrow(main_df)) {
+  if(main_df$mpa[i] < main_df$tlp[i]) {
+    main_df$pre.tlp[i] <- "yes"
+  }
+  else if(main_df$mpa[i] > main_df$tlp[i])  {
+    main_df$pre.tlp[i] <- "no"
+  }
+  else {
+    main_df$pre.tlp[i] <- "NA"
+  }
+}
+
+pre.tlp.df <- main_df %>% 
+  filter(pre.tlp == "yes") %>% 
+  select(spp, fh, tti, ttfg, fd, gd, gti, model, temp_max, mpa)
+post.tlp.df <- main_df %>% 
+  filter(pre.tlp == "no") %>% 
+  select(spp, fh, tti, ttfg, fd, gd, gti, model, temp_max, mpa)
+```
+
+## Summary Tables of Means
+
+First, two summary tables (one for pre-TLP and one for post-TLP) comparing mean flam. metrics for models
+
+NOTE: Edits to make -- actual flam. metric names instead of abbreviations, add a title
+```{r}
+pre.tlp.df %>% 
+  select(fh, tti, ttfg, fd, gd, gti, temp_max, model) %>% 
+  na.omit() %>% 
+  tbl_summary(by = model, 
+              statistic = list(all_continuous() ~ "{mean}"),
+              label = list(fh ~ "Flame Height", 
+              tti ~ "Time to Ignition", 
+              ttfg ~ "Time to First Glow", 
+              fd ~ "Flame Duration",
+              gd ~ "Glow Duration", 
+              gti ~ "Glow to Ignition",
+              temp_max ~ "Maximum Temperature")) %>% # Changing the abbreviated names to full names with label =
+  add_difference() %>% 
+  modify_header(label ~ "**Flam. Metric**") %>% 
+  modify_spanning_header(c("stat_1", "stat_2") ~ "**Model**") %>%  # To add spanning "model" header
+  as_gt(include = -cols_align) %>%
+  gt::tab_source_note(gt::md("**Pre-TLP Data**")) # To add caption
+```
+
+## Water Potential vs. Time to Ignition (Not Scaled, Centered)
+```{r}
+ggplot(main_df, aes(x = mpa, y = tti, color = pre.tlp)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE, size = 0.75) +
+  labs(x = "Water Potential (-MPa)", y = "Time to Ignition (s)", color = "Pre-TLP?") +
+  theme_bw() +
+  facet_grid(spp ~ model, scale = "free") +
+  scale_color_manual(values = c("grey70", "black"))
+```
+
+## Water Potential vs. Time to Ignition (scaled, centered)
+```{r}
+both_df1$pre.tlp <- main_df$pre.tlp
+
+ggplot(both_df1, aes(x = mpa, y = tti, color = pre.tlp)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE, size = 0.75) +
+  labs(x = "Water Potential (-MPa)", y = "Time to Ignition (scaled, centered)", color = "Pre-TLP?") +
+  theme_bw() +
+  facet_grid(spp ~ model, scale = "free") +
+  scale_color_manual(values = c("grey70", "black"))
+
+#ggsave("tlp.comparisons.jpg", height = 7, width = 10)
+```
+
+```{r}
+ggplot(epi_df1, aes(x = water_wt, y = tti, color = spp)) +
+  geom_point() +
+  geom_smooth(se = F, method = lm)
+```
+
+# -------------------------------
+# MEM in Hydration vs. Flam.
+```{r}
+both_df1 <- both_df1 %>% 
+  mutate(Species = case_when(spp == "ADFA" ~ "A. fasciculatum",
+                             spp == "ARPA" ~ "A. patula",
+                             spp == "CECO" ~ "C. cordulatus",
+                             spp == "CEME" ~ "C. megacarpus")) %>% 
+  mutate(Model = case_when(model == "HP" ~ "Hot Plate",
+                           model == "EPI" ~ "Epiradiator"))
+```
+
+## LFM
+### TTI
+Model:
+```{r}
+l.tti.m <- lmer(tti ~ lfm_outliers_out*model + site + year_month + spp + (1|individual), data = both_df1)
+```
+
+Plot:
+```{r}
+tti.lfm <- ggplot(data = both_df1, aes(y = tti, x = lfm_outliers_out, color = Model, shape = Species)) +
+  geom_point(size = 1, alpha = 0.8) +
+  geom_abline(slope = 0.01310, intercept = -1.43488, color = 'grey70', cex = 1) +
+  geom_abline(slope = 0.00262, intercept = -0.907, color = 'black', cex = 1) +
+  labs(y ="Time to Ignition (scaled, centered)", x = "Live Fuel Moisture", color = "Method", shape = "Species") +
+  theme_bw()+
+  scale_color_manual(values = c("grey70", "black")) +
+  theme(axis.title = element_text(face = 'bold'),
+        legend.title = element_text(face = 'bold', size = 14),
+        legend.text = element_text(face = 'italic', size = 12))
+```
+
+### FH
+Model:
+```{r}
+l.fh.m <-lmer(fh ~ lfm_outliers_out*model + site + year_month + spp + (1|individual), data = both_df1)
+```
+
+Plot:
+```{r}
+fh.lfm <- ggplot(data = both_df1, aes(y = fh, x = lfm_outliers_out, color = Model, shape = Species)) +
+  geom_point(size = 1, alpha = 0.8) +
+  geom_abline(slope = -0.0135, intercept = 0.87712, color = 'grey70', cex = 1) +
+  geom_abline(slope = -0.0031, intercept = -0.03629, color = 'black', cex = 1) +
+  labs(y ="Flame Height (scaled, centered)", x = "Live Fuel Moisture", color = "Method", shape = "Species") +
+  theme_bw()+
+  scale_color_manual(values = c("grey70", "black")) +
+  theme(axis.title = element_text(face = 'bold'),
+        legend.title = element_text(face = 'bold', size = 14),
+        legend.text = element_text(face = 'italic', size = 12))
+```
+
+### FD
+Model:
+```{r}
+l.fd.m <-lmer(fd ~ lfm_outliers_out*model + site + year_month + spp + (1|individual), data = both_df1)
+```
+
+Plot:
+```{r}
+fd.lfm <- ggplot(data = both_df1, aes(y = fd, x = lfm_outliers_out, color = Model, shape = Species)) +
+  geom_point(size = 1, alpha = 0.8) +
+  geom_abline(slope = 0.001802, intercept = 0.072078, color = 'grey70', cex = 1) +
+  geom_abline(slope = 0.003772, intercept = 0.057998, color = 'black', cex = 1) +
+  labs(y ="Flame Duration (scaled, centered)", x = "Live Fuel Moisture", color = "Method", shape = "Species") +
+  theme_bw()+
+  scale_color_manual(values = c("grey70", "black")) +
+  theme(axis.title = element_text(face = 'bold'),
+        legend.title = element_text(face = 'bold', size = 14),
+        legend.text = element_text(face = 'italic', size = 12))
+```
+
+### GD
+Model:
+```{r}
+l.gd.m <-lmer(gd ~ lfm_outliers_out*model + site + year_month + spp + (1|individual), data = both_df1)
+```
+
+Plot:
+```{r}
+gd.lfm <- ggplot(data = both_df1, aes(y = gd, x = lfm_outliers_out, color = Model, shape = Species)) +
+  geom_point(size = 1, alpha = 0.8) +
+  geom_abline(slope = -0.005859, intercept = 0.737723, color = 'grey70', cex = 1) +
+  geom_abline(slope = 0.01889, intercept = -1.181073, color = 'black', cex = 1) +
+  labs(y ="Glow Duration (scaled, centered)", x = "Live Fuel Moisture", color = "Method", shape = "Species") +
+  theme_bw()+
+  scale_color_manual(values = c("grey70", "black")) +
+  theme(axis.title = element_text(face = 'bold'),
+        legend.title = element_text(face = 'bold', size = 14),
+        legend.text = element_text(face = 'italic', size = 12))
+```
+
+### Max. Temp.
+Model:
+```{r}
+l.temp.m <-lmer(temp_max ~ lfm_outliers_out*model + site + year_month + spp + (1|individual), data = both_df1)
+```
+
+Plot:
+```{r}
+temp.lfm <- ggplot(data = both_df1, aes(y = temp_max, x = lfm_outliers_out, color = Model, shape = Species)) +
+  geom_point(size = 1, alpha = 0.8) +
+  geom_abline(slope = -0.003956, intercept = 0.387693, color = 'grey70', cex = 1) +
+  geom_abline(slope = 0.017793, intercept = -1.394144, color = 'black', cex = 1) +
+  labs(y ="Max. Temp. (scaled, centered)", x = "Live Fuel Moisture", color = "Method", shape = "Species") +
+  theme_bw()+
+  scale_color_manual(values = c("grey70", "black")) +
+  theme(axis.title = element_text(face = 'bold'),
+        legend.title = element_text(face = 'bold', size = 14),
+        legend.text = element_text(face = 'italic', size = 12))
+```
+
+### PFG
+Model:
+```{r}
+l.pfg.m <-lmer(pfg ~ lfm_outliers_out*model + site + year_month + spp + (1|individual), data = both_df1)
+```
+
+Plot:
+```{r}
+pfg.lfm <- ggplot(data = both_df1, aes(y = pfg, x = lfm_outliers_out, color = Model, shape = Species)) +
+  geom_point(size = 1, alpha = 0.8) +
+  geom_abline(slope = -0.01267, intercept = 1.11633, color = 'grey70', cex = 1) +
+  geom_abline(slope = 0.01258, intercept = -0.89204, color = 'black', cex = 1) +
+  labs(y ="Post-Flame Glow (scaled, centered)", x = "Live Fuel Moisture", color = "Method", shape = "Species") +
+  theme_bw()+
+  scale_color_manual(values = c("grey70", "black")) +
+  theme(axis.title = element_text(face = 'bold'),
+        legend.title = element_text(face = 'bold', size = 14),
+        legend.text = element_text(face = 'italic', size = 12))
+```
+
+### TTFG
+Model:
+```{r}
+l.ttfg.m <-lmer(ttfg ~ lfm_outliers_out*model + site + year_month + spp + (1|individual), data = both_df1)
+```
+
+Plot:
+```{r}
+ttfg.lfm <- ggplot(data = both_df1, aes(y = ttfg, x = lfm_outliers_out, color = Model, shape = Species)) +
+  geom_point(size = 1, alpha = 0.8) +
+  geom_abline(slope = 0.00813, intercept = -1.40820, color = 'grey70', cex = 1) +
+  geom_abline(slope = -0.01249, intercept = -0.18457, color = 'black', cex = 1) +
+  labs(y ="Time to First Glow (scaled, centered)", x = "Live Fuel Moisture", color = "Method", shape = "Species") +
+  theme_bw()+
+  scale_color_manual(values = c("grey70", "black")) +
+  theme(axis.title = element_text(face = 'bold'),
+        legend.title = element_text(face = 'bold', size = 14),
+        legend.text = element_text(face = 'italic', size = 12))
+```
+
+### GTI
+Model:
+```{r}
+l.gti.m <-lmer(gti ~ lfm_outliers_out*model + site + year_month + spp + (1|individual), data = both_df1)
+```
+
+Plot:
+```{r}
+gti.lfm <- ggplot(data = both_df1, aes(y = gti, x = lfm_outliers_out, color = Model, shape = Species)) +
+  geom_point(size = 1, alpha = 0.8) +
+  geom_abline(slope = 0.006350, intercept = -0.422963, color = 'grey70', cex = 1) +
+  geom_abline(slope = 0.014875, intercept = -1.112233, color = 'black', cex = 1) +
+  labs(y ="Glow to Ignition (scaled, centered)", x = "Live Fuel Moisture", color = "Method", shape = "Species") +
+  theme_bw()+
+  scale_color_manual(values = c("grey70", "black")) +
+  theme(axis.title = element_text(face = 'bold'),
+        legend.title = element_text(face = 'bold', size = 14), 
+        legend.text = element_text(face = 'italic', size = 12))
+```
+
+### Model Selection Table
+```{r}
+tab_model(l.tti.m, l.fh.m, l.fd.m, l.gd.m, l.temp.m, l.pfg.m, l.ttfg.m, l.gti.m,
+          show.reflvl = FALSE, 
+          digits = 3, 
+          show.aic = TRUE, 
+          show.ci = FALSE,
+          show.icc = FALSE, 
+         string.pred = "Coeffcient", 
+        dv.labels = c("TTI", "FH", "FD", "GD", "Max Temp.", "PFG", "TTFG", "GTI"),
+         title = "LFM vs. Flam Mixed Effects Models",
+  string.p = "P-Value", 
+  p.style = "stars")
+```
+
+### All plots together
+```{r}
+ggarrange(tti.lfm, fh.lfm, fd.lfm, gd.lfm, temp.lfm, pfg.lfm, ttfg.lfm, gti.lfm, ncol = 3, nrow = 3, common.legend = TRUE)
+
+ggsave("figures/lfm.vs.metrics.MEM.jpg", height = 10, width = 10)
+```
+
+## Water Potential
+### TTI
+Model:
+```{r}
+w.tti.m <- lmer(tti ~ mpa*model + site + year_month + spp + (1|individual), data = both_df1)
+```
+
+Plot:
+```{r}
+tti.mpa <- ggplot(data = both_df1, aes(y = tti, x = mpa, color = Model, shape = Species)) +
+  geom_point(size = 1, alpha = 0.8) +
+  geom_abline(slope = 0.13620, intercept = 0.14417, color = 'grey70', cex = 1) +
+  geom_abline(slope = 0.01566, intercept = -0.57023, color = 'black', cex = 1) +
+  labs(y ="Time to Ignition (scaled, centered)", x = "Water Potential", color = "Method", shape = "Species") +
+  theme_bw()+
+  scale_color_manual(values = c("grey70", "black")) +
+  theme(axis.title = element_text(face = 'bold'),
+        legend.title = element_text(face = 'bold', size = 14),
+        legend.text = element_text(face = 'italic', size = 12))
+```
+
+### FH
+Model:
+```{r}
+w.fh.m <- lmer(fh ~ mpa*model + site + year_month + spp + (1|individual), data = both_df1)
+```
+
+Plot:
+```{r}
+fh.mpa <- ggplot(data = both_df1, aes(y = fh, x = mpa, color = Model, shape = Species)) +
+  geom_point(size = 1, alpha = 0.8) +
+  geom_abline(slope = -0.1076, intercept = -0.57206, color = 'grey70', cex = 1) +
+  geom_abline(slope = -0.01239, intercept = -0.33835, color = 'black', cex = 1) +
+  labs(y ="Flame Height (scaled, centered)", x = "Water Potential", color = "Method", shape = "Species") +
+  theme_bw()+
+  scale_color_manual(values = c("grey70", "black")) +
+  theme(axis.title = element_text(face = 'bold'),
+        legend.title = element_text(face = 'bold', size = 14),
+        legend.text = element_text(face = 'italic', size = 12))
+fh.mpa
+```
+
+### FD
+Model:
+```{r}
+w.fd.m <- lmer(fd ~ mpa*model + site + year_month + spp + (1|individual), data = both_df1)
+```
+
+Plot:
+```{r}
+fd.mpa <- ggplot(data = both_df1, aes(y = fd, x = mpa, color = Model, shape = Species)) +
+  geom_point(size = 1, alpha = 0.8) +
+  geom_abline(slope = -0.028498, intercept = 0.106223, color = 'grey70', cex = 1) +
+  geom_abline(slope = -0.031017, intercept = 0.23579, color = 'black', cex = 1) +
+  labs(y ="Flame Duration (scaled, centered)", x = "Water Potential", color = "Method", shape = "Species") +
+  theme_bw()+
+  scale_color_manual(values = c("grey70", "black")) +
+  theme(axis.title = element_text(face = 'bold'),
+        legend.title = element_text(face = 'bold', size = 14),
+        legend.text = element_text(face = 'italic', size = 12))
+```
+
+### GD
+Model:
+```{r}
+w.gd.m <- lmer(gd ~ mpa*model + site + year_month + spp + (1|individual), data = both_df1)
+```
+
+Plot:
+```{r}
+gd.mpa <- ggplot(data = both_df1, aes(y = gd, x = mpa, color = Model, shape = Species)) +
+  geom_point(size = 1, alpha = 0.8) +
+  geom_abline(slope = -0.04853, intercept = 0.09737, color = 'grey70', cex = 1) +
+  geom_abline(slope = 0.06135, intercept = 0.51799, color = 'black', cex = 1) +
+  labs(y ="Glow Duration (scaled, centered)", x = "Water Potential", color = "Method", shape = "Species") +
+  theme_bw()+
+  scale_color_manual(values = c("grey70", "black")) +
+  theme(axis.title = element_text(face = 'bold'),
+        legend.title = element_text(face = 'bold', size = 14), 
+        legend.text = element_text(face = 'italic', size = 12))
+```
+
+### Max. Temp.
+Model:
+```{r}
+w.temp.m <- lmer(temp_max ~ mpa*model + site + year_month + spp + (1|individual), data = both_df1)
+```
+
+Plot:
+```{r}
+temp.mpa <- ggplot(data = both_df1, aes(y = temp_max, x = mpa, color = Model, shape = Species)) +
+  geom_point(size = 1, alpha = 0.8) +
+  geom_abline(slope = -0.12292, intercept = -0.45282, color = 'grey70', cex = 1) +
+  geom_abline(slope = 0.16666, intercept = 0.49957, color = 'black', cex = 1) +
+  labs(y ="Max. Temp. (scaled, centered)", x = "Water Potential", color = "Method", shape = "Species") +
+  theme_bw()+
+  scale_color_manual(values = c("grey70", "black")) +
+  theme(axis.title = element_text(face = 'bold'),
+        legend.title = element_text(face = 'bold', size = 14), 
+        legend.text = element_text(face = 'italic', size = 12))
+```
+
+### PFG
+Model:
+```{r}
+w.pfg.m <- lmer(pfg ~ mpa*model + site + year_month + spp + (1|individual), data = both_df1)
+```
+
+Plot:
+```{r}
+pfg.mpa <- ggplot(data = both_df1, aes(y = pfg, x = mpa, color = Model, shape = Species)) +
+  geom_point(size = 1, alpha = 0.8) +
+  geom_abline(slope = -0.09663, intercept = -0.23417, color = 'grey70', cex = 1) +
+  geom_abline(slope = 0.02734, intercept = 0.31742, color = 'black', cex = 1) +
+  labs(y ="Post-Flame Glow (scaled, centered)", x = "Water Potential", color = "Method", shape = "Species") +
+  theme_bw()+
+  scale_color_manual(values = c("grey70", "black")) +
+  theme(axis.title = element_text(face = 'bold'),
+        legend.title = element_text(face = 'bold', size = 14),
+        legend.text = element_text(face = 'italic', size = 12))
+```
+
+### TTFG
+Model:
+```{r}
+w.ttfg.m <- lmer(ttfg ~ mpa*model + site + year_month + spp + (1|individual), data = both_df1)
+```
+
+Plot:
+```{r}
+ttfg.mpa <- ggplot(data = both_df1, aes(y = ttfg, x = mpa, color = Model, shape = Species)) +
+  geom_point(size = 1, alpha = 0.8) +
+  geom_abline(slope = 0.06897, intercept = -0.46277, color = 'grey70', cex = 1) +
+  geom_abline(slope = -0.10608, intercept = -1.48104, color = 'black', cex = 1) +
+  labs(y ="Time to First Glow (scaled, centered)", x = "Water Potential", color = "Method", shape = "Species") +
+  theme_bw()+
+  scale_color_manual(values = c("grey70", "black")) +
+  theme(axis.title = element_text(face = 'bold'),
+        legend.title = element_text(face = 'bold', size = 14),
+        legend.text = element_text(face = 'italic', size = 12))
+```
+
+### GTI
+Model:
+```{r}
+w.gti.m <- lmer(gti ~ mpa*model + site + year_month + spp + (1|individual), data = both_df1)
+```
+
+Plot:
+```{r}
+gti.mpa <- ggplot(data = both_df1, aes(y = gti, x = mpa, color = Model, shape = Species)) +
+  geom_point(size = 1, alpha = 0.8) +
+  geom_abline(slope = 0.098791, intercept = 0.468523, color = 'grey70', cex = 1) +
+  geom_abline(slope = 0.106078, intercept = 0.484539, color = 'black', cex = 1) +
+  labs(y ="Glow to Ignition (scaled, centered)", x = "Water Potential", color = "Method", shape = "Species") +
+  theme_bw()+
+  scale_color_manual(values = c("grey70", "black")) +
+  theme(axis.title = element_text(face = 'bold'),
+        legend.title = element_text(face = 'bold', size = 14),
+        legend.text = element_text(face = 'italic', size = 12))
+```
+
+### Model Selection Table
+```{r}
+tab_model(w.tti.m, w.fh.m, w.fd.m, w.gd.m, w.temp.m, w.pfg.m, w.ttfg.m, w.gti.m,
+          show.reflvl = FALSE, 
+          digits = 3, 
+          show.aic = TRUE, 
+          show.ci = FALSE,
+          show.icc = FALSE, 
+         string.pred = "Coeffcient", 
+        dv.labels = c("TTI", "FH", "FD", "GD", "Max Temp.", "PFG", "TTFG", "GTI"),
+         title = "MPa vs. Flam Mixed Effects Models",
+  string.p = "P-Value", 
+  p.style = "stars")
+```
+
+### All plots together
+```{r}
+ggarrange(tti.mpa, fh.mpa, fd.mpa, gd.mpa, temp.mpa, pfg.mpa, ttfg.mpa, gti.mpa, ncol = 3, nrow = 3, common.legend = TRUE)
+
+ggsave("figures/mpa.vs.metrics.MEM.jpg", height = 10, width = 10)
+```
+
+## Dry Weight
+Scaling dry weight first
+```{r}
+both_df1 <- both_df1 %>% 
+  dplyr::group_by(model) %>% 
+  mutate(dw_scaled = scale(dw_flam_sample))
+```
+
+### TTI
+Model:
+```{r}
+dw.tti.m <- lmer(tti ~ dw_scaled*model + site + year_month + spp + (1|individual), data = both_df1)
+```
+
+Plot:
+```{r}
+tti.dw <- ggplot(data = both_df1, aes(y = tti, x = dw_scaled, color = Model, shape = Species)) +
+  geom_point(size = 1, alpha = 0.8) +
+  geom_abline(slope = -0.10279, intercept = -0.40383, color = 'grey70', cex = 1) +
+  geom_abline(slope = -0.05295, intercept = -0.69815, color = 'black', cex = 1) +
+  labs(y ="Time to Ignition (scaled, centered)", x = "Dry Weight", color = "Method", shape = "Species") +
+  theme_bw()+
+  scale_color_manual(values = c("grey70", "black")) +
+  theme(axis.title = element_text(face = 'bold'),
+        legend.title = element_text(face = 'bold', size = 14),
+        legend.text = element_text(face = 'italic', size = 12))
+tti.dw
+```
+
+### FH
+Model:
+```{r}
+dw.fh.m <-lmer(fh ~ dw_scaled*model + site + year_month + spp + (1|individual), data = both_df1)
+```
+
+Plot:
+```{r}
+fh.dw <- ggplot(data = both_df1, aes(y = fh, x = dw_scaled, color = Model, shape = Species)) +
+  geom_point(size = 1, alpha = 0.8) +
+  geom_abline(slope = 0.25227, intercept = -0.17053, color = 'grey70', cex = 1) +
+  geom_abline(slope = 0.49291, intercept = -0.3031, color = 'black', cex = 1) +
+  labs(y ="Flame Height (scaled, centered)", x = "Dry Weight", color = "Method", shape = "Species") +
+  theme_bw()+
+  scale_color_manual(values = c("grey70", "black")) +
+  theme(axis.title = element_text(face = 'bold'),
+        legend.title = element_text(face = 'bold', size = 14),
+        legend.text = element_text(face = 'italic', size = 12))
+fh.dw
+```
+
+### FD
+Model:
+```{r}
+dw.fd.m <-lmer(fd ~ dw_scaled*model + site + year_month + spp + (1|individual), data = both_df1)
+dw.fd.m
+```
+
+Plot:
+```{r}
+fd.dw <- ggplot(data = both_df1, aes(y = fd, x = dw_scaled, color = Model, shape = Species)) +
+  geom_point(size = 1, alpha = 0.8) +
+  geom_abline(slope = 0.001612, intercept = 0.219612, color = 'grey70', cex = 1) +
+  geom_abline(slope = 0.321655, intercept = 0.337596, color = 'black', cex = 1) +
+  labs(y ="Flame Duration (scaled, centered)", x = "Dry Weight", color = "Method", shape = "Species") +
+  theme_bw()+
+  scale_color_manual(values = c("grey70", "black")) +
+  theme(axis.title = element_text(face = 'bold'),
+        legend.title = element_text(face = 'bold', size = 14),
+        legend.text = element_text(face = 'italic', size = 12))
+fd.dw
+```
+
+### GD
+Model:
+```{r}
+dw.gd.m <-lmer(gd ~ dw_scaled*model + site + year_month + spp + (1|individual), data = both_df1)
+dw.gd.m
+```
+
+Plot:
+```{r}
+gd.dw <- ggplot(data = both_df1, aes(y = gd, x = dw_scaled, color = Model, shape = Species)) +
+  geom_point(size = 1, alpha = 0.8) +
+  geom_abline(slope = 0.29270, intercept = 0.24603, color = 'grey70', cex = 1) +
+  geom_abline(slope = 0.33945, intercept = 0.25806, color = 'black', cex = 1) +
+  labs(y ="Glow Duration (scaled, centered)", x = "Dry Weight", color = "Method", shape = "Species") +
+  theme_bw()+
+  scale_color_manual(values = c("grey70", "black")) +
+  theme(axis.title = element_text(face = 'bold'),
+        legend.title = element_text(face = 'bold', size = 14),
+        legend.text = element_text(face = 'italic', size = 12))
+gd.dw
+```
+
+### Max. Temp.
+Model:
+```{r}
+dw.temp.m <-lmer(temp_max ~ dw_scaled*model + site + year_month + spp + (1|individual), data = both_df1)
+dw.temp.m
+```
+
+Plot:
+```{r}
+temp.dw <- ggplot(data = both_df1, aes(y = temp_max, x = dw_scaled, color = Model, shape = Species)) +
+  geom_point(size = 1, alpha = 0.8) +
+  geom_abline(slope = 0.138919, intercept = 0.049758, color = 'grey70', cex = 1) +
+  geom_abline(slope = 0.171334, intercept = -0.026337, color = 'black', cex = 1) +
+  labs(y ="Max. Temp. (scaled, centered)", x = "Dry Weight", color = "Method", shape = "Species") +
+  theme_bw()+
+  scale_color_manual(values = c("grey70", "black")) +
+  theme(axis.title = element_text(face = 'bold'),
+        legend.title = element_text(face = 'bold', size = 14),
+        legend.text = element_text(face = 'italic', size = 12))
+temp.dw
+```
+
+### PFG
+Model:
+```{r}
+dw.pfg.m <-lmer(pfg ~ dw_scaled*model + site + year_month + spp + (1|individual), data = both_df1)
+dw.pfg.m
+```
+
+Plot:
+```{r}
+pfg.dw <- ggplot(data = both_df1, aes(y = pfg, x = dw_scaled, color = Model, shape = Species)) +
+  geom_point(size = 1, alpha = 0.8) +
+  geom_abline(slope = -0.04543, intercept = 0.09295, color = 'grey70', cex = 1) +
+  geom_abline(slope = -0.01366, intercept = 0.04752, color = 'black', cex = 1) +
+  labs(y ="Post-Flame Glow (scaled, centered)", x = "Dry Weight", color = "Method", shape = "Species") +
+  theme_bw()+
+  scale_color_manual(values = c("grey70", "black")) +
+  theme(axis.title = element_text(face = 'bold'),
+        legend.title = element_text(face = 'bold', size = 14),
+        legend.text = element_text(face = 'italic', size = 12))
+pfg.dw
+```
+
+### TTFG
+Model:
+```{r}
+dw.ttfg.m <-lmer(ttfg ~ dw_scaled*model + site + year_month + spp + (1|individual), data = both_df1)
+dw.ttfg.m
+```
+
+Plot:
+```{r}
+ttfg.dw <- ggplot(data = both_df1, aes(y = ttfg, x = dw_scaled, color = Model, shape = Species)) +
+  geom_point(size = 1, alpha = 0.8) +
+  geom_abline(slope = -0.15294, intercept = -0.73207, color = 'grey70', cex = 1) +
+  geom_abline(slope = -0.05083, intercept = -1.13142, color = 'black', cex = 1) +
+  labs(y ="Time to First Glow (scaled, centered)", x = "Dry Weight", color = "Method", shape = "Species") +
+  theme_bw()+
+  scale_color_manual(values = c("grey70", "black")) +
+  theme(axis.title = element_text(face = 'bold'),
+        legend.title = element_text(face = 'bold', size = 14), 
+        legend.text = element_text(face = 'italic', size = 12))
+ttfg.dw
+```
+
+### GTI
+Model:
+```{r}
+dw.gti.m <-lmer(gti ~ dw_scaled*model + site + year_month + spp + (1|individual), data = both_df1)
+dw.gti.m
+```
+
+Plot:
+```{r}
+gti.dw <- ggplot(data = both_df1, aes(y = gti, x = dw_scaled, color = Model, shape = Species)) +
+  geom_point(size = 1, alpha = 0.8) +
+  geom_abline(slope = -0.009359, intercept = 0.067278, color = 'grey70', cex = 1) +
+  geom_abline(slope = 0.038454, intercept = 0.046909, color = 'black', cex = 1) +
+  labs(y ="Glow to Ignition (scaled, centered)", x = "Dry Weight", color = "Method", shape = "Species") +
+  theme_bw()+
+  scale_color_manual(values = c("grey70", "black")) +
+  theme(axis.title = element_text(face = 'bold'),
+        legend.title = element_text(face = 'bold', size = 14),
+        legend.text = element_text(face = 'italic', size = 12))
+gti.dw
+```
+
+### Model Selection Table
+```{r}
+tab_model(dw.tti.m, dw.fh.m, dw.fd.m, dw.gd.m, dw.temp.m, dw.pfg.m, dw.ttfg.m, dw.gti.m,
+          show.reflvl = FALSE, 
+          digits = 3, 
+          show.aic = TRUE, 
+          show.ci = FALSE,
+          show.icc = FALSE, 
+         string.pred = "Coeffcient", 
+        dv.labels = c("TTI", "FH", "FD", "GD", "Max Temp.", "PFG", "TTFG", "GTI"),
+         title = "DW vs. Flam Mixed Effects Models",
+  string.p = "P-Value", 
+  p.style = "stars")
+```
+
+### All plots together
+```{r}
+ggarrange(tti.dw, fh.dw, fd.dw, gd.dw, temp.dw, pfg.dw, ttfg.dw, gti.dw, ncol = 3, nrow = 3, common.legend = TRUE)
+
+ggsave("figures/dw.vs.metrics.MEM.jpg", height = 10, width = 10)
+```
+
+
+
+```{r}
+ggplot(epi_df1, aes(x = water_wt, y = tti, color = spp)) +
+  geom_point() +
+  geom_smooth(se = F, method = lm)
+```
+
+# -------------------------------
+# REMEF: MEM in Hydration vs. Flam.
+Copy-pasted above code and going to try REMEF on partial effects to eliminate fixed effects of site, year_month, species and the random effect of individual to isolate the effect of hydration and the model on the flam. metrics
+```{r}
+both_df1.remef <- both_df1 %>% 
+  mutate(site = as.factor(site)) %>% 
+  mutate(spp = as.factor(spp)) %>% 
+  mutate(year_month = as.factor(year_month)) %>%
+  drop_na(lfm_outliers_out)
+```
+
+## LFM
+### TTI
+Remef:
+```{r}
+l.tti.mR <- lmer(tti ~ lfm_outliers_out*model + site + year_month + spp + (1|individual), data = both_df1.remef)
+
+both_df1.remef$r_tti <- remef(l.tti.mR, fix = c('site2', 'sitePainted Caves', 'siteSt. Marys', 'sppARPA', 'sppCEME'),  ran = "all", keep.intercept = FALSE)
+```
+
+Plot:
+```{r}
+tti.lfmR <- ggplot(data = both_df1.remef, aes(y = r_tti, x = lfm_outliers_out, color = Model)) +
+  geom_point(size = 1, alpha = 0.8, aes(shape = Species)) +
+  geom_smooth(se = F, method = 'lm') +
+  labs(y ="Time to Ignition (effects removed)", x = "Live Fuel Moisture", color = "Method", shape = "Species") +
+  theme_bw()+
+  scale_color_manual(values = c("grey70", "black")) +
+  annotate('text', x = 40, y = 3.2, label = 'a', size = 11) +
+  theme(axis.title = element_text(face = 'bold'),
+        legend.title = element_text(face = 'bold', size = 14),
+        legend.text = element_text(face = 'italic', size = 12),
+        axis.title.x = element_blank(),
+        axis.text.x = element_blank())
+tti.lfmR
+```
+
+### FH
+Remef:
+```{r}
+l.fh.mR <- lmer(fh ~ lfm_outliers_out*model + site + year_month + spp + (1|individual), data = both_df1.remef)
+
+both_df1.remef$r_fh <- remef(l.fh.mR, fix = c('site2', 'sitePainted Caves', 'siteSt. Marys', 'sppARPA', 'sppCEME'),  ran = "all", keep.intercept = FALSE)
+```
+
+Plot:
+```{r}
+fh.lfmR <- ggplot(data = both_df1.remef, aes(y = r_fh, x = lfm_outliers_out, color = Model)) +
+  geom_point(size = 1, alpha = 0.8, aes(shape = Species)) +
+  geom_smooth(se = F, method = 'lm') +
+  labs(y ="Flame Height (effects removed)", x = "Live Fuel Moisture", color = "Method", shape = "Species") +
+  theme_bw()+
+  scale_color_manual(values = c("grey70", "black")) +
+  annotate('text', x = 40, y = 1.3, label = 'b', size = 11) +
+  theme(axis.title = element_text(face = 'bold'),
+        legend.title = element_text(face = 'bold', size = 14),
+        legend.text = element_text(face = 'italic', size = 12),
+        axis.title.x = element_blank(),
+        axis.text.x = element_blank())
+fh.lfmR
+```
+
+### FD
+Remef:
+```{r}
+l.fd.mR <- lmer(fd ~ lfm_outliers_out*model + site + year_month + spp + (1|individual), data = both_df1.remef)
+
+both_df1.remef$r_fd <- remef(l.fd.mR, fix = c('site2', 'sitePainted Caves', 'siteSt. Marys', 'sppARPA', 'sppCEME'),  ran = "all", keep.intercept = FALSE)
+```
+
+Plot:
+```{r}
+fd.lfmR <- ggplot(data = both_df1.remef, aes(y = r_fd, x = lfm_outliers_out, color = Model)) +
+  geom_point(size = 1, alpha = 0.8, aes(shape = Species)) +
+  geom_smooth(se = F, method = 'lm') +
+  labs(y ="Flame Duration (effects removed)", x = "Live Fuel Moisture", color = "Method", shape = "Species") +
+  theme_bw()+
+  scale_color_manual(values = c("grey70", "black")) +
+  annotate('text', x = 40, y = 3.125, label = 'c', size = 11) +
+  theme(axis.title = element_text(face = 'bold'),
+        legend.title = element_text(face = 'bold', size = 14),
+        legend.text = element_text(face = 'italic', size = 12),
+        axis.title.x = element_blank(),
+        axis.text.x = element_blank())
+fd.lfmR
+```
+
+### GD
+Remef:
+```{r}
+l.gd.mR <- lmer(gd ~ lfm_outliers_out*model + site + year_month + spp + (1|individual), data = both_df1.remef)
+
+both_df1.remef$r_gd <- remef(l.gd.mR, fix = c('site2', 'sitePainted Caves', 'siteSt. Marys', 'sppARPA', 'sppCEME'),  ran = "all", keep.intercept = FALSE)
+```
+
+Plot:
+```{r}
+gd.lfmR <- ggplot(data = both_df1.remef, aes(y = r_gd, x = lfm_outliers_out, color = Model)) +
+  geom_point(size = 1, alpha = 0.8, aes(shape = Species)) +
+  geom_smooth(se = F, method = 'lm') +
+  labs(y ="Glow Duration (effects removed)", x = "Live Fuel Moisture", color = "Method", shape = "Species") +
+  theme_bw()+
+  scale_color_manual(values = c("grey70", "black")) +
+  annotate('text', x = 40, y = 2.425, label = 'd', size = 11) +
+  theme(axis.title = element_text(face = 'bold'),
+        legend.title = element_text(face = 'bold', size = 14),
+        legend.text = element_text(face = 'italic', size = 12),
+        axis.title.x = element_blank(),
+        axis.text.x = element_blank())
+gd.lfmR
+```
+
+### Max. Temp.
+Remef:
+```{r}
+l.temp_max.mR <- lmer(temp_max ~ lfm_outliers_out*model + site + year_month + spp + (1|individual), data = both_df1.remef)
+
+both_df1.remef$r_temp_max <- remef(l.temp_max.mR, fix = c('site2', 'sitePainted Caves', 'siteSt. Marys', 'sppARPA', 'sppCEME'),  ran = "all", keep.intercept = FALSE)
+```
+
+Plot:
+```{r}
+temp_max.lfmR <- ggplot(data = both_df1.remef, aes(y = r_temp_max, x = lfm_outliers_out, color = Model)) +
+  geom_point(size = 1, alpha = 0.8, aes(shape = Species)) +
+  geom_smooth(se = F, method = 'lm') +
+  labs(y ="Maximum Temp. (effects removed)", x = "Live Fuel Moisture", color = "Method", shape = "Species") +
+  theme_bw()+
+  scale_color_manual(values = c("grey70", "black")) +
+  annotate('text', x = 40, y = 3.1, label = 'e', size = 11) +
+  theme(axis.title = element_text(face = 'bold'),
+        legend.title = element_text(face = 'bold', size = 14),
+        legend.text = element_text(face = 'italic', size = 12),
+        axis.title.x = element_blank(),
+        axis.text.x = element_blank())
+temp_max.lfmR
+```
+
+### PFG
+Remef:
+```{r}
+l.pfg.mR <- lmer(pfg ~ lfm_outliers_out*model + site + year_month + spp + (1|individual), data = both_df1.remef)
+
+both_df1.remef$r_pfg <- remef(l.pfg.mR, fix = c('site2', 'sitePainted Caves', 'siteSt. Marys', 'sppARPA', 'sppCEME'),  ran = "all", keep.intercept = FALSE)
+```
+
+Plot:
+```{r}
+pfg.lfmR <- ggplot(data = both_df1.remef, aes(y = r_pfg, x = lfm_outliers_out, color = Model)) +
+  geom_point(size = 1, alpha = 0.8, aes(shape = Species)) +
+  geom_smooth(se = F, method = 'lm') +
+  labs(y ="Post-Flame Glow (effects removed)", x = "Live Fuel Moisture", color = "Method", shape = "Species") +
+  theme_bw()+
+  scale_color_manual(values = c("grey70", "black")) +
+  annotate('text', x = 40, y = 2.4, label = 'f', size = 11) +
+  theme(axis.title = element_text(face = 'bold'),
+        legend.title = element_text(face = 'bold', size = 14),
+        legend.text = element_text(face = 'italic', size = 12),
+        axis.title.x = element_blank())
+pfg.lfmR
+```
+
+### TTFG
+Remef:
+```{r}
+l.ttfg.mR <- lmer(ttfg ~ lfm_outliers_out*model + site + year_month + spp + (1|individual), data = both_df1.remef)
+
+both_df1.remef$r_ttfg <- remef(l.ttfg.mR, fix = c('site2', 'sitePainted Caves', 'siteSt. Marys', 'sppARPA', 'sppCEME'),  ran = "all", keep.intercept = FALSE)
+```
+
+Plot:
+```{r}
+ttfg.lfmR <- ggplot(data = both_df1.remef, aes(y = r_ttfg, x = lfm_outliers_out, color = Model)) +
+  geom_point(size = 1, alpha = 0.8, aes(shape = Species)) +
+  geom_smooth(se = F, method = 'lm') +
+  labs(y ="Time to First Glow (effects removed)", x = "Live Fuel Moisture", color = "Method", shape = "Species") +
+  theme_bw()+
+  scale_color_manual(values = c("grey70", "black")) +
+  annotate('text', x = 40, y = 3.1, label = 'g', size = 11) +
+  theme(axis.title = element_text(face = 'bold'),
+        legend.title = element_text(face = 'bold', size = 14),
+        legend.text = element_text(face = 'italic', size = 12),
+        axis.title.x = element_blank())
+ttfg.lfmR
+```
+
+### GTI
+Remef:
+```{r}
+l.gti.mR <- lmer(gti ~ lfm_outliers_out*model + site + year_month + spp + (1|individual), data = both_df1.remef)
+
+both_df1.remef$r_gti <- remef(l.gti.mR, fix = c('site2', 'sitePainted Caves', 'siteSt. Marys', 'sppARPA', 'sppCEME'),  ran = "all", keep.intercept = FALSE)
+```
+
+Plot:
+```{r}
+gti.lfmR <- ggplot(data = both_df1.remef, aes(y = r_gti, x = lfm_outliers_out, color = Model)) +
+  geom_point(size = 1, alpha = 0.8, aes(shape = Species)) +
+  geom_smooth(se = F, method = 'lm') +
+  labs(y ="Glow to Ignition (effects removed)", x = "Live Fuel Moisture", color = "Method", shape = "Species") +
+  theme_bw()+
+  scale_color_manual(values = c("grey70", "black")) +
+  annotate('text', x = 40, y = 3.375, label = 'h', size = 11) +
+  theme(axis.title = element_text(face = 'bold'),
+        legend.title = element_text(face = 'bold', size = 14),
+        legend.text = element_text(face = 'italic', size = 12),
+        axis.title.x = element_blank())
+gti.lfmR
+```
+
+### Model Selection Table
+```{r}
+tab_model(l.tti.mR, l.fh.mR, l.fd.mR, l.gd.mR, l.temp_max.mR, l.pfg.mR, l.ttfg.mR, l.gti.mR,
+          show.reflvl = FALSE, 
+          digits = 3, 
+          show.aic = TRUE, 
+          show.ci = FALSE,
+          show.icc = FALSE, 
+         string.pred = "Coeffcient", 
+        dv.labels = c("TTI", "FH", "FD", "GD", "Max Temp.", "PFG", "TTFG", "GTI"),
+         title = "LFM vs. Flam Mixed Effects Models: pre-REMEF",
+  string.p = "P-Value", 
+  p.style = "stars")
+```
+
+### ANOVA
+```{r}
+# Time to Ignition
+l.tti.mR 
+l.tti.mR.wom <- lmer(tti ~ lfm_outliers_out + site + year_month + spp + (1|individual), data = both_df1.remef)
+anova(l.tti.mR, l.tti.mR.wom)
+
+# Flame height
+l.fh.mR
+l.fh.mR.wom <- lmer(fh ~ lfm_outliers_out + site + year_month + spp + (1|individual), data = both_df1.remef)
+anova(l.fh.mR, l.fh.mR.wom)
+
+# Flame duration
+l.fd.mR
+l.fd.mR.wom <- lmer(fd ~ lfm_outliers_out + site + year_month + spp + (1|individual), data = both_df1.remef)
+anova(l.fd.mR, l.fd.mR.wom)
+
+# Glow duration
+l.gd.mR
+l.gd.mR.wom <- lmer(gd ~ lfm_outliers_out + site + year_month + spp + (1|individual), data = both_df1.remef)
+anova(l.gd.mR, l.gd.mR.wom)
+
+# Max. Temp.
+l.temp_max.mR
+l.temp_max.mR.wom <- lmer(temp_max ~ lfm_outliers_out + site + year_month + spp + (1|individual), data = both_df1.remef)
+anova(l.temp_max.mR, l.temp_max.mR.wom)
+
+# Post-Flame glow
+l.pfg.mR
+l.pfg.mR.wom <- lmer(pfg ~ lfm_outliers_out + site + year_month + spp + (1|individual), data = both_df1.remef)
+anova(l.pfg.mR, l.pfg.mR.wom)
+
+# Time to first glow
+l.ttfg.mR
+l.ttfg.mR.wom <- lmer(ttfg ~ lfm_outliers_out + site + year_month + spp + (1|individual), data = both_df1.remef)
+anova(l.ttfg.mR, l.ttfg.mR.wom)
+
+# Glow to ignition
+l.gti.mR
+l.gti.mR.wom <- lmer(gti ~ lfm_outliers_out + site + year_month + spp + (1|individual), data = both_df1.remef)
+anova(l.gti.mR, l.gti.mR.wom)
+```
+
+
+### All plots together
+```{r}
+lfm.grob <- textGrob("Live Fuel Moisture (%)", 
+                   gp=gpar(fontface="bold", 
+                           col="black", 
+                           fontsize=20)) 
+
+plots <- ggarrange(tti.lfmR, fh.lfmR, fd.lfmR, gd.lfmR, temp_max.lfmR, pfg.lfmR, ttfg.lfmR, gti.lfmR, ncol = 3, nrow = 3, common.legend = TRUE)
+plots.grob <-ggarrange(arrangeGrob(plots, bottom = lfm.grob))
+
+ggsave("figures/lfm.vs.metrics.MEM.REMEF.jpg", height = 10, width = 10)
+```
+
+## Water Potential
+### TTI
+Remef:
+```{r}
+w.tti.mR <- lmer(tti ~ mpa*model + site + year_month + spp + (1|individual), data = both_df1.remef)
+
+both_df1.remef$r_tti.w <- remef(w.tti.mR, fix = c('site2', 'sitePainted Caves', 'siteSt. Marys', 'sppARPA', 'sppCEME'),  ran = "all", keep.intercept = FALSE)
+```
+
+Plot:
+```{r}
+tti.mpaR <- ggplot(data = both_df1.remef, aes(y = r_tti.w, x = mpa, color = Model)) +
+  geom_point(size = 1, alpha = 0.8, aes(shape = Species)) +
+  geom_smooth(method = "lm", se = F) +
+  labs(y ="Time to Ignition (effects removed)", x = "Water Potential", color = "Method", shape = "Species") +
+  theme_bw()+
+  scale_color_manual(values = c("grey70", "black")) +
+  theme(axis.title = element_text(face = 'bold'),
+        legend.title = element_text(face = 'bold', size = 14),
+        legend.text = element_text(face = 'italic', size = 12),
+        axis.title.x = element_blank(),
+        axis.text.x = element_blank())
+tti.mpaR
+```
+
+### FH
+Remef:
+```{r}
+w.fh.mR <- lmer(fh ~ mpa*model + site + year_month + spp + (1|individual), data = both_df1.remef)
+
+both_df1.remef$r_fh.w <- remef(w.fh.mR, fix = c('site2', 'sitePainted Caves', 'siteSt. Marys', 'sppARPA', 'sppCEME'),  ran = "all", keep.intercept = FALSE)
+```
+
+Plot:
+```{r}
+fh.mpaR <- ggplot(data = both_df1.remef, aes(y = r_fh.w, x = mpa, color = Model)) +
+  geom_point(size = 1, alpha = 0.8, aes(shape = Species)) +
+  geom_smooth(method = "lm", se = F) +
+  labs(y ="Flame Height (effects removed)", x = "Water Potential", color = "Method", shape = "Species") +
+  theme_bw()+
+  scale_color_manual(values = c("grey70", "black")) +
+  theme(axis.title = element_text(face = 'bold'),
+        legend.title = element_text(face = 'bold', size = 14),
+        legend.text = element_text(face = 'italic', size = 12),
+        axis.title.x = element_blank(),
+        axis.text.x = element_blank())
+fh.mpaR
+```
+
+### FD
+Remef:
+```{r}
+w.fd.mR <- lmer(fd ~ mpa*model + site + year_month + spp + (1|individual), data = both_df1.remef)
+
+both_df1.remef$r_fd.w <- remef(w.fd.mR, fix = c('site2', 'sitePainted Caves', 'siteSt. Marys', 'sppARPA', 'sppCEME'),  ran = "all", keep.intercept = FALSE)
+```
+
+Plot:
+```{r}
+fd.mpaR <- ggplot(data = both_df1.remef, aes(y = r_fd.w, x = mpa, color = Model)) +
+  geom_point(size = 1, alpha = 0.8, aes(shape = Species)) +
+  geom_smooth(method = 'lm', se = F) +
+  labs(y ="Flame Duration (effects removed)", x = "Water Potential", color = "Method", shape = "Species") +
+  theme_bw()+
+  scale_color_manual(values = c("grey70", "black")) +
+  theme(axis.title = element_text(face = 'bold'),
+        legend.title = element_text(face = 'bold', size = 14),
+        legend.text = element_text(face = 'italic', size = 12),
+        axis.title.x = element_blank(),
+        axis.text.x = element_blank())
+fd.mpaR
+```
+
+### GD
+Remef:
+```{r}
+w.gd.mR <- lmer(gd ~ mpa*model + site + year_month + spp + (1|individual), data = both_df1.remef)
+
+both_df1.remef$r_gd.w <- remef(w.gd.mR, fix = c('site2', 'sitePainted Caves', 'siteSt. Marys', 'sppARPA', 'sppCEME'),  ran = "all", keep.intercept = FALSE)
+```
+
+Plot:
+```{r}
+gd.mpaR <- ggplot(data = both_df1.remef, aes(y = r_gd.w, x = mpa, color = Model)) +
+  geom_point(size = 1, alpha = 0.8, aes(shape = Species)) +
+  geom_smooth(method = 'lm', se = F) +
+  labs(y ="Glow Duration (effects removed)", x = "Water Potential", color = "Method", shape = "Species") +
+  theme_bw()+
+  scale_color_manual(values = c("grey70", "black")) +
+  theme(axis.title = element_text(face = 'bold'),
+        legend.title = element_text(face = 'bold', size = 14), 
+        legend.text = element_text(face = 'italic', size = 12),
+        axis.title.x = element_blank(),
+        axis.text.x = element_blank())
+gd.mpaR
+```
+
+### Max. Temp.
+Remef:
+```{r}
+w.temp.mR <- lmer(temp_max ~ mpa*model + site + year_month + spp + (1|individual), data = both_df1.remef)
+
+both_df1.remef$r_temp.w <- remef(w.temp.mR, fix = c('site2', 'sitePainted Caves', 'siteSt. Marys', 'sppARPA', 'sppCEME'),  ran = "all", keep.intercept = FALSE)
+```
+
+Plot:
+```{r}
+temp.mpaR <- ggplot(data = both_df1.remef, aes(y = r_temp.w, x = mpa, color = Model)) +
+  geom_point(size = 1, alpha = 0.8, aes(shape = Species)) +
+  geom_smooth(method = 'lm', se = F) +
+  labs(y ="Max. Temp. (effects removed)", x = "Water Potential", color = "Method", shape = "Species") +
+  theme_bw()+
+  scale_color_manual(values = c("grey70", "black")) +
+  theme(axis.title = element_text(face = 'bold'),
+        legend.title = element_text(face = 'bold', size = 14), 
+        legend.text = element_text(face = 'italic', size = 12),
+        axis.title.x = element_blank(),
+        axis.text.x = element_blank())
+temp.mpaR
+```
+
+### PFG
+Remef:
+```{r}
+w.pfg.mR <- lmer(pfg ~ mpa*model + site + year_month + spp + (1|individual), data = both_df1.remef)
+
+both_df1.remef$r_pfg.w <- remef(w.pfg.mR, fix = c('site2', 'sitePainted Caves', 'siteSt. Marys', 'sppARPA', 'sppCEME'),  ran = "all", keep.intercept = FALSE)
+```
+
+Plot:
+```{r}
+pfg.mpaR <- ggplot(data = both_df1.remef, aes(y = r_pfg.w, x = mpa, color = Model)) +
+  geom_point(size = 1, alpha = 0.8, aes(shape = Species)) +
+  geom_smooth(method = 'lm', se = F) +
+  labs(y ="Post-Flame Glow (effects removed)", x = "Water Potential", color = "Method", shape = "Species") +
+  theme_bw()+
+  scale_color_manual(values = c("grey70", "black")) +
+  theme(axis.title = element_text(face = 'bold'),
+        legend.title = element_text(face = 'bold', size = 14),
+        legend.text = element_text(face = 'italic', size = 12),
+        axis.title.x = element_blank())
+pfg.mpaR
+```
+
+### TTFG
+Remef:
+```{r}
+w.ttfg.mR <- lmer(ttfg ~ mpa*model + site + year_month + spp + (1|individual), data = both_df1.remef)
+
+both_df1.remef$r_ttfg.w <- remef(w.ttfg.mR, fix = c('site2', 'sitePainted Caves', 'siteSt. Marys', 'sppARPA', 'sppCEME'),  ran = "all", keep.intercept = FALSE)
+```
+
+Plot:
+```{r}
+ttfg.mpaR <- ggplot(data = both_df1.remef, aes(y = r_ttfg.w, x = mpa, color = Model)) +
+  geom_point(size = 1, alpha = 0.8, aes(shape = Species)) +
+  geom_smooth(method = 'lm', se = F) +
+  labs(y ="Time to First Glow (effects removed)", x = "Water Potential", color = "Method", shape = "Species") +
+  theme_bw()+
+  scale_color_manual(values = c("grey70", "black")) +
+  theme(axis.title = element_text(face = 'bold'),
+        legend.title = element_text(face = 'bold', size = 14),
+        legend.text = element_text(face = 'italic', size = 12),
+        axis.title.x = element_blank())
+ttfg.mpaR
+```
+
+### GTI
+Remef:
+```{r}
+w.gti.mR <- lmer(gti ~ mpa*model + site + year_month + spp + (1|individual), data = both_df1.remef)
+
+both_df1.remef$r_gti.w <- remef(w.gti.mR, fix = c('site2', 'sitePainted Caves', 'siteSt. Marys', 'sppARPA', 'sppCEME'),  ran = "all", keep.intercept = FALSE)
+```
+
+Plot:
+```{r}
+gti.mpaR <- ggplot(data = both_df1.remef, aes(y = r_gti.w, x = mpa, color = Model)) +
+  geom_point(size = 1, alpha = 0.8, aes(shape = Species)) +
+  geom_smooth(method = 'lm', se = F) +
+  labs(y ="Glow to Ignition (scaled, centered)", x = "Water Potential", color = "Method", shape = "Species") +
+  theme_bw()+
+  scale_color_manual(values = c("grey70", "black")) +
+  theme(axis.title = element_text(face = 'bold'),
+        legend.title = element_text(face = 'bold', size = 14),
+        legend.text = element_text(face = 'italic', size = 12),
+        axis.title.x = element_blank())
+gti.mpaR
+```
+
+### Model Selection Table
+```{r}
+tab_model(w.tti.mR, w.fh.mR, w.fd.mR, w.gd.mR, w.temp.mR, w.pfg.mR, w.ttfg.mR, w.gti.mR,
+          show.reflvl = FALSE, 
+          digits = 3, 
+          show.aic = TRUE, 
+          show.ci = FALSE,
+          show.icc = FALSE, 
+         string.pred = "Coeffcient", 
+        dv.labels = c("TTI", "FH", "FD", "GD", "Max Temp.", "PFG", "TTFG", "GTI"),
+         title = "MPa vs. Flam Mixed Effects Models",
+  string.p = "P-Value", 
+  p.style = "stars")
+```
+
+### ANOVA
+```{r}
+# Time to Ignition
+w.tti.mR 
+w.tti.mR.wom <- lmer(tti ~ mpa + site + year_month + spp + (1|individual), data = both_df1.remef)
+anova(w.tti.mR, w.tti.mR.wom)
+
+# Flame height
+w.fh.mR
+w.fh.mR.wom <- lmer(fh ~ mpa + site + year_month + spp + (1|individual), data = both_df1.remef)
+anova(w.fh.mR, w.fh.mR.wom)
+
+# Flame duration
+w.fd.mR
+w.fd.mR.wom <- lmer(fd ~ mpa + site + year_month + spp + (1|individual), data = both_df1.remef)
+anova(w.fd.mR, w.fd.mR.wom)
+
+# Glow duration
+w.gd.mR
+w.gd.mR.wom <- lmer(gd ~ mpa + site + year_month + spp + (1|individual), data = both_df1.remef)
+anova(w.gd.mR, w.gd.mR.wom)
+
+# Max. Temp.
+w.temp.mR
+w.temp.mR.wom <- lmer(temp_max ~ mpa + site + year_month + spp + (1|individual), data = both_df1.remef)
+anova(w.temp.mR, w.temp.mR.wom)
+
+# Post-Flame glow
+w.pfg.mR
+w.pfg.mR.wom <- lmer(pfg ~ mpa + site + year_month + spp + (1|individual), data = both_df1.remef)
+anova(w.pfg.mR, w.pfg.mR.wom)
+
+# Time to first glow
+w.ttfg.mR
+w.ttfg.mR.wom <- lmer(ttfg ~ mpa + site + year_month + spp + (1|individual), data = both_df1.remef)
+anova(w.ttfg.mR, w.ttfg.mR.wom)
+
+# Glow to ignition
+w.gti.mR
+w.gti.mR.wom <- lmer(gti ~ mpa + site + year_month + spp + (1|individual), data = both_df1.remef)
+anova(w.gti.mR, w.gti.mR.wom)
+```
+
+### All plots together
+```{r}
+mpa.grob <- textGrob("Water Potential (MPa)", 
+                   gp=gpar(fontface="bold", 
+                           col="black", 
+                           fontsize=20)) 
+
+plots <- ggarrange(tti.mpaR, fh.mpaR, fd.mpaR, gd.mpaR, temp.mpaR, pfg.mpaR, ttfg.mpaR, gti.mpaR, ncol = 3, nrow = 3, common.legend = TRUE)
+plots.grob <-ggarrange(arrangeGrob(plots, bottom = mpa.grob))
+
+ggsave("figures/mpa.vs.metrics.MEM.REMEF.jpg", height = 10, width = 10)
+```
+
+## Dry Weight
+Scaling dry weight first
+```{r}
+both_df1.remef <- both_df1.remef %>% 
+  dplyr::group_by(model) %>% 
+  mutate(dw_scaled = scale(dw_flam_sample))
+```
+
+### TTI
+Remef:
+```{r}
+dw.tti.mR <- lmer(tti ~ dw_scaled*model + site + year_month + spp + (1|individual), data = both_df1.remef)
+
+both_df1.remef$r_tti.dw <- remef(dw.tti.mR, fix = c('site2', 'sitePainted Caves', 'siteSt. Marys', 'sppARPA', 'sppCEME'),  ran = "all", keep.intercept = FALSE)
+```
+
+Plot:
+```{r}
+tti.dwR <- ggplot(data = both_df1.remef, aes(y = r_tti.dw, x = dw_scaled, color = Model)) +
+  geom_point(size = 1, alpha = 0.8, aes(shape = Species)) +
+  geom_smooth(method = "lm", se = F) +
+  labs(y ="Time to Ignition (effects removed)", x = "Dry Weight (scaled)", color = "Method", shape = "Species") +
+  theme_bw()+
+  scale_color_manual(values = c("grey70", "black")) +
+  theme(axis.title = element_text(face = 'bold'),
+        legend.title = element_text(face = 'bold', size = 14),
+        legend.text = element_text(face = 'italic', size = 12),
+        axis.title.x = element_blank(),
+        axis.text.x = element_blank())
+tti.dwR
+```
+
+### FH
+Remef:
+```{r}
+dw.fh.mR <- lmer(fh ~ dw_scaled*model + site + year_month + spp + (1|individual), data = both_df1.remef)
+
+both_df1.remef$r_fh.dw <- remef(dw.fh.mR, fix = c('site2', 'sitePainted Caves', 'siteSt. Marys', 'sppARPA', 'sppCEME'),  ran = "all", keep.intercept = FALSE)
+```
+
+Plot:
+```{r}
+fh.dwR <- ggplot(data = both_df1.remef, aes(y = r_fh.dw, x = dw_scaled, color = Model)) +
+  geom_point(size = 1, alpha = 0.8, aes(shape = Species)) +
+  geom_smooth(method = "lm", se = F) +
+  labs(y ="Flame Height (effects removed)", x = "Dry Weight (scaled)", color = "Method", shape = "Species") +
+  theme_bw()+
+  scale_color_manual(values = c("grey70", "black")) +
+  theme(axis.title = element_text(face = 'bold'),
+        legend.title = element_text(face = 'bold', size = 14),
+        legend.text = element_text(face = 'italic', size = 12),
+        axis.title.x = element_blank(),
+        axis.text.x = element_blank())
+fh.dwR
+```
+
+### FD
+Remef:
+```{r}
+dw.fd.mR <- lmer(fd ~ dw_scaled*model + site + year_month + spp + (1|individual), data = both_df1.remef)
+
+both_df1.remef$r_fd.dw <- remef(dw.fd.mR, fix = c('site2', 'sitePainted Caves', 'siteSt. Marys', 'sppARPA', 'sppCEME'),  ran = "all", keep.intercept = FALSE)
+```
+
+Plot:
+```{r}
+fd.dwR <- ggplot(data = both_df1.remef, aes(y = r_fd.dw, x = dw_scaled, color = Model)) +
+  geom_point(size = 1, alpha = 0.8, aes(shape = Species)) +
+  geom_smooth(method = 'lm', se = F) +
+  labs(y ="Flame Duration (effects removed)", x = "Dry Weight (scaled)", color = "Method", shape = "Species") +
+  theme_bw()+
+  scale_color_manual(values = c("grey70", "black")) +
+  theme(axis.title = element_text(face = 'bold'),
+        legend.title = element_text(face = 'bold', size = 14),
+        legend.text = element_text(face = 'italic', size = 12),
+        axis.title.x = element_blank(),
+        axis.text.x = element_blank())
+fd.dwR
+```
+
+### GD
+Remef:
+```{r}
+dw.gd.mR <- lmer(gd ~ dw_scaled*model + site + year_month + spp + (1|individual), data = both_df1.remef)
+
+both_df1.remef$r_gd.dw <- remef(dw.gd.mR, fix = c('site2', 'sitePainted Caves', 'siteSt. Marys', 'sppARPA', 'sppCEME'),  ran = "all", keep.intercept = FALSE)
+```
+
+Plot:
+```{r}
+gd.dwR <- ggplot(data = both_df1.remef, aes(y = r_gd.dw, x = dw_scaled, color = Model)) +
+  geom_point(size = 1, alpha = 0.8, aes(shape = Species)) +
+  geom_smooth(method = 'lm', se = F) +
+  labs(y ="Glow Duration (effects removed)", x = "Dry Weight (scaled)", color = "Method", shape = "Species") +
+  theme_bw()+
+  scale_color_manual(values = c("grey70", "black")) +
+  theme(axis.title = element_text(face = 'bold'),
+        legend.title = element_text(face = 'bold', size = 14), 
+        legend.text = element_text(face = 'italic', size = 12),
+        axis.title.x = element_blank(),
+        axis.text.x = element_blank())
+gd.dwR
+```
+
+### Max. Temp.
+Remef:
+```{r}
+dw.temp.mR <- lmer(temp_max ~ dw_scaled*model + site + year_month + spp + (1|individual), data = both_df1.remef)
+
+both_df1.remef$r_temp.dw <- remef(dw.temp.mR, fix = c('site2', 'sitePainted Caves', 'siteSt. Marys', 'sppARPA', 'sppCEME'),  ran = "all", keep.intercept = FALSE)
+```
+
+Plot:
+```{r}
+temp.dwR <- ggplot(data = both_df1.remef, aes(y = r_temp.dw, x = dw_scaled, color = Model)) +
+  geom_point(size = 1, alpha = 0.8, aes(shape = Species)) +
+  geom_smooth(method = 'lm', se = F) +
+  labs(y ="Max. Temp. (effects removed)", x = "Dry Weight (scaled)", color = "Method", shape = "Species") +
+  theme_bw()+
+  scale_color_manual(values = c("grey70", "black")) +
+  theme(axis.title = element_text(face = 'bold'),
+        legend.title = element_text(face = 'bold', size = 14), 
+        legend.text = element_text(face = 'italic', size = 12),
+        axis.title.x = element_blank(),
+        axis.text.x = element_blank())
+temp.dwR
+```
+
+### PFG
+Remef:
+```{r}
+dw.pfg.mR <- lmer(pfg ~ dw_scaled*model + site + year_month + spp + (1|individual), data = both_df1.remef)
+
+both_df1.remef$r_pfg.dw <- remef(dw.pfg.mR, fix = c('site2', 'sitePainted Caves', 'siteSt. Marys', 'sppARPA', 'sppCEME'),  ran = "all", keep.intercept = FALSE)
+```
+
+Plot:
+```{r}
+pfg.dwR <- ggplot(data = both_df1.remef, aes(y = r_pfg.dw, x = dw_scaled, color = Model)) +
+  geom_point(size = 1, alpha = 0.8, aes(shape = Species)) +
+  geom_smooth(method = 'lm', se = F) +
+  labs(y ="Post-Flame Glow (effects removed)", x = "Dry Weight (scaled)", color = "Method", shape = "Species") +
+  theme_bw()+
+  scale_color_manual(values = c("grey70", "black")) +
+  theme(axis.title = element_text(face = 'bold'),
+        legend.title = element_text(face = 'bold', size = 14),
+        legend.text = element_text(face = 'italic', size = 12),
+        axis.title.x = element_blank())
+pfg.dwR
+```
+
+### TTFG
+Remef:
+```{r}
+dw.ttfg.mR <- lmer(ttfg ~ dw_scaled*model + site + year_month + spp + (1|individual), data = both_df1.remef)
+
+both_df1.remef$r_ttfg.dw <- remef(dw.ttfg.mR, fix = c('site2', 'sitePainted Caves', 'siteSt. Marys', 'sppARPA', 'sppCEME'),  ran = "all", keep.intercept = FALSE)
+```
+
+Plot:
+```{r}
+ttfg.dwR <- ggplot(data = both_df1.remef, aes(y = r_ttfg.dw, x = dw_scaled, color = Model)) +
+  geom_point(size = 1, alpha = 0.8, aes(shape = Species)) +
+  geom_smooth(method = 'lm', se = F) +
+  labs(y ="Time to First Glow (effects removed)", x = "Dry Weight (scaled)", color = "Method", shape = "Species") +
+  theme_bw()+
+  scale_color_manual(values = c("grey70", "black")) +
+  theme(axis.title = element_text(face = 'bold'),
+        legend.title = element_text(face = 'bold', size = 14),
+        legend.text = element_text(face = 'italic', size = 12),
+        axis.title.x = element_blank())
+ttfg.dwR
+```
+
+### GTI
+Remef:
+```{r}
+dw.gti.mR <- lmer(gti ~ dw_scaled*model + site + year_month + spp + (1|individual), data = both_df1.remef)
+
+both_df1.remef$r_gti.dw <- remef(dw.gti.mR, fix = c('site2', 'sitePainted Caves', 'siteSt. Marys', 'sppARPA', 'sppCEME'),  ran = "all", keep.intercept = FALSE)
+```
+
+Plot:
+```{r}
+gti.dwR <- ggplot(data = both_df1.remef, aes(y = r_gti.dw, x = dw_scaled, color = Model)) +
+  geom_point(size = 1, alpha = 0.8, aes(shape = Species)) +
+  geom_smooth(method = 'lm', se = F) +
+  labs(y ="Glow to Ignition (scaled, centered)", x = "Dry Weight (scaled)", color = "Method", shape = "Species") +
+  theme_bw()+
+  scale_color_manual(values = c("grey70", "black")) +
+  theme(axis.title = element_text(face = 'bold'),
+        legend.title = element_text(face = 'bold', size = 14),
+        legend.text = element_text(face = 'italic', size = 12),
+        axis.title.x = element_blank())
+gti.dwR
+```
+### Model Selection Table
+```{r}
+tab_model(dw.tti.mR, dw.fh.mR, dw.fd.mR, dw.gd.mR, dw.temp.mR, dw.pfg.mR, dw.ttfg.mR, dw.gti.mR,
+          show.reflvl = FALSE, 
+          digits = 3, 
+          show.aic = TRUE, 
+          show.ci = FALSE,
+          show.icc = FALSE, 
+         string.pred = "Coeffcient", 
+        dv.labels = c("TTI", "FH", "FD", "GD", "Max Temp.", "PFG", "TTFG", "GTI"),
+         title = "DW vs. Flam Mixed Effects Models",
+  string.p = "P-Value", 
+  p.style = "stars")
+```
+
+
+### ANOVA
+```{r}
+# Time to Ignition
+dw.tti.mR 
+dw.tti.mR.wom <- lmer(tti ~ dw_scaled + site + year_month + spp + (1|individual), data = both_df1.remef)
+anova(dw.tti.mR, dw.tti.mR.wom)
+
+# Flame height
+dw.fh.mR
+dw.fh.mR.wom <- lmer(fh ~ dw_scaled + site + year_month + spp + (1|individual), data = both_df1.remef)
+anova(dw.fh.mR, dw.fh.mR.wom)
+
+# Flame duration
+dw.fd.mR
+dw.fd.mR.wom <- lmer(fd ~ dw_scaled + site + year_month + spp + (1|individual), data = both_df1.remef)
+anova(dw.fd.mR, dw.fd.mR.wom)
+
+# Glow duration
+dw.gd.mR
+dw.gd.mR.wom <- lmer(gd ~ dw_scaled + site + year_month + spp + (1|individual), data = both_df1.remef)
+anova(dw.gd.mR, dw.gd.mR.wom)
+
+# Max. Temp.
+dw.temp.mR
+dw.temp.mR.wom <- lmer(temp_max ~ dw_scaled + site + year_month + spp + (1|individual), data = both_df1.remef)
+anova(dw.temp.mR, dw.temp.mR.wom)
+
+# Post-Flame glow
+dw.pfg.mR
+dw.pfg.mR.wom <- lmer(pfg ~ dw_scaled + site + year_month + spp + (1|individual), data = both_df1.remef)
+anova(dw.pfg.mR, dw.pfg.mR.wom)
+
+# Time to first glow
+dw.ttfg.mR
+dw.ttfg.mR.wom <- lmer(ttfg ~ dw_scaled + site + year_month + spp + (1|individual), data = both_df1.remef)
+anova(dw.ttfg.mR, dw.ttfg.mR.wom)
+
+# Glow to ignition
+dw.gti.mR
+dw.gti.mR.wom <- lmer(gti ~ dw_scaled + site + year_month + spp + (1|individual), data = both_df1.remef)
+anova(dw.gti.mR, dw.gti.mR.wom)
+```
+
+### All plots together
+```{r}
+dw.grob <- textGrob("Dry Weight (scaled)", 
+                   gp=gpar(fontface="bold", 
+                           col="black", 
+                           fontsize=20)) 
+
+plots <- ggarrange(tti.dwR, fh.dwR, fd.dwR, gd.dwR, temp.dwR, pfg.dwR, ttfg.dwR, gti.dwR, ncol = 3, nrow = 3, common.legend = TRUE)
+plots.grob <-ggarrange(arrangeGrob(plots, bottom = dw.grob))
+
+ggsave("figures/dw.vs.metrics.MEM.REMEF.jpg", height = 10, width = 10)
+```
+
+## Using Top Models Identified in MEM Selection Split by Model
+### TTI
+Using MPa + DW*spp (w/ MPa as primary predictor)
+Remef:
+```{r}
+top.tti.mR <- lmer(tti ~ mpa*model + dw_scaled*spp + site + year_month + (1|individual), data = both_df1.remef)
+
+both_df1.remef$r_tti.top <- remef(top.tti.mR, fix = c('site2', 'sitePainted Caves', 'sppCECO', 'sppARPA', 'sppCEME', 'dw_scaled'),  ran = "all", keep.intercept = FALSE)
+```
+
+Plot:
+```{r}
+tti.topR <- ggplot(data = both_df1.remef, aes(y = r_tti.top, x = mpa, color = Model)) +
+  geom_point(size = 1, alpha = 0.8, aes(shape = Species)) +
+  geom_smooth(method = "lm", se = F) +
+  labs(y ="Time to Ignition (effects removed)", x = "Water Potential", color = "Method", shape = "Species") +
+  theme_bw()+
+  scale_color_manual(values = c("grey70", "black")) +
+  theme(axis.title = element_text(face = 'bold'),
+        legend.title = element_text(face = 'bold', size = 14),
+        legend.text = element_text(face = 'italic', size = 12))
+tti.topR
+```
+
+### FH
+Using DW x species
+Remef:
+```{r}
+top.fh.mR <- lmer(fh ~ dw_scaled*model + site + year_month + dw_scaled*spp + (1|individual), data = both_df1.remef)
+
+both_df1.remef$r_fh.top <- remef(top.fh.mR, fix = c('site2', 'sitePainted Caves', 'siteSt. Marys', 'sppARPA', 'sppCEME'),  ran = "all", keep.intercept = FALSE)
+```
+
+Plot:
+```{r}
+fh.topR <- ggplot(data = both_df1.remef, aes(y = r_fh.top, x = dw_scaled, color = Model)) +
+  geom_point(size = 1, alpha = 0.8, aes(shape = Species)) +
+  geom_smooth(method = "lm", se = F) +
+  labs(y ="Flame Height (effects removed)", x = "Dry Weight (scaled)", color = "Method", shape = "Species") +
+  theme_bw()+
+  scale_color_manual(values = c("grey70", "black")) +
+  theme(axis.title = element_text(face = 'bold'),
+        legend.title = element_text(face = 'bold', size = 14),
+        legend.text = element_text(face = 'italic', size = 12))
+fh.topR
+```
+
+### FD
+Using DW x species
+Remef:
+```{r}
+top.fd.mR <- lmer(fd ~ dw_scaled*model + site + year_month + dw_scaled*spp + (1|individual), data = both_df1.remef)
+
+both_df1.remef$r_fd.top <- remef(top.fd.mR, fix = c('site2', 'sitePainted Caves', 'siteSt. Marys', 'sppARPA', 'sppCEME'),  ran = "all", keep.intercept = FALSE)
+```
+
+Plot:
+```{r}
+fd.topR <- ggplot(data = both_df1.remef, aes(y = r_fd.top, x = dw_scaled, color = Model)) +
+  geom_point(size = 1, alpha = 0.8, aes(shape = Species)) +
+  geom_smooth(method = 'lm', se = F) +
+  labs(y ="Flame Duration (effects removed)", x = "Dry Weight (scaled)", color = "Method", shape = "Species") +
+  theme_bw()+
+  scale_color_manual(values = c("grey70", "black")) +
+  theme(axis.title = element_text(face = 'bold'),
+        legend.title = element_text(face = 'bold', size = 14),
+        legend.text = element_text(face = 'italic', size = 12))
+fd.topR
+```
+
+### GD
+Using mpa + lfm + dw*spp w/ dry weight as primary predictor
+Remef:
+```{r}
+top.gd.mR <- lmer(gd ~ dw_scaled*model + lfm + mpa + site + year_month + dw_scaled*spp + (1|individual), data = both_df1.remef)
+
+both_df1.remef$r_gd.top <- remef(top.gd.mR, fix = c('site2', 'sitePainted Caves', 'siteSt. Marys', 'sppARPA', 'sppCEME', 'mpa', 'lfm'),  ran = "all", keep.intercept = FALSE)
+```
+
+Plot:
+```{r}
+gd.topR <- ggplot(data = both_df1.remef, aes(y = r_gd.top, x = dw_scaled, color = Model)) +
+  geom_point(size = 1, alpha = 0.8, aes(shape = Species)) +
+  geom_smooth(method = 'lm', se = F) +
+  labs(y ="Glow Duration (effects removed)", x = "Dry Weight (scaled)", color = "Method", shape = "Species") +
+  theme_bw()+
+  scale_color_manual(values = c("grey70", "black")) +
+  theme(axis.title = element_text(face = 'bold'),
+        legend.title = element_text(face = 'bold', size = 14), 
+        legend.text = element_text(face = 'italic', size = 12))
+gd.topR
+```
+
+### Max. Temp.
+Using LFM + MPa + DW*spp w/ mpa as primary predictor
+Remef:
+```{r}
+top.temp.mR <- lmer(temp_max ~ mpa*model + lfm + site + year_month + dw_scaled*spp + (1|individual), data = both_df1.remef)
+
+both_df1.remef$r_temp.top <- remef(top.temp.mR, fix = c('site2', 'sitePainted Caves', 'siteSt. Marys', 'sppARPA', 'sppCEME', 'lfm', 'dw_scaled'),  ran = "all", keep.intercept = FALSE)
+```
+
+Plot:
+```{r}
+temp.topR <- ggplot(data = both_df1.remef, aes(y = r_temp.top, x = mpa, color = Model)) +
+  geom_point(size = 1, alpha = 0.8, aes(shape = Species)) +
+  geom_smooth(method = 'lm', se = F) +
+  labs(y ="Max. Temp. (effects removed)", x = "Water Potential", color = "Method", shape = "Species") +
+  theme_bw()+
+  scale_color_manual(values = c("grey70", "black")) +
+  theme(axis.title = element_text(face = 'bold'),
+        legend.title = element_text(face = 'bold', size = 14), 
+        legend.text = element_text(face = 'italic', size = 12))
+temp.topR
+```
+
+### PFG
+Using MPa + DW*spp w/ DW as primary predictor
+Remef:
+```{r}
+top.pfg.mR <- lmer(pfg ~ dw_scaled*model + mpa + site + year_month + dw_scaled*spp + (1|individual), data = both_df1.remef)
+
+both_df1.remef$r_pfg.top <- remef(top.pfg.mR, fix = c('site2', 'sitePainted Caves', 'siteSt. Marys', 'sppARPA', 'sppCEME', 'mpa'),  ran = "all", keep.intercept = FALSE)
+```
+
+Plot:
+```{r}
+pfg.topR <- ggplot(data = both_df1.remef, aes(y = r_pfg.top, x = dw_scaled, color = Model)) +
+  geom_point(size = 1, alpha = 0.8, aes(shape = Species)) +
+  geom_smooth(method = 'lm', se = F) +
+  labs(y ="Post-Flame Glow (effects removed)", x = "Dry Weight (scaled)", color = "Method", shape = "Species") +
+  theme_bw()+
+  scale_color_manual(values = c("grey70", "black")) +
+  theme(axis.title = element_text(face = 'bold'),
+        legend.title = element_text(face = 'bold', size = 14),
+        legend.text = element_text(face = 'italic', size = 12))
+pfg.topR
+```
+
+### TTFG
+Major disagreement between two methods, so...
+
+Model selection:
+```{r}
+mpa <- lmer(ttfg ~ mpa*model + sample_wt + site + year_month + spp + (1|individual), data = both_df1.remef)
+dw <-  lmer(ttfg ~ dw_scaled*model + site + year_month + spp + (1|individual), data = both_df1.remef)
+lfm <-  lmer(ttfg ~ lfm*model + sample_wt + site + year_month + spp + (1|individual), data = both_df1.remef)
+MPA.lfm <-  lmer(ttfg ~ mpa*model + lfm + sample_wt + site + year_month + spp + (1|individual), data = both_df1.remef)
+LFM.mpa <-  lmer(ttfg ~ lfm*model + mpa + sample_wt + site + year_month + spp + (1|individual), data = both_df1.remef)
+DW.lfm <- lmer(ttfg ~ dw_scaled*model + lfm + site + year_month + spp + (1|individual), data = both_df1.remef)
+LFM.dw <- lmer(ttfg ~ lfm*model + dw_scaled + site + year_month + spp + (1|individual), data = both_df1.remef)
+DW.mpa <- lmer(ttfg ~ dw_scaled*model + mpa + site + year_month + spp + (1|individual), data = both_df1.remef)
+MPA.dw <- lmer(ttfg ~ mpa*model + dw_scaled + site + year_month + spp + (1|individual), data = both_df1.remef)
+LFM.mpa.dw <-  lmer(ttfg ~ lfm*model + mpa + dw_scaled + site + year_month + spp + (1|individual), data = both_df1.remef)
+MPA.lfm.dw <-  lmer(ttfg ~ mpa*model + lfm + dw_scaled + site + year_month + spp + (1|individual), data = both_df1.remef)
+DW.mpa.lfm <-  lmer(ttfg ~ dw_scaled*model + mpa + lfm + site + year_month + spp + (1|individual), data = both_df1.remef)
+# From the above models, mpa + dw performed the best. Going to see if adding mpa*spp interaction helps at all
+mpa.dw.spp <- lmer(ttfg ~ mpa*model + dw_scaled + site + year_month + mpa*spp + (1|individual), data = both_df1.remef)
+# Interaction term worsened model performance
+
+tab_model(mpa, dw, lfm, MPA.lfm, LFM.mpa, DW.lfm, LFM.dw, DW.mpa, MPA.dw, LFM.mpa.dw, MPA.lfm.dw, DW.mpa.lfm, mpa.dw.spp,
+          show.reflvl = FALSE, 
+          digits = 3, 
+          show.aic = TRUE, 
+          show.ci = FALSE,
+          show.icc = FALSE, 
+         string.pred = "Coeffcient", 
+        dv.labels = c("MPa", "DW", "LFM", "MPA and lfm", "LFM and mpa", "DW and lfm", "LFM and dw", "DW and mpa", "MPA and dw", "LFM, mpa and dw", "MPA, lfm and dw", "DW, lfm and mpa", "MPa x species + DW"),
+         title = "ttfg: Chooosing model for visualization",
+  string.p = "P-Value", 
+  p.style = "stars")
+```
+
+Using MPA and dw
+Remef:
+```{r}
+top.ttfg.mR <- lmer(ttfg ~ mpa*model + dw_scaled + site + year_month + spp + (1|individual), data = both_df1.remef)
+
+both_df1.remef$r_ttfg.top <- remef(top.ttfg.mR, fix = c('site2', 'sitePainted Caves', 'siteSt. Marys', 'sppARPA', 'sppCEME', 'dw_scaled'),  ran = "all", keep.intercept = FALSE)
+```
+
+Plot:
+```{r}
+ttfg.topR <- ggplot(data = both_df1.remef, aes(y = r_ttfg.top, x = mpa, color = Model)) +
+  geom_point(size = 1, alpha = 0.8, aes(shape = Species)) +
+  geom_smooth(method = 'lm', se = F) +
+  labs(y ="Time to First Glow (effects removed)", x = "Water Potential", color = "Method", shape = "Species") +
+  theme_bw()+
+  scale_color_manual(values = c("grey70", "black")) +
+  theme(axis.title = element_text(face = 'bold'),
+        legend.title = element_text(face = 'bold', size = 14),
+        legend.text = element_text(face = 'italic', size = 12))
+ttfg.topR
+```
+
+### GTI
+Major disagreement between two methods
+Model selection:
+```{r}
+mpa <- lmer(gti ~ mpa*model + sample_wt + site + year_month + spp + (1|individual), data = both_df1.remef)
+dw <-  lmer(gti ~ dw_scaled*model + site + year_month + spp + (1|individual), data = both_df1.remef)
+lfm <-  lmer(gti ~ lfm*model + sample_wt + site + year_month + spp + (1|individual), data = both_df1.remef)
+MPA.lfm <-  lmer(gti ~ mpa*model + lfm + sample_wt + site + year_month + spp + (1|individual), data = both_df1.remef)
+LFM.mpa <-  lmer(gti ~ lfm*model + mpa + sample_wt + site + year_month + spp + (1|individual), data = both_df1.remef)
+DW.lfm <- lmer(gti ~ dw_scaled*model + lfm + site + year_month + spp + (1|individual), data = both_df1.remef)
+LFM.dw <- lmer(gti ~ lfm*model + dw_scaled + site + year_month + spp + (1|individual), data = both_df1.remef)
+DW.mpa <- lmer(gti ~ dw_scaled*model + mpa + site + year_month + spp + (1|individual), data = both_df1.remef)
+MPA.dw <- lmer(gti ~ mpa*model + dw_scaled + site + year_month + spp + (1|individual), data = both_df1.remef)
+LFM.mpa.dw <-  lmer(gti ~ lfm*model + mpa + dw_scaled + site + year_month + spp + (1|individual), data = both_df1.remef)
+MPA.lfm.dw <-  lmer(gti ~ mpa*model + lfm + dw_scaled + site + year_month + spp + (1|individual), data = both_df1.remef)
+DW.mpa.lfm <-  lmer(gti ~ dw_scaled*model + mpa + lfm + site + year_month + spp + (1|individual), data = both_df1.remef)
+# From the above models, DW + mpa performed the best. Going to see if adding dw*spp interaction helps at all
+dw.mpa.spp <- lmer(gti ~ dw_scaled*model + mpa + site + year_month + dw_scaled*spp + (1|individual), data = both_df1.remef)
+# Interaction term worsened model performance
+
+tab_model(mpa, dw, lfm, MPA.lfm, LFM.mpa, DW.lfm, LFM.dw, DW.mpa, MPA.dw, LFM.mpa.dw, MPA.lfm.dw, DW.mpa.lfm, dw.mpa.spp,
+          show.reflvl = FALSE, 
+          digits = 3, 
+          show.aic = TRUE, 
+          show.ci = FALSE,
+          show.icc = FALSE, 
+         string.pred = "Coeffcient", 
+        dv.labels = c("MPa", "DW", "LFM", "MPA and lfm", "LFM and mpa", "DW and lfm", "LFM and dw", "DW and mpa", "MPA and dw", "LFM, mpa and dw", "MPA, lfm and dw", "DW, lfm and mpa", "DW x species + mpa"),
+         title = "gti: Chooosing model for visualization",
+  string.p = "P-Value", 
+  p.style = "stars")
+```
+
+Using DW + mpa
+Remef:
+```{r}
+top.gti.mR <- lmer(gti ~ dw_scaled*model + mpa + site + year_month + spp + (1|individual), data = both_df1.remef)
+
+both_df1.remef$r_gti.top <- remef(top.gti.mR, fix = c('site2', 'sitePainted Caves', 'siteSt. Marys', 'sppARPA', 'sppCEME', 'mpa'),  ran = "all", keep.intercept = FALSE)
+```
+
+Plot:
+```{r}
+gti.topR <- ggplot(data = both_df1.remef, aes(y = r_gti.top, x = dw_scaled, color = Model)) +
+  geom_point(size = 1, alpha = 0.8, aes(shape = Species)) +
+  geom_smooth(method = 'lm', se = F) +
+  labs(y ="Glow to Ignition (scaled, centered)", x = "Dry Weight (scaled)", color = "Method", shape = "Species") +
+  theme_bw()+
+  scale_color_manual(values = c("grey70", "black")) +
+  theme(axis.title = element_text(face = 'bold'),
+        legend.title = element_text(face = 'bold', size = 14),
+        legend.text = element_text(face = 'italic', size = 12))
+gti.topR
+```
+
+
+### All plots together
+```{r}
+plots <- ggarrange(tti.topR, fh.topR, fd.topR, gd.topR, temp.topR, pfg.topR, ttfg.topR, gti.topR, ncol = 3, nrow = 3, common.legend = TRUE)
+plots
+
+ggsave("figures/hydration.vs.metrics.MEM.split.selection.remef.jpg", height = 10, width = 10)
+```
+
+
+## Using Top Models: Completing Another Set of MEM Selection
+### TTI
+Model selection:
+```{r}
+mpa <- lmer(tti ~ mpa*model + sample_wt + site + year_month + spp + (1|individual), data = both_df1.remef)
+dw <-  lmer(tti ~ dw_scaled*model + site + year_month + spp + (1|individual), data = both_df1.remef)
+lfm <-  lmer(tti ~ lfm*model + sample_wt + site + year_month + spp + (1|individual), data = both_df1.remef)
+MPA.lfm <-  lmer(tti ~ mpa*model + lfm + sample_wt + site + year_month + spp + (1|individual), data = both_df1.remef)
+LFM.mpa <-  lmer(tti ~ lfm*model + mpa + sample_wt + site + year_month + spp + (1|individual), data = both_df1.remef)
+DW.lfm <- lmer(tti ~ dw_scaled*model + lfm + site + year_month + spp + (1|individual), data = both_df1.remef)
+LFM.dw <- lmer(tti ~ lfm*model + dw_scaled + site + year_month + spp + (1|individual), data = both_df1.remef)
+DW.mpa <- lmer(tti ~ dw_scaled*model + mpa + site + year_month + spp + (1|individual), data = both_df1.remef)
+MPA.dw <- lmer(tti ~ mpa*model + dw_scaled + site + year_month + spp + (1|individual), data = both_df1.remef)
+LFM.mpa.dw <-  lmer(tti ~ lfm*model + mpa + dw_scaled + site + year_month + spp + (1|individual), data = both_df1.remef)
+MPA.lfm.dw <-  lmer(tti ~ mpa*model + lfm + dw_scaled + site + year_month + spp + (1|individual), data = both_df1.remef)
+DW.mpa.lfm <-  lmer(tti ~ dw_scaled*model + mpa + lfm + site + year_month + spp + (1|individual), data = both_df1.remef)
+# From the above models, mpa performed the best. Going to see if adding mpa*spp interaction helps at all
+mpa.spp <- lmer(tti ~ mpa*model + sample_wt + site + year_month + mpa*spp + (1|individual), data = both_df1.remef)
+# Interaction term worsened model performance
+
+tab_model(mpa, dw, lfm, MPA.lfm, LFM.mpa, DW.lfm, LFM.dw, DW.mpa, MPA.dw, LFM.mpa.dw, MPA.lfm.dw, DW.mpa.lfm, mpa.spp,
+          show.reflvl = FALSE, 
+          digits = 3, 
+          show.aic = TRUE, 
+          show.ci = FALSE,
+          show.icc = FALSE, 
+         string.pred = "Coeffcient", 
+        dv.labels = c("MPa", "DW", "LFM", "MPA and lfm", "LFM and mpa", "DW and lfm", "LFM and dw", "DW and mpa", "MPA and dw", "LFM, mpa and dw", "MPA, lfm and dw", "DW, lfm and mpa", "MPa x species"),
+         title = "tti: Chooosing model for visualization",
+  string.p = "P-Value", 
+  p.style = "stars")
+```
+
+Using MPa
+Remef:
+```{r}
+top2.tti.mR <- lmer(tti ~ mpa*model + sample_wt + site + year_month + spp + (1|individual), data = both_df1.remef)
+
+both_df1.remef$r_tti.top2 <- remef(top2.tti.mR, fix = c('site2', 'sitePainted Caves', 'siteSt. Marys', 'sppARPA', 'sppCEME', 'sample_wt'),  ran = "all", keep.intercept = FALSE)
+```
+
+Plot:
+```{r}
+tti.top2R <- ggplot(data = both_df1.remef, aes(y = r_tti.top2, x = mpa, color = Model)) +
+  geom_point(size = 1, alpha = 0.8, aes(shape = Species)) +
+  geom_smooth(method = "lm", se = F) +
+  labs(y ="Time to Ignition", x = "Water Potential (MPa)", color = "Method", shape = "Species") +
+  theme_bw()+
+  scale_color_manual(values = c("grey70", "black")) +
+  annotate('text', x = -9.5, y = 1.73, label = 'a', size = 11) +
+  guides(color = guide_legend(override.aes = list(size = 1.2))) +
+  guides(shape = guide_legend(override.aes = list(size = 2))) +
+  theme(axis.title = element_text(face = 'bold', size = 14),
+        legend.title = element_text(face = 'bold', size = 16),
+        legend.text = element_text(face = 'italic', size = 14),
+        axis.title.x = element_blank())
+tti.top2R
+```
+
+### FH
+Model selection:
+```{r}
+mpa <- lmer(fh ~ mpa*model + sample_wt + site + year_month + spp + (1|individual), data = both_df1.remef)
+dw <-  lmer(fh ~ dw_scaled*model + site + year_month + spp + (1|individual), data = both_df1.remef)
+lfm <-  lmer(fh ~ lfm*model + sample_wt + site + year_month + spp + (1|individual), data = both_df1.remef)
+MPA.lfm <-  lmer(fh ~ mpa*model + lfm + sample_wt + site + year_month + spp + (1|individual), data = both_df1.remef)
+LFM.mpa <-  lmer(fh ~ lfm*model + mpa + sample_wt + site + year_month + spp + (1|individual), data = both_df1.remef)
+DW.lfm <- lmer(fh ~ dw_scaled*model + lfm + site + year_month + spp + (1|individual), data = both_df1.remef)
+LFM.dw <- lmer(fh ~ lfm*model + dw_scaled + site + year_month + spp + (1|individual), data = both_df1.remef)
+DW.mpa <- lmer(fh ~ dw_scaled*model + mpa + site + year_month + spp + (1|individual), data = both_df1.remef)
+MPA.dw <- lmer(fh ~ mpa*model + dw_scaled + site + year_month + spp + (1|individual), data = both_df1.remef)
+LFM.mpa.dw <-  lmer(fh ~ lfm*model + mpa + dw_scaled + site + year_month + spp + (1|individual), data = both_df1.remef)
+MPA.lfm.dw <-  lmer(fh ~ mpa*model + lfm + dw_scaled + site + year_month + spp + (1|individual), data = both_df1.remef)
+DW.mpa.lfm <-  lmer(fh ~ dw_scaled*model + mpa + lfm + site + year_month + spp + (1|individual), data = both_df1.remef)
+# From the above models, dw performed the best. Going to see if adding mpa*spp interaction helps at all
+dw.spp <- lmer(fh ~ dw_scaled*model + site + year_month + mpa*spp + (1|individual), data = both_df1.remef)
+# Interaction term worsened model performance
+
+tab_model(mpa, dw, lfm, MPA.lfm, LFM.mpa, DW.lfm, LFM.dw, DW.mpa, MPA.dw, LFM.mpa.dw, MPA.lfm.dw, DW.mpa.lfm, dw.spp,
+          show.reflvl = FALSE, 
+          digits = 3, 
+          show.aic = TRUE, 
+          show.ci = FALSE,
+          show.icc = FALSE, 
+         string.pred = "Coeffcient", 
+        dv.labels = c("MPa", "DW", "LFM", "MPA and lfm", "LFM and mpa", "DW and lfm", "LFM and dw", "DW and mpa", "MPA and dw", "LFM, mpa and dw", "MPA, lfm and dw", "DW, lfm and mpa", "DW x species"),
+         title = "fh: Chooosing model for visualization",
+  string.p = "P-Value", 
+  p.style = "stars")
+```
+
+Using DW
+Remef:
+```{r}
+top2.fh.mR <- lmer(fh ~ dw_scaled*model + site + year_month + spp + (1|individual), data = both_df1.remef)
+
+both_df1.remef$r_fh.top2 <- remef(top2.fh.mR, fix = c('site2', 'sitePainted Caves', 'siteSt. Marys', 'sppARPA', 'sppCEME'),  ran = "all", keep.intercept = FALSE)
+```
+
+Plot:
+```{r}
+fh.top2R <- ggplot(data = both_df1.remef, aes(y = r_fh.top2, x = dw_scaled, color = Model)) +
+  geom_point(size = 1, alpha = 0.8, aes(shape = Species)) +
+  geom_smooth(method = "lm", se = F) +
+  labs(y ="Flame Height", x = "Dry Weight (scaled)", color = "Method", shape = "Species") +
+  theme_bw()+
+  scale_color_manual(values = c("grey70", "black")) +
+  annotate('text', x = -2.7, y = 2.89, label = 'e', size = 11) +
+  theme(axis.title = element_text(face = 'bold', size = 14),
+        legend.title = element_text(face = 'bold', size = 14),
+        legend.text = element_text(face = 'italic', size = 12),
+        legend.position = 'none',
+        axis.title.x = element_blank())
+fh.top2R
+```
+
+### FD
+Model selection:
+```{r}
+mpa <- lmer(fd ~ mpa*model + sample_wt + site + year_month + spp + (1|individual), data = both_df1.remef)
+dw <-  lmer(fd ~ dw_scaled*model + site + year_month + spp + (1|individual), data = both_df1.remef)
+lfm <-  lmer(fd ~ lfm*model + sample_wt + site + year_month + spp + (1|individual), data = both_df1.remef)
+MPA.lfm <-  lmer(fd ~ mpa*model + lfm + sample_wt + site + year_month + spp + (1|individual), data = both_df1.remef)
+LFM.mpa <-  lmer(fd ~ lfm*model + mpa + sample_wt + site + year_month + spp + (1|individual), data = both_df1.remef)
+DW.lfm <- lmer(fd ~ dw_scaled*model + lfm + site + year_month + spp + (1|individual), data = both_df1.remef)
+LFM.dw <- lmer(fd ~ lfm*model + dw_scaled + site + year_month + spp + (1|individual), data = both_df1.remef)
+DW.mpa <- lmer(fd ~ dw_scaled*model + mpa + site + year_month + spp + (1|individual), data = both_df1.remef)
+MPA.dw <- lmer(fd ~ mpa*model + dw_scaled + site + year_month + spp + (1|individual), data = both_df1.remef)
+LFM.mpa.dw <-  lmer(fd ~ lfm*model + mpa + dw_scaled + site + year_month + spp + (1|individual), data = both_df1.remef)
+MPA.lfm.dw <-  lmer(fd ~ mpa*model + lfm + dw_scaled + site + year_month + spp + (1|individual), data = both_df1.remef)
+DW.mpa.lfm <-  lmer(fd ~ dw_scaled*model + mpa + lfm + site + year_month + spp + (1|individual), data = both_df1.remef)
+# From the above models, dw performed the best. Going to see if adding dw*spp interaction helps at all
+dw.spp <- lmer(fd ~ dw_scaled*model + site + year_month + dw_scaled*spp + (1|individual), data = both_df1.remef)
+# Interaction term worsened model performance
+
+tab_model(mpa, dw, lfm, MPA.lfm, LFM.mpa, DW.lfm, LFM.dw, DW.mpa, MPA.dw, LFM.mpa.dw, MPA.lfm.dw, DW.mpa.lfm, dw.spp,
+          show.reflvl = FALSE, 
+          digits = 3, 
+          show.aic = TRUE, 
+          show.ci = FALSE,
+          show.icc = FALSE, 
+         string.pred = "Coeffcient", 
+        dv.labels = c("MPa", "DW", "LFM", "MPA and lfm", "LFM and mpa", "DW and lfm", "LFM and dw", "DW and mpa", "MPA and dw", "LFM, mpa and dw", "MPA, lfm and dw", "DW, lfm and mpa", "DW x species"),
+         title = "fd: Chooosing model for visualization",
+  string.p = "P-Value", 
+  p.style = "stars")
+```
+
+Using DW
+Remef:
+```{r}
+top2.fd.mR <- lmer(fd ~ dw_scaled*model + site + year_month + spp + (1|individual), data = both_df1.remef)
+
+both_df1.remef$r_fd.top2 <- remef(top2.fd.mR, fix = c('site2', 'sitePainted Caves', 'siteSt. Marys', 'sppARPA', 'sppCEME'),  ran = "all", keep.intercept = FALSE)
+```
+
+Plot:
+```{r}
+fd.top2R <- ggplot(data = both_df1.remef, aes(y = r_fd.top2, x = dw_scaled, color = Model)) +
+  geom_point(size = 1, alpha = 0.8, aes(shape = Species)) +
+  geom_smooth(method = 'lm', se = F) +
+  labs(y ="Flame Duration", x = "Dry Weight (scaled)", color = "Method", shape = "Species") +
+  theme_bw()+
+  scale_color_manual(values = c("grey70", "black")) +
+  annotate('text', x = -2.7, y = 3.29, label = 'f', size = 11) +
+  theme(axis.title = element_text(face = 'bold', size = 14),
+        legend.title = element_text(face = 'bold', size = 14),
+        legend.text = element_text(face = 'italic', size = 12),
+        legend.position = 'none',
+        axis.title.x = element_blank())
+fd.top2R
+```
+
+### GD
+Model selection:
+```{r}
+mpa <- lmer(gd ~ mpa*model + sample_wt + site + year_month + spp + (1|individual), data = both_df1.remef)
+dw <-  lmer(gd ~ dw_scaled*model + site + year_month + spp + (1|individual), data = both_df1.remef)
+lfm <-  lmer(gd ~ lfm*model + sample_wt + site + year_month + spp + (1|individual), data = both_df1.remef)
+MPA.lfm <-  lmer(gd ~ mpa*model + lfm + sample_wt + site + year_month + spp + (1|individual), data = both_df1.remef)
+LFM.mpa <-  lmer(gd ~ lfm*model + mpa + sample_wt + site + year_month + spp + (1|individual), data = both_df1.remef)
+DW.lfm <- lmer(gd ~ dw_scaled*model + lfm + site + year_month + spp + (1|individual), data = both_df1.remef)
+LFM.dw <- lmer(gd ~ lfm*model + dw_scaled + site + year_month + spp + (1|individual), data = both_df1.remef)
+DW.mpa <- lmer(gd ~ dw_scaled*model + mpa + site + year_month + spp + (1|individual), data = both_df1.remef)
+MPA.dw <- lmer(gd ~ mpa*model + dw_scaled + site + year_month + spp + (1|individual), data = both_df1.remef)
+LFM.mpa.dw <-  lmer(gd ~ lfm*model + mpa + dw_scaled + site + year_month + spp + (1|individual), data = both_df1.remef)
+MPA.lfm.dw <-  lmer(gd ~ mpa*model + lfm + dw_scaled + site + year_month + spp + (1|individual), data = both_df1.remef)
+DW.mpa.lfm <-  lmer(gd ~ dw_scaled*model + mpa + lfm + site + year_month + spp + (1|individual), data = both_df1.remef)
+# From the above models, DW performed the best. Going to see if adding DW*spp interaction helps at all
+int.spp <- lmer(gd ~ dw_scaled*model + site + year_month + dw_scaled*spp + (1|individual), data = both_df1.remef)
+# Interaction term worsened model performance
+
+tab_model(mpa, dw, lfm, MPA.lfm, LFM.mpa, DW.lfm, LFM.dw, DW.mpa, MPA.dw, LFM.mpa.dw, MPA.lfm.dw, DW.mpa.lfm, int.spp,
+          show.reflvl = FALSE, 
+          digits = 3, 
+          show.aic = TRUE, 
+          show.ci = FALSE,
+          show.icc = FALSE, 
+         string.pred = "Coeffcient", 
+        dv.labels = c("MPa", "DW", "LFM", "MPA and lfm", "LFM and mpa", "DW and lfm", "LFM and dw", "DW and mpa", "MPA and dw", "LFM, mpa and dw", "MPA, lfm and dw", "DW, lfm and mpa", "species interaction"),
+         title = "gd: Chooosing model for visualization",
+  string.p = "P-Value", 
+  p.style = "stars")
+```
+
+Using DW, mpa, lfm
+Remef:
+```{r}
+top2.gd.mR <- lmer(gd ~ dw_scaled*model + site + year_month + spp + (1|individual), data = both_df1.remef)
+
+both_df1.remef$r_gd.top2 <- remef(top2.gd.mR, fix = c('site2', 'sitePainted Caves', 'siteSt. Marys', 'sppARPA', 'sppCEME'),  ran = "all", keep.intercept = FALSE)
+```
+
+Plot:
+```{r}
+gd.top2R <- ggplot(data = both_df1.remef, aes(y = r_gd.top2, x = dw_scaled, color = Model)) +
+  geom_point(size = 1, alpha = 0.8, aes(shape = Species)) +
+  geom_smooth(method = 'lm', se = F) +
+  labs(y ="Glow Duration", x = "Dry Weight (scaled)", color = "Method", shape = "Species") +
+  theme_bw()+
+  scale_color_manual(values = c("grey70", "black")) +
+  annotate('text', x = -2.7, y = 3.3, label = 'g', size = 11) +
+  theme(axis.title = element_text(face = 'bold', size = 14),
+        legend.title = element_text(face = 'bold', size = 14), 
+        legend.text = element_text(face = 'italic', size = 12),
+        legend.position = 'none',
+        axis.title.x = element_blank())
+gd.top2R
+```
+
+### Max. Temp.
+Model selection:
+```{r}
+mpa <- lmer(temp_max ~ mpa*model + sample_wt + site + year_month + spp + (1|individual), data = both_df1.remef)
+dw <-  lmer(temp_max ~ dw_scaled*model + site + year_month + spp + (1|individual), data = both_df1.remef)
+lfm <-  lmer(temp_max ~ lfm*model + sample_wt + site + year_month + spp + (1|individual), data = both_df1.remef)
+MPA.lfm <-  lmer(temp_max ~ mpa*model + lfm + sample_wt + site + year_month + spp + (1|individual), data = both_df1.remef)
+LFM.mpa <-  lmer(temp_max ~ lfm*model + mpa + sample_wt + site + year_month + spp + (1|individual), data = both_df1.remef)
+DW.lfm <- lmer(temp_max ~ dw_scaled*model + lfm + site + year_month + spp + (1|individual), data = both_df1.remef)
+LFM.dw <- lmer(temp_max ~ lfm*model + dw_scaled + site + year_month + spp + (1|individual), data = both_df1.remef)
+DW.mpa <- lmer(temp_max ~ dw_scaled*model + mpa + site + year_month + spp + (1|individual), data = both_df1.remef)
+MPA.dw <- lmer(temp_max ~ mpa*model + dw_scaled + site + year_month + spp + (1|individual), data = both_df1.remef)
+LFM.mpa.dw <-  lmer(temp_max ~ lfm*model + mpa + dw_scaled + site + year_month + spp + (1|individual), data = both_df1.remef)
+MPA.lfm.dw <-  lmer(temp_max ~ mpa*model + lfm + dw_scaled + site + year_month + spp + (1|individual), data = both_df1.remef)
+DW.mpa.lfm <-  lmer(temp_max ~ dw_scaled*model + mpa + lfm + site + year_month + spp + (1|individual), data = both_df1.remef)
+# From the above models, mpa performed the best. Going to see if adding mpa*spp interaction helps at all
+mpa.spp <- lmer(temp_max ~ mpa*model + sample_wt + site + year_month + mpa*spp + (1|individual), data = both_df1.remef)
+# Interaction term worsened model performance
+
+tab_model(mpa, dw, lfm, MPA.lfm, LFM.mpa, DW.lfm, LFM.dw, DW.mpa, MPA.dw, LFM.mpa.dw, MPA.lfm.dw, DW.mpa.lfm, mpa.spp,
+          show.reflvl = FALSE, 
+          digits = 3, 
+          show.aic = TRUE, 
+          show.ci = FALSE,
+          show.icc = FALSE, 
+         string.pred = "Coeffcient", 
+        dv.labels = c("MPa", "DW", "LFM", "MPA and lfm", "LFM and mpa", "DW and lfm", "LFM and dw", "DW and mpa", "MPA and dw", "LFM, mpa and dw", "MPA, lfm and dw", "DW, lfm and mpa", "MPa x species"),
+         title = "Max Temp.: Chooosing model for visualization",
+  string.p = "P-Value", 
+  p.style = "stars")
+```
+
+Using MPa
+Remef:
+```{r}
+top2.temp.mR <- lmer(temp_max ~ mpa*model + sample_wt + site + year_month + spp + (1|individual), data = both_df1.remef)
+
+both_df1.remef$r_temp.top2 <- remef(top2.temp.mR, fix = c('site2', 'sitePainted Caves', 'siteSt. Marys', 'sppARPA', 'sppCEME', 'sample_wt'),  ran = "all", keep.intercept = FALSE)
+```
+
+Plot:
+```{r}
+temp.top2R <- ggplot(data = both_df1.remef, aes(y = r_temp.top2, x = mpa, color = Model)) +
+  geom_point(size = 1, alpha = 0.8, aes(shape = Species)) +
+  geom_smooth(method = 'lm', se = F) +
+  labs(y ="Maximum Temperature", x = "Water Potential (MPa)", color = "Method", shape = "Species") +
+  theme_bw()+
+  scale_color_manual(values = c("grey70", "black")) +
+  annotate('text', x = -9.5, y = 3.65, label = 'b', size = 11) +
+  guides(color = guide_legend(override.aes = list(size = 1.2))) +
+  guides(shape = guide_legend(override.aes = list(size = 2))) +
+  theme(axis.title = element_text(face = 'bold', size = 14),
+        legend.title = element_text(face = 'bold', size = 16), 
+        legend.text = element_text(face = 'italic', size = 14),
+        axis.title.x = element_blank())
+temp.top2R
+```
+
+### PFG
+Model selection:
+```{r}
+mpa <- lmer(pfg ~ mpa*model + sample_wt + site + year_month + spp + (1|individual), data = both_df1.remef)
+dw <-  lmer(pfg ~ dw_scaled*model + site + year_month + spp + (1|individual), data = both_df1.remef)
+lfm <-  lmer(pfg ~ lfm*model + sample_wt + site + year_month + spp + (1|individual), data = both_df1.remef)
+MPA.lfm <-  lmer(pfg ~ mpa*model + lfm + sample_wt + site + year_month + spp + (1|individual), data = both_df1.remef)
+LFM.mpa <-  lmer(pfg ~ lfm*model + mpa + sample_wt + site + year_month + spp + (1|individual), data = both_df1.remef)
+DW.lfm <- lmer(pfg ~ dw_scaled*model + lfm + site + year_month + spp + (1|individual), data = both_df1.remef)
+LFM.dw <- lmer(pfg ~ lfm*model + dw_scaled + site + year_month + spp + (1|individual), data = both_df1.remef)
+DW.mpa <- lmer(pfg ~ dw_scaled*model + mpa + site + year_month + spp + (1|individual), data = both_df1.remef)
+MPA.dw <- lmer(pfg ~ mpa*model + dw_scaled + site + year_month + spp + (1|individual), data = both_df1.remef)
+LFM.mpa.dw <-  lmer(pfg ~ lfm*model + mpa + dw_scaled + site + year_month + spp + (1|individual), data = both_df1.remef)
+MPA.lfm.dw <-  lmer(pfg ~ mpa*model + lfm + dw_scaled + site + year_month + spp + (1|individual), data = both_df1.remef)
+DW.mpa.lfm <-  lmer(pfg ~ dw_scaled*model + mpa + lfm + site + year_month + spp + (1|individual), data = both_df1.remef)
+# From the above models, mpa performed the best. Going to see if adding mpa*spp interaction helps at all
+dw.spp <- lmer(pfg ~ dw_scaled*model + site + year_month + dw_scaled*spp + (1|individual), data = both_df1.remef)
+# Interaction term worsened model performance
+
+tab_model(mpa, dw, lfm, MPA.lfm, LFM.mpa, DW.lfm, LFM.dw, DW.mpa, MPA.dw, LFM.mpa.dw, MPA.lfm.dw, DW.mpa.lfm, dw.spp,
+          show.reflvl = FALSE, 
+          digits = 3, 
+          show.aic = TRUE, 
+          show.ci = FALSE,
+          show.icc = FALSE, 
+         string.pred = "Coeffcient", 
+        dv.labels = c("MPa", "DW", "LFM", "MPA and lfm", "LFM and mpa", "DW and lfm", "LFM and dw", "DW and mpa", "MPA and dw", "LFM, mpa and dw", "MPA, lfm and dw", "DW, lfm and mpa", "DW x species"),
+         title = "pfg: Chooosing model for visualization",
+  string.p = "P-Value", 
+  p.style = "stars")
+```
+
+Using DW
+Remef:
+```{r}
+top2.pfg.mR <- lmer(pfg ~ dw_scaled*model + site + year_month + spp + (1|individual), data = both_df1.remef)
+
+both_df1.remef$r_pfg.top2 <- remef(top2.pfg.mR, fix = c('site2', 'sitePainted Caves', 'siteSt. Marys', 'sppARPA', 'sppCEME'),  ran = "all", keep.intercept = FALSE)
+```
+
+Plot:
+```{r}
+pfg.top2R <- ggplot(data = both_df1.remef, aes(y = r_pfg.top2, x = dw_scaled, color = Model)) +
+  geom_point(size = 1, alpha = 0.8, aes(shape = Species)) +
+  geom_smooth(method = 'lm', se = F) +
+  labs(y ="Post-Flame Glow", x = "Dry Weight (scaled)", color = "Method", shape = "Species") +
+  theme_bw()+
+  scale_color_manual(values = c("grey70", "black")) +
+  annotate('text', x = -2.7, y = 3.865, label = 'h', size = 11) +
+  theme(axis.title = element_text(face = 'bold', size = 14),
+        legend.title = element_text(face = 'bold', size = 14),
+        legend.text = element_text(face = 'italic', size = 12),
+        legend.position = 'none',
+        axis.title.x = element_blank())
+pfg.top2R
+```
+
+### TTFG
+Model selection:
+```{r}
+mpa <- lmer(ttfg ~ mpa*model + sample_wt + site + year_month + spp + (1|individual), data = both_df1.remef)
+dw <-  lmer(ttfg ~ dw_scaled*model + site + year_month + spp + (1|individual), data = both_df1.remef)
+lfm <-  lmer(ttfg ~ lfm*model + sample_wt + site + year_month + spp + (1|individual), data = both_df1.remef)
+MPA.lfm <-  lmer(ttfg ~ mpa*model + lfm + sample_wt + site + year_month + spp + (1|individual), data = both_df1.remef)
+LFM.mpa <-  lmer(ttfg ~ lfm*model + mpa + sample_wt + site + year_month + spp + (1|individual), data = both_df1.remef)
+DW.lfm <- lmer(ttfg ~ dw_scaled*model + lfm + site + year_month + spp + (1|individual), data = both_df1.remef)
+LFM.dw <- lmer(ttfg ~ lfm*model + dw_scaled + site + year_month + spp + (1|individual), data = both_df1.remef)
+DW.mpa <- lmer(ttfg ~ dw_scaled*model + mpa + site + year_month + spp + (1|individual), data = both_df1.remef)
+MPA.dw <- lmer(ttfg ~ mpa*model + dw_scaled + site + year_month + spp + (1|individual), data = both_df1.remef)
+LFM.mpa.dw <-  lmer(ttfg ~ lfm*model + mpa + dw_scaled + site + year_month + spp + (1|individual), data = both_df1.remef)
+MPA.lfm.dw <-  lmer(ttfg ~ mpa*model + lfm + dw_scaled + site + year_month + spp + (1|individual), data = both_df1.remef)
+DW.mpa.lfm <-  lmer(ttfg ~ dw_scaled*model + mpa + lfm + site + year_month + spp + (1|individual), data = both_df1.remef)
+# From the above models, mpa  performed the best. Going to see if adding mpa*spp interaction helps at all
+mpa.dw.spp <- lmer(ttfg ~ mpa*model + site + year_month + mpa*spp + (1|individual), data = both_df1.remef)
+# Interaction term worsened model performance
+
+tab_model(mpa, dw, lfm, MPA.lfm, LFM.mpa, DW.lfm, LFM.dw, DW.mpa, MPA.dw, LFM.mpa.dw, MPA.lfm.dw, DW.mpa.lfm, mpa.dw.spp,
+          show.reflvl = FALSE, 
+          digits = 3, 
+          show.aic = TRUE, 
+          show.ci = FALSE,
+          show.icc = FALSE, 
+         string.pred = "Coeffcient", 
+        dv.labels = c("MPa", "DW", "LFM", "MPA and lfm", "LFM and mpa", "DW and lfm", "LFM and dw", "DW and mpa", "MPA and dw", "LFM, mpa and dw", "MPA, lfm and dw", "DW, lfm and mpa", "MPa x species + DW"),
+         title = "ttfg: Chooosing model for visualization",
+  string.p = "P-Value", 
+  p.style = "stars")
+```
+
+Using MPA and dw
+Remef:
+```{r}
+top2.ttfg.mR <- lmer(ttfg ~ mpa*model + site + year_month + spp + (1|individual), data = both_df1.remef)
+
+both_df1.remef$r_ttfg.top2 <- remef(top2.ttfg.mR, fix = c('site2', 'sitePainted Caves', 'siteSt. Marys', 'sppARPA', 'sppCEME'),  ran = "all", keep.intercept = FALSE)
+```
+
+Plot:
+```{r}
+ttfg.top2R <- ggplot(data = both_df1.remef, aes(y = r_ttfg.top2, x = mpa, color = Model)) +
+  geom_point(size = 1, alpha = 0.8, aes(shape = Species)) +
+  geom_smooth(method = 'lm', se = F) +
+  labs(y ="Time to First Glow", x = "Water Potential (MPa)", color = "Method", shape = "Species") +
+  theme_bw()+
+  scale_color_manual(values = c("grey70", "black")) +
+  annotate('text', x = -9.5, y = 2.37, label = 'c', size = 11) +
+  guides(color = guide_legend(override.aes = list(size = 1.2))) +
+  guides(shape = guide_legend(override.aes = list(size = 2))) +
+  theme(axis.title = element_text(face = 'bold', size = 14),
+        legend.title = element_text(face = 'bold', size = 16),
+        legend.text = element_text(face = 'italic', size = 14),
+        axis.title.x = element_blank())
+ttfg.top2R
+```
+
+### GTI
+Model selection:
+```{r}
+mpa <- lmer(gti ~ mpa*model + sample_wt + site + year_month + spp + (1|individual), data = both_df1.remef)
+dw <-  lmer(gti ~ dw_scaled*model + site + year_month + spp + (1|individual), data = both_df1.remef)
+lfm <-  lmer(gti ~ lfm*model + sample_wt + site + year_month + spp + (1|individual), data = both_df1.remef)
+MPA.lfm <-  lmer(gti ~ mpa*model + lfm + sample_wt + site + year_month + spp + (1|individual), data = both_df1.remef)
+LFM.mpa <-  lmer(gti ~ lfm*model + mpa + sample_wt + site + year_month + spp + (1|individual), data = both_df1.remef)
+DW.lfm <- lmer(gti ~ dw_scaled*model + lfm + site + year_month + spp + (1|individual), data = both_df1.remef)
+LFM.dw <- lmer(gti ~ lfm*model + dw_scaled + site + year_month + spp + (1|individual), data = both_df1.remef)
+DW.mpa <- lmer(gti ~ dw_scaled*model + mpa + site + year_month + spp + (1|individual), data = both_df1.remef)
+MPA.dw <- lmer(gti ~ mpa*model + dw_scaled + site + year_month + spp + (1|individual), data = both_df1.remef)
+LFM.mpa.dw <-  lmer(gti ~ lfm*model + mpa + dw_scaled + site + year_month + spp + (1|individual), data = both_df1.remef)
+MPA.lfm.dw <-  lmer(gti ~ mpa*model + lfm + dw_scaled + site + year_month + spp + (1|individual), data = both_df1.remef)
+DW.mpa.lfm <-  lmer(gti ~ dw_scaled*model + mpa + lfm + site + year_month + spp + (1|individual), data = both_df1.remef)
+# From the above models, mpa performed the best. Going to see if adding dw*spp interaction helps at all
+mpa.spp <- lmer(gti ~ mpa*model + site + year_month + dw_scaled*spp + (1|individual), data = both_df1.remef)
+# Interaction term worsened model performance
+
+tab_model(mpa, dw, lfm, MPA.lfm, LFM.mpa, DW.lfm, LFM.dw, DW.mpa, MPA.dw, LFM.mpa.dw, MPA.lfm.dw, DW.mpa.lfm, mpa.spp,
+          show.reflvl = FALSE, 
+          digits = 3, 
+          show.aic = TRUE, 
+          show.ci = FALSE,
+          show.icc = FALSE, 
+         string.pred = "Coeffcient", 
+        dv.labels = c("MPa", "DW", "LFM", "MPA and lfm", "LFM and mpa", "DW and lfm", "LFM and dw", "DW and mpa", "MPA and dw", "LFM, mpa and dw", "MPA, lfm and dw", "DW, lfm and mpa", "mpa x species"),
+         title = "gti: Chooosing model for visualization",
+  string.p = "P-Value", 
+  p.style = "stars")
+```
+
+Using MPa
+Remef:
+```{r}
+top2.gti.mR <- lmer(gti ~ mpa*model + site + year_month + spp + (1|individual), data = both_df1.remef)
+
+both_df1.remef$r_gti.top2 <- remef(top2.gti.mR, fix = c('site2', 'sitePainted Caves', 'siteSt. Marys', 'sppARPA', 'sppCEME', 'mpa'),  ran = "all", keep.intercept = FALSE)
+```
+
+Plot:
+```{r}
+gti.top2R <- ggplot(data = both_df1.remef, aes(y = r_gti.top2, x = mpa, color = Model)) +
+  geom_point(size = 1, alpha = 0.8, aes(shape = Species)) +
+  geom_smooth(method = 'lm', se = F) +
+  labs(y ="Glow to Ignition", x = "Water Potential (MPa)", color = "Method", shape = "Species") +
+  theme_bw()+
+  scale_color_manual(values = c("grey70", "black")) +
+  guides(color = guide_legend(override.aes = list(size = 1.2))) +
+  guides(shape = guide_legend(override.aes = list(size = 2))) +
+  annotate('text', x = -9.5, y = 2.705, label = 'd', size = 11) +
+  theme(axis.title = element_text(face = 'bold', size = 14),
+        legend.title = element_text(face = 'bold', size = 16),
+        legend.text = element_text(face = 'italic', size = 14),
+        axis.title.x = element_blank())
+gti.top2R
+```
+
+### All plots together
+```{r}
+mpa.plots <- ggarrange(tti.top2R, temp.top2R, ttfg.top2R, gti.top2R, ncol = 4, nrow = 1, common.legend = TRUE)
+mpa.plots.grob <-ggarrange(arrangeGrob(mpa.plots, bottom = mpa.grob))
+
+dw.plots <- ggarrange(fh.top2R, fd.top2R, gd.top2R, pfg.top2R, ncol = 4, nrow = 1)
+dw.plots.grob <- ggarrange(arrangeGrob(dw.plots, bottom = dw.grob))
+
+plots <- ggarrange(mpa.plots.grob, dw.plots.grob, nrow = 2)
+plots
+
+ggsave("figures/hydration.vs.metrics.MEM.selection.r.jpg", height = 7, width = 13)
+```
+
+# ----------------------------
+
+# ANOVA
+Does including method improve models?
+```{r}
+# Time to ignition
+top2.tti.mR
+top2.tti.mR.wom <- lmer(tti ~ mpa + sample_wt + site + year_month + spp + (1|individual), data = both_df1.remef)
+anova(top2.tti.mR, top2.tti.mR.wom)
+
+# Flame height
+top2.fh.mR
+top2.fh.mR.wom <- lmer(fh ~ dw_scaled + site + year_month + spp + (1|individual), data = both_df1.remef)
+anova(top2.fh.mR, top2.fh.mR.wom)
+
+# Flame duration
+top2.fd.mR
+top2.fd.mR.wom <- lmer(fd ~ dw_scaled + site + year_month + spp + (1|individual), data = both_df1.remef)
+anova(top2.fd.mR, top2.fd.mR.wom)
+
+# Glow duration
+top2.gd.mR 
+top2.gd.mR.wom <- lmer(gd ~ dw_scaled + site + year_month + spp + (1|individual), data = both_df1.remef)
+anova(top2.gd.mR, top2.gd.mR.wom)
+
+# Maximum temperature
+top2.temp.mR
+top2.temp.mR.wom <- lmer(temp_max ~ mpa + sample_wt + site + year_month + spp + (1|individual), data = both_df1.remef)
+anova(top2.temp.mR, top2.temp.mR.wom)
+
+# Post-flame glow
+top2.pfg.mR
+top2.pfg.mR.wom <- lmer(pfg ~ dw_scaled + site + year_month + spp + (1|individual), data = both_df1.remef)
+anova(top2.pfg.mR, top2.pfg.mR.wom)
+
+# Time to first glow
+top2.ttfg.mR
+top2.ttfg.mR.wom <- lmer(ttfg ~ mpa + site + year_month + spp + (1|individual), data = both_df1.remef)
+anova(top2.ttfg.mR, top2.ttfg.mR.wom)
+
+# Glow to ignition
+top2.gti.mR
+top2.gti.mR.wom <- lmer(gti ~ mpa + site + year_month + spp + (1|individual), data = both_df1.remef)
+anova(top2.gti.mR, top2.gti.mR.wom)
+```
+

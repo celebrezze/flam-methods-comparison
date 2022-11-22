@@ -1,0 +1,1241 @@
+---
+title: "Linear MEM Selection - Analyzing Each Model Separately"
+author: "Joe Celebrezze"
+date: "8/2/2022"
+output: html_document
+---
+
+# Set-up
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(here)
+library(lme4) # mixed effects models
+library(sjPlot) #tab_model function
+library(performance) # colinearity check
+library(kableExtra) # for Kable table
+here = here::here
+select = dplyr::select
+col3 = hcl.colors(10, "YlOrRd", rev = TRUE) #color scale to use for consistency 
+```
+
+Reading in dataframe
+```{r}
+paired_methods_long <- read.csv(here("processed-data", "compiled-datasets", "METHODS", "bothm_bothl_manual_ignitions_in.csv"))
+
+epi.df <- paired_methods_long %>% 
+  filter(model == "EPI" & ignition == 1) # n = 96
+
+hp.df <- paired_methods_long %>% 
+  filter(model == "HP" & ignition == 1) # n = 83
+```
+# --------------------------------
+# MEM Model Selection
+
+## Covariates to Include
+- There are a lot of potential covariates to include in the models, but not all of them may be necessary, so first going to try a model selection where I whittle out which covariates to include and which ones to leave out.
+- Species MUST be in the model. Otherwise, let's look at site, sampling date (year_month), sample weight, and starting temperature
+- For now, I am going to do two rounds of model selection, one with water potential and one with live fuel moisture
+
+*Going to do model selections for the following flam. metrics: TTI, FH, FD, GD*
+
+## Covariate colinearity check
+```{r}
+max.mod <- lmer(tti ~ mpa + spp + start_temp + sample_wt + site + year_month + (1|individual), data = epi.df)
+multicollinearity(max.mod) # All good!
+```
+
+### Epiradiator
+#### TTI
+=== MPa ===
+```{r}
+max.mod <- lmer(tti ~ mpa + spp + start_temp + sample_wt + site + year_month + (1|individual), data = epi.df)
+m1 <- lmer(tti ~ mpa + spp + start_temp + sample_wt + site + (1|individual), data = epi.df)
+m2 <- lmer(tti ~ mpa + spp + start_temp + sample_wt + year_month + (1|individual), data = epi.df)
+m3 <- lmer(tti ~ mpa + spp + start_temp + site + year_month + (1|individual), data = epi.df)
+m4 <- lmer(tti ~ mpa + spp + sample_wt + site + year_month + (1|individual), data = epi.df)
+m5 <- lmer(tti ~ mpa + spp + start_temp + sample_wt + (1|individual), data = epi.df)
+m6 <- lmer(tti ~ mpa + spp + start_temp + site + (1|individual), data = epi.df)
+m7 <- lmer(tti ~ mpa + spp + start_temp + year_month + (1|individual), data = epi.df)
+m8 <- lmer(tti ~ mpa + spp + sample_wt + site + (1|individual), data = epi.df)
+m9 <- lmer(tti ~ mpa + spp + sample_wt + year_month + (1|individual), data = epi.df)
+m10 <- lmer(tti ~ mpa + spp + site + year_month + (1|individual), data = epi.df)
+m11 <- lmer(tti ~ mpa + spp + start_temp + (1|individual), data = epi.df)
+m12 <- lmer(tti ~ mpa + spp + sample_wt + (1|individual), data = epi.df)
+m13 <- lmer(tti ~ mpa + spp + site + (1|individual), data = epi.df)
+m14 <- lmer(tti ~ mpa + spp + year_month + (1|individual), data = epi.df)
+
+tab_model(max.mod, m1, m2, m3, m4, m5, m6, m7, m8, m9, m10, m11, m12, m13, m14,
+          show.reflvl = TRUE, 
+          digits = 3, 
+          show.aic = TRUE, 
+          show.ci = FALSE,
+          show.icc = FALSE, 
+         string.pred = "Coeffcient", 
+        dv.labels = c("Max. Model", "Model 1","Model 2", 
+                       "Model 3", "Model 4","Model 5",
+                       "Model 6", "Model 7", "Model 8", 
+                       "Model 9","Model 10", "Model 11",
+                       "Model 12", "Model 13", "Model 14"),
+         title = "covariate analysis: tti ~ mpa, EPI",
+  string.p = "P-Value", 
+  p.style = "stars")
+# best models: 8 & 4, followed by max. model and model 1
+# Sample weight and site seem important
+```
+
+=== LFM ===
+```{r}
+max.mod <- lmer(tti ~ lfm + spp + start_temp + sample_wt + site + year_month + (1|individual), data = epi.df)
+m1 <- lmer(tti ~ lfm + spp + start_temp + sample_wt + site + (1|individual), data = epi.df)
+m2 <- lmer(tti ~ lfm + spp + start_temp + sample_wt + year_month + (1|individual), data = epi.df)
+m3 <- lmer(tti ~ lfm + spp + start_temp + site + year_month + (1|individual), data = epi.df)
+m4 <- lmer(tti ~ lfm + spp + sample_wt + site + year_month + (1|individual), data = epi.df)
+m5 <- lmer(tti ~ lfm + spp + start_temp + sample_wt + (1|individual), data = epi.df)
+m6 <- lmer(tti ~ lfm + spp + start_temp + site + (1|individual), data = epi.df)
+m7 <- lmer(tti ~ lfm + spp + start_temp + year_month + (1|individual), data = epi.df)
+m8 <- lmer(tti ~ lfm + spp + sample_wt + site + (1|individual), data = epi.df)
+m9 <- lmer(tti ~ lfm + spp + sample_wt + year_month + (1|individual), data = epi.df)
+m10 <- lmer(tti ~ lfm + spp + site + year_month + (1|individual), data = epi.df)
+m11 <- lmer(tti ~ lfm + spp + start_temp + (1|individual), data = epi.df)
+m12 <- lmer(tti ~ lfm + spp + sample_wt + (1|individual), data = epi.df)
+m13 <- lmer(tti ~ lfm + spp + site + (1|individual), data = epi.df)
+m14 <- lmer(tti ~ lfm + spp + year_month + (1|individual), data = epi.df)
+
+tab_model(max.mod, m1, m2, m3, m4, m5, m6, m7, m8, m9, m10, m11, m12, m13, m14,
+          show.reflvl = TRUE, 
+          digits = 3, 
+          show.aic = TRUE, 
+          show.ci = FALSE,
+          show.icc = FALSE, 
+         string.pred = "Coeffcient", 
+        dv.labels = c("Max. Model", "Model 1","Model 2", 
+                       "Model 3", "Model 4","Model 5",
+                       "Model 6", "Model 7", "Model 8", 
+                       "Model 9","Model 10", "Model 11",
+                       "Model 12", "Model 13", "Model 14"),
+         title = "covariate analysis: tti ~ lfm, EPI",
+  string.p = "P-Value", 
+  p.style = "stars")
+
+# best models: 8 & 4, followed by max. model and model 1
+# Again, sample weight and site seem important
+```
+
+#### FD
+=== MPa ===
+```{r}
+max.mod <- lmer(fd ~ mpa + spp + start_temp + sample_wt + site + year_month + (1|individual), data = epi.df)
+m1 <- lmer(fd ~ mpa + spp + start_temp + sample_wt + site + (1|individual), data = epi.df)
+m2 <- lmer(fd ~ mpa + spp + start_temp + sample_wt + year_month + (1|individual), data = epi.df)
+m3 <- lmer(fd ~ mpa + spp + start_temp + site + year_month + (1|individual), data = epi.df)
+m4 <- lmer(fd ~ mpa + spp + sample_wt + site + year_month + (1|individual), data = epi.df)
+m5 <- lmer(fd ~ mpa + spp + start_temp + sample_wt + (1|individual), data = epi.df)
+m6 <- lmer(fd ~ mpa + spp + start_temp + site + (1|individual), data = epi.df)
+m7 <- lmer(fd ~ mpa + spp + start_temp + year_month + (1|individual), data = epi.df)
+m8 <- lmer(fd ~ mpa + spp + sample_wt + site + (1|individual), data = epi.df)
+m9 <- lmer(fd ~ mpa + spp + sample_wt + year_month + (1|individual), data = epi.df)
+m10 <- lmer(fd ~ mpa + spp + site + year_month + (1|individual), data = epi.df)
+m11 <- lmer(fd ~ mpa + spp + start_temp + (1|individual), data = epi.df)
+m12 <- lmer(fd ~ mpa + spp + sample_wt + (1|individual), data = epi.df)
+m13 <- lmer(fd ~ mpa + spp + site + (1|individual), data = epi.df)
+m14 <- lmer(fd ~ mpa + spp + year_month + (1|individual), data = epi.df)
+
+tab_model(max.mod, m1, m2, m3, m4, m5, m6, m7, m8, m9, m10, m11, m12, m13, m14,
+          show.reflvl = TRUE, 
+          digits = 3, 
+          show.aic = TRUE, 
+          show.ci = FALSE,
+          show.icc = FALSE, 
+         string.pred = "Coeffcient", 
+        dv.labels = c("Max. Model", "Model 1","Model 2", 
+                       "Model 3", "Model 4","Model 5",
+                       "Model 6", "Model 7", "Model 8", 
+                       "Model 9","Model 10", "Model 11",
+                       "Model 12", "Model 13", "Model 14"),
+         title = "covariate analysis: fd ~ mpa, EPI",
+  string.p = "P-Value", 
+  p.style = "stars")
+# best models: 8 & 4, followed by models 9 & 12
+# Sample weight and site seem important (sample weight especially important)
+```
+
+=== LFM ===
+```{r}
+max.mod <- lmer(fd ~ lfm + spp + start_temp + sample_wt + site + year_month + (1|individual), data = epi.df)
+m1 <- lmer(fd ~ lfm + spp + start_temp + sample_wt + site + (1|individual), data = epi.df)
+m2 <- lmer(fd ~ lfm + spp + start_temp + sample_wt + year_month + (1|individual), data = epi.df)
+m3 <- lmer(fd ~ lfm + spp + start_temp + site + year_month + (1|individual), data = epi.df)
+m4 <- lmer(fd ~ lfm + spp + sample_wt + site + year_month + (1|individual), data = epi.df)
+m5 <- lmer(fd ~ lfm + spp + start_temp + sample_wt + (1|individual), data = epi.df)
+m6 <- lmer(fd ~ lfm + spp + start_temp + site + (1|individual), data = epi.df)
+m7 <- lmer(fd ~ lfm + spp + start_temp + year_month + (1|individual), data = epi.df)
+m8 <- lmer(fd ~ lfm + spp + sample_wt + site + (1|individual), data = epi.df)
+m9 <- lmer(fd ~ lfm + spp + sample_wt + year_month + (1|individual), data = epi.df)
+m10 <- lmer(fd ~ lfm + spp + site + year_month + (1|individual), data = epi.df)
+m11 <- lmer(fd ~ lfm + spp + start_temp + (1|individual), data = epi.df)
+m12 <- lmer(fd ~ lfm + spp + sample_wt + (1|individual), data = epi.df)
+m13 <- lmer(fd ~ lfm + spp + site + (1|individual), data = epi.df)
+m14 <- lmer(fd ~ lfm + spp + year_month + (1|individual), data = epi.df)
+
+tab_model(max.mod, m1, m2, m3, m4, m5, m6, m7, m8, m9, m10, m11, m12, m13, m14,
+          show.reflvl = TRUE, 
+          digits = 3, 
+          show.aic = TRUE, 
+          show.ci = FALSE,
+          show.icc = FALSE, 
+         string.pred = "Coeffcient", 
+        dv.labels = c("Max. Model", "Model 1","Model 2", 
+                       "Model 3", "Model 4","Model 5",
+                       "Model 6", "Model 7", "Model 8", 
+                       "Model 9","Model 10", "Model 11",
+                       "Model 12", "Model 13", "Model 14"),
+         title = "covariate analysis: fd ~ lfm, EPI",
+  string.p = "P-Value", 
+  p.style = "stars")
+
+# best models: 8 & 4, followed by models 9 & 12
+# Sample weight and site seem important (sample weight especially important)
+```
+
+#### FH
+=== MPa ===
+Since LFM and MPa are totally agreeing on which covariates to include, going to just stick with mpa (lower AIC scores) for FH and GD
+```{r}
+max.mod <- lmer(fh ~ mpa + spp + start_temp + sample_wt + site + year_month + (1|individual), data = epi.df)
+m1 <- lmer(fh ~ mpa + spp + start_temp + sample_wt + site + (1|individual), data = epi.df)
+m2 <- lmer(fh ~ mpa + spp + start_temp + sample_wt + year_month + (1|individual), data = epi.df)
+m3 <- lmer(fh ~ mpa + spp + start_temp + site + year_month + (1|individual), data = epi.df)
+m4 <- lmer(fh ~ mpa + spp + sample_wt + site + year_month + (1|individual), data = epi.df)
+m5 <- lmer(fh ~ mpa + spp + start_temp + sample_wt + (1|individual), data = epi.df)
+m6 <- lmer(fh ~ mpa + spp + start_temp + site + (1|individual), data = epi.df)
+m7 <- lmer(fh ~ mpa + spp + start_temp + year_month + (1|individual), data = epi.df)
+m8 <- lmer(fh ~ mpa + spp + sample_wt + site + (1|individual), data = epi.df)
+m9 <- lmer(fh ~ mpa + spp + sample_wt + year_month + (1|individual), data = epi.df)
+m10 <- lmer(fh ~ mpa + spp + site + year_month + (1|individual), data = epi.df)
+m11 <- lmer(fh ~ mpa + spp + start_temp + (1|individual), data = epi.df)
+m12 <- lmer(fh ~ mpa + spp + sample_wt + (1|individual), data = epi.df)
+m13 <- lmer(fh ~ mpa + spp + site + (1|individual), data = epi.df)
+m14 <- lmer(fh ~ mpa + spp + year_month + (1|individual), data = epi.df)
+
+tab_model(max.mod, m1, m2, m3, m4, m5, m6, m7, m8, m9, m10, m11, m12, m13, m14,
+          show.reflvl = TRUE, 
+          digits = 3, 
+          show.aic = TRUE, 
+          show.ci = FALSE,
+          show.icc = FALSE, 
+         string.pred = "Coeffcient", 
+        dv.labels = c("Max. Model", "Model 1","Model 2", 
+                       "Model 3", "Model 4","Model 5",
+                       "Model 6", "Model 7", "Model 8", 
+                       "Model 9","Model 10", "Model 11",
+                       "Model 12", "Model 13", "Model 14"),
+         title = "covariate analysis: fh ~ mpa, EPI",
+  string.p = "P-Value", 
+  p.style = "stars")
+# best models: 8 & 4, followed by models 9 & 12
+# Sample weight and site seem important (sample weight especially important)
+```
+
+#### GD
+=== MPa ===
+```{r}
+max.mod <- lmer(gd ~ mpa + spp + start_temp + sample_wt + site + year_month + (1|individual), data = epi.df)
+m1 <- lmer(gd ~ mpa + spp + start_temp + sample_wt + site + (1|individual), data = epi.df)
+m2 <- lmer(gd ~ mpa + spp + start_temp + sample_wt + year_month + (1|individual), data = epi.df)
+m3 <- lmer(gd ~ mpa + spp + start_temp + site + year_month + (1|individual), data = epi.df)
+m4 <- lmer(gd ~ mpa + spp + sample_wt + site + year_month + (1|individual), data = epi.df)
+m5 <- lmer(gd ~ mpa + spp + start_temp + sample_wt + (1|individual), data = epi.df)
+m6 <- lmer(gd ~ mpa + spp + start_temp + site + (1|individual), data = epi.df)
+m7 <- lmer(gd ~ mpa + spp + start_temp + year_month + (1|individual), data = epi.df)
+m8 <- lmer(gd ~ mpa + spp + sample_wt + site + (1|individual), data = epi.df)
+m9 <- lmer(gd ~ mpa + spp + sample_wt + year_month + (1|individual), data = epi.df)
+m10 <- lmer(gd ~ mpa + spp + site + year_month + (1|individual), data = epi.df)
+m11 <- lmer(gd ~ mpa + spp + start_temp + (1|individual), data = epi.df)
+m12 <- lmer(gd ~ mpa + spp + sample_wt + (1|individual), data = epi.df)
+m13 <- lmer(gd ~ mpa + spp + site + (1|individual), data = epi.df)
+m14 <- lmer(gd ~ mpa + spp + year_month + (1|individual), data = epi.df)
+
+tab_model(max.mod, m1, m2, m3, m4, m5, m6, m7, m8, m9, m10, m11, m12, m13, m14,
+          show.reflvl = TRUE, 
+          digits = 3, 
+          show.aic = TRUE, 
+          show.ci = FALSE,
+          show.icc = FALSE, 
+         string.pred = "Coeffcient", 
+        dv.labels = c("Max. Model", "Model 1","Model 2", 
+                       "Model 3", "Model 4","Model 5",
+                       "Model 6", "Model 7", "Model 8", 
+                       "Model 9","Model 10", "Model 11",
+                       "Model 12", "Model 13", "Model 14"),
+         title = "covariate analysis: gd ~ mpa, EPI",
+  string.p = "P-Value", 
+  p.style = "stars")
+# best models: 4 & 8, Max. Model and Model 1 not sig. worse
+# Sample weight and site seem important
+```
+
+### Hot Plate
+#### TTI
+=== MPa ===
+- There are a lot of potential covariates to include in the models, but not all of them may be necessary, so first going to try a model selection where I whittle out which covariates to include and which ones to leave out.
+- Species MUST be in the model. Otherwise, let's look at site, sampling date (year_month), sample weight, and starting temperature
+- For now, I am going to do two rounds of model selection, one with water potential and one with live fuel moisture
+```{r}
+max.mod <- lmer(tti ~ mpa + spp + start_temp + sample_wt + site + year_month + (1|individual), data = hp.df)
+m1 <- lmer(tti ~ mpa + spp + start_temp + sample_wt + site + (1|individual), data = hp.df)
+m2 <- lmer(tti ~ mpa + spp + start_temp + sample_wt + year_month + (1|individual), data = hp.df)
+m3 <- lmer(tti ~ mpa + spp + start_temp + site + year_month + (1|individual), data = hp.df)
+m4 <- lmer(tti ~ mpa + spp + sample_wt + site + year_month + (1|individual), data = hp.df)
+m5 <- lmer(tti ~ mpa + spp + start_temp + sample_wt + (1|individual), data = hp.df)
+m6 <- lmer(tti ~ mpa + spp + start_temp + site + (1|individual), data = hp.df)
+m7 <- lmer(tti ~ mpa + spp + start_temp + year_month + (1|individual), data = hp.df)
+m8 <- lmer(tti ~ mpa + spp + sample_wt + site + (1|individual), data = hp.df)
+m9 <- lmer(tti ~ mpa + spp + sample_wt + year_month + (1|individual), data = hp.df)
+m10 <- lmer(tti ~ mpa + spp + site + year_month + (1|individual), data = hp.df)
+m11 <- lmer(tti ~ mpa + spp + start_temp + (1|individual), data = hp.df)
+m12 <- lmer(tti ~ mpa + spp + sample_wt + (1|individual), data = hp.df)
+m13 <- lmer(tti ~ mpa + spp + site + (1|individual), data = hp.df)
+m14 <- lmer(tti ~ mpa + spp + year_month + (1|individual), data = hp.df)
+
+tab_model(max.mod, m1, m2, m3, m4, m5, m6, m7, m8, m9, m10, m11, m12, m13, m14,
+          show.reflvl = TRUE, 
+          digits = 3, 
+          show.aic = TRUE, 
+          show.ci = FALSE,
+          show.icc = FALSE, 
+         string.pred = "Coeffcient", 
+        dv.labels = c("Max. Model", "Model 1","Model 2", 
+                       "Model 3", "Model 4","Model 5",
+                       "Model 6", "Model 7", "Model 8", 
+                       "Model 9","Model 10", "Model 11",
+                       "Model 12", "Model 13", "Model 14"),
+         title = "covariate analysis: tti ~ mpa, Hot Plate",
+  string.p = "P-Value", 
+  p.style = "stars")
+# best models: 8 & 4, followed by max. model and model 1
+# Sample weight and site seem important
+################################
+### Agrees with epiradiator ###
+###############################
+```
+
+=== LFM ===
+==== Covariates to include ====
+Ran model selection, but not including it here as the results were equivalent to tti ~ mpa above
+
+#### FD
+=== MPa ===
+```{r}
+max.mod <- lmer(fd ~ mpa + spp + start_temp + sample_wt + site + year_month + (1|individual), data = hp.df)
+m1 <- lmer(fd ~ mpa + spp + start_temp + sample_wt + site + (1|individual), data = hp.df)
+m2 <- lmer(fd ~ mpa + spp + start_temp + sample_wt + year_month + (1|individual), data = hp.df)
+m3 <- lmer(fd ~ mpa + spp + start_temp + site + year_month + (1|individual), data = hp.df)
+m4 <- lmer(fd ~ mpa + spp + sample_wt + site + year_month + (1|individual), data = hp.df)
+m5 <- lmer(fd ~ mpa + spp + start_temp + sample_wt + (1|individual), data = hp.df)
+m6 <- lmer(fd ~ mpa + spp + start_temp + site + (1|individual), data = hp.df)
+m7 <- lmer(fd ~ mpa + spp + start_temp + year_month + (1|individual), data = hp.df)
+m8 <- lmer(fd ~ mpa + spp + sample_wt + site + (1|individual), data = hp.df)
+m9 <- lmer(fd ~ mpa + spp + sample_wt + year_month + (1|individual), data = hp.df)
+m10 <- lmer(fd ~ mpa + spp + site + year_month + (1|individual), data = hp.df)
+m11 <- lmer(fd ~ mpa + spp + start_temp + (1|individual), data = hp.df)
+m12 <- lmer(fd ~ mpa + spp + sample_wt + (1|individual), data = hp.df)
+m13 <- lmer(fd ~ mpa + spp + site + (1|individual), data = hp.df)
+m14 <- lmer(fd ~ mpa + spp + year_month + (1|individual), data = hp.df)
+
+tab_model(max.mod, m1, m2, m3, m4, m5, m6, m7, m8, m9, m10, m11, m12, m13, m14,
+          show.reflvl = TRUE, 
+          digits = 3, 
+          show.aic = TRUE, 
+          show.ci = FALSE,
+          show.icc = FALSE, 
+         string.pred = "Coeffcient", 
+        dv.labels = c("Max. Model", "Model 1","Model 2", 
+                       "Model 3", "Model 4","Model 5",
+                       "Model 6", "Model 7", "Model 8", 
+                       "Model 9","Model 10", "Model 11",
+                       "Model 12", "Model 13", "Model 14"),
+         title = "covariate analysis: fd ~ mpa, Hot Plate",
+  string.p = "P-Value", 
+  p.style = "stars")
+# best models: Max. Model and Model 1; Models 4 & 8 not significantly worse
+# Sample weight and site seem important; starting temp. also important
+##########################################
+### Slightly different to epiradiator ###
+########################################
+```
+
+=== LFM ===
+==== Covariates to include ====
+```{r}
+max.mod <- lmer(fd ~ lfm + spp + start_temp + sample_wt + site + year_month + (1|individual), data = hp.df)
+m1 <- lmer(fd ~ lfm + spp + start_temp + sample_wt + site + (1|individual), data = hp.df)
+m2 <- lmer(fd ~ lfm + spp + start_temp + sample_wt + year_month + (1|individual), data = hp.df)
+m3 <- lmer(fd ~ lfm + spp + start_temp + site + year_month + (1|individual), data = hp.df)
+m4 <- lmer(fd ~ lfm + spp + sample_wt + site + year_month + (1|individual), data = hp.df)
+m5 <- lmer(fd ~ lfm + spp + start_temp + sample_wt + (1|individual), data = hp.df)
+m6 <- lmer(fd ~ lfm + spp + start_temp + site + (1|individual), data = hp.df)
+m7 <- lmer(fd ~ lfm + spp + start_temp + year_month + (1|individual), data = hp.df)
+m8 <- lmer(fd ~ lfm + spp + sample_wt + site + (1|individual), data = hp.df)
+m9 <- lmer(fd ~ lfm + spp + sample_wt + year_month + (1|individual), data = hp.df)
+m10 <- lmer(fd ~ lfm + spp + site + year_month + (1|individual), data = hp.df)
+m11 <- lmer(fd ~ lfm + spp + start_temp + (1|individual), data = hp.df)
+m12 <- lmer(fd ~ lfm + spp + sample_wt + (1|individual), data = hp.df)
+m13 <- lmer(fd ~ lfm + spp + site + (1|individual), data = hp.df)
+m14 <- lmer(fd ~ lfm + spp + year_month + (1|individual), data = hp.df)
+
+tab_model(max.mod, m1, m2, m3, m4, m5, m6, m7, m8, m9, m10, m11, m12, m13, m14,
+          show.reflvl = TRUE, 
+          digits = 3, 
+          show.aic = TRUE, 
+          show.ci = FALSE,
+          show.icc = FALSE, 
+         string.pred = "Coeffcient", 
+        dv.labels = c("Max. Model", "Model 1","Model 2", 
+                       "Model 3", "Model 4","Model 5",
+                       "Model 6", "Model 7", "Model 8", 
+                       "Model 9","Model 10", "Model 11",
+                       "Model 12", "Model 13", "Model 14"),
+         title = "covariate analysis: fd ~ lfm, Hot Plate",
+  string.p = "P-Value", 
+  p.style = "stars")
+
+# best models: Max. model and model 1; followed by models 4 & 8
+# Sample weight, start temp. and site all important
+##############################################
+### Does not agree with EPI (Start temp.) ###
+#############################################
+```
+
+#### FH
+=== MPa ===
+```{r}
+max.mod <- lmer(fh ~ mpa + spp + start_temp + sample_wt + site + year_month + (1|individual), data = hp.df)
+m1 <- lmer(fh ~ mpa + spp + start_temp + sample_wt + site + (1|individual), data = hp.df)
+m2 <- lmer(fh ~ mpa + spp + start_temp + sample_wt + year_month + (1|individual), data = hp.df)
+m3 <- lmer(fh ~ mpa + spp + start_temp + site + year_month + (1|individual), data = hp.df)
+m4 <- lmer(fh ~ mpa + spp + sample_wt + site + year_month + (1|individual), data = hp.df)
+m5 <- lmer(fh ~ mpa + spp + start_temp + sample_wt + (1|individual), data = hp.df)
+m6 <- lmer(fh ~ mpa + spp + start_temp + site + (1|individual), data = hp.df)
+m7 <- lmer(fh ~ mpa + spp + start_temp + year_month + (1|individual), data = hp.df)
+m8 <- lmer(fh ~ mpa + spp + sample_wt + site + (1|individual), data = hp.df)
+m9 <- lmer(fh ~ mpa + spp + sample_wt + year_month + (1|individual), data = hp.df)
+m10 <- lmer(fh ~ mpa + spp + site + year_month + (1|individual), data = hp.df)
+m11 <- lmer(fh ~ mpa + spp + start_temp + (1|individual), data = hp.df)
+m12 <- lmer(fh ~ mpa + spp + sample_wt + (1|individual), data = hp.df)
+m13 <- lmer(fh ~ mpa + spp + site + (1|individual), data = hp.df)
+m14 <- lmer(fh ~ mpa + spp + year_month + (1|individual), data = hp.df)
+
+tab_model(max.mod, m1, m2, m3, m4, m5, m6, m7, m8, m9, m10, m11, m12, m13, m14,
+          show.reflvl = TRUE, 
+          digits = 3, 
+          show.aic = TRUE, 
+          show.ci = FALSE,
+          show.icc = FALSE, 
+         string.pred = "Coeffcient", 
+        dv.labels = c("Max. Model", "Model 1","Model 2", 
+                       "Model 3", "Model 4","Model 5",
+                       "Model 6", "Model 7", "Model 8", 
+                       "Model 9","Model 10", "Model 11",
+                       "Model 12", "Model 13", "Model 14"),
+         title = "covariate analysis: fh ~ mpa, Hot Plate",
+  string.p = "P-Value", 
+  p.style = "stars")
+# best models: 8 & 4, followed by max. model and model 1
+# Sample weight and site seem important (starting temp. also important)
+##################################################
+### Slightly disagrees with EPI (start temp.) ###
+#################################################
+```
+
+=== LFM ===
+==== Covariates to include ====
+```{r}
+max.mod <- lmer(fh ~ lfm + spp + start_temp + sample_wt + site + year_month + (1|individual), data = hp.df)
+m1 <- lmer(fh ~ lfm + spp + start_temp + sample_wt + site + (1|individual), data = hp.df)
+m2 <- lmer(fh ~ lfm + spp + start_temp + sample_wt + year_month + (1|individual), data = hp.df)
+m3 <- lmer(fh ~ lfm + spp + start_temp + site + year_month + (1|individual), data = hp.df)
+m4 <- lmer(fh ~ lfm + spp + sample_wt + site + year_month + (1|individual), data = hp.df)
+m5 <- lmer(fh ~ lfm + spp + start_temp + sample_wt + (1|individual), data = hp.df)
+m6 <- lmer(fh ~ lfm + spp + start_temp + site + (1|individual), data = hp.df)
+m7 <- lmer(fh ~ lfm + spp + start_temp + year_month + (1|individual), data = hp.df)
+m8 <- lmer(fh ~ lfm + spp + sample_wt + site + (1|individual), data = hp.df)
+m9 <- lmer(fh ~ lfm + spp + sample_wt + year_month + (1|individual), data = hp.df)
+m10 <- lmer(fh ~ lfm + spp + site + year_month + (1|individual), data = hp.df)
+m11 <- lmer(fh ~ lfm + spp + start_temp + (1|individual), data = hp.df)
+m12 <- lmer(fh ~ lfm + spp + sample_wt + (1|individual), data = hp.df)
+m13 <- lmer(fh ~ lfm + spp + site + (1|individual), data = hp.df)
+m14 <- lmer(fh ~ lfm + spp + year_month + (1|individual), data = hp.df)
+
+tab_model(max.mod, m1, m2, m3, m4, m5, m6, m7, m8, m9, m10, m11, m12, m13, m14,
+          show.reflvl = TRUE, 
+          digits = 3, 
+          show.aic = TRUE, 
+          show.ci = FALSE,
+          show.icc = FALSE, 
+         string.pred = "Coeffcient", 
+        dv.labels = c("Max. Model", "Model 1","Model 2", 
+                       "Model 3", "Model 4","Model 5",
+                       "Model 6", "Model 7", "Model 8", 
+                       "Model 9","Model 10", "Model 11",
+                       "Model 12", "Model 13", "Model 14"),
+         title = "covariate analysis: fh ~ lfm, Hot Plate",
+  string.p = "P-Value", 
+  p.style = "stars")
+# best models: 8 & 4, followed by max. model and model 1
+# Sample weight and site seem important (starting temp. also important)
+##################################################
+### Slightly disagrees with EPI (start temp.) ###
+#################################################
+```
+
+#### GD
+=== MPa ===
+```{r}
+max.mod <- lmer(gd ~ mpa + spp + start_temp + sample_wt + site + year_month + (1|individual), data = hp.df)
+m1 <- lmer(gd ~ mpa + spp + start_temp + sample_wt + site + (1|individual), data = hp.df)
+m2 <- lmer(gd ~ mpa + spp + start_temp + sample_wt + year_month + (1|individual), data = hp.df)
+m3 <- lmer(gd ~ mpa + spp + start_temp + site + year_month + (1|individual), data = hp.df)
+m4 <- lmer(gd ~ mpa + spp + sample_wt + site + year_month + (1|individual), data = hp.df)
+m5 <- lmer(gd ~ mpa + spp + start_temp + sample_wt + (1|individual), data = hp.df)
+m6 <- lmer(gd ~ mpa + spp + start_temp + site + (1|individual), data = hp.df)
+m7 <- lmer(gd ~ mpa + spp + start_temp + year_month + (1|individual), data = hp.df)
+m8 <- lmer(gd ~ mpa + spp + sample_wt + site + (1|individual), data = hp.df)
+m9 <- lmer(gd ~ mpa + spp + sample_wt + year_month + (1|individual), data = hp.df)
+m10 <- lmer(gd ~ mpa + spp + site + year_month + (1|individual), data = hp.df)
+m11 <- lmer(gd ~ mpa + spp + start_temp + (1|individual), data = hp.df)
+m12 <- lmer(gd ~ mpa + spp + sample_wt + (1|individual), data = hp.df)
+m13 <- lmer(gd ~ mpa + spp + site + (1|individual), data = hp.df)
+m14 <- lmer(gd ~ mpa + spp + year_month + (1|individual), data = hp.df)
+
+tab_model(max.mod, m1, m2, m3, m4, m5, m6, m7, m8, m9, m10, m11, m12, m13, m14,
+          show.reflvl = TRUE, 
+          digits = 3, 
+          show.aic = TRUE, 
+          show.ci = FALSE,
+          show.icc = FALSE, 
+         string.pred = "Coeffcient", 
+        dv.labels = c("Max. Model", "Model 1","Model 2", 
+                       "Model 3", "Model 4","Model 5",
+                       "Model 6", "Model 7", "Model 8", 
+                       "Model 9","Model 10", "Model 11",
+                       "Model 12", "Model 13", "Model 14"),
+         title = "covariate analysis: gd ~ mpa, Hot Plate",
+  string.p = "P-Value", 
+  p.style = "stars")
+# best models: 4 & 8, Max. Model and Model 1 not sig. worse
+# Sample weight and site seem important
+########################
+### Agrees with EPI ###
+#######################
+```
+
+### Summary
+From the above model selection, sample weight and site are ALWAYS important. Models 4 & 8 were consistently the top performing model or they were not significantly worse than the top performing model. Other variables such as starting temperature are important some of the time. It seems like, for the hot plate trials, starting temperature may play a larger role, but it is still not consistently included in the top two models, so I do not plan on including it in the next model selection. Since model 4 was consistently in the top performing models, it seems like sampling date should be included in the model selection. At the very end, after I choose the best predictors, I will do another model selection looking at whether the model is improved by taking it out.
+# -------------------------------
+## Predictors to Include
+ - Going to look at the following predictors: mpa, lfm, dry weight and wet weight and combinations of them all
+ - First, must look at colinearity between the predictors
+ 
+### Predictor colinearity check
+```{r}
+max.mod <- lmer(tti ~ mpa + lfm + dw_flam_sample + ww_flam_sample + spp + sample_wt + site + year_month + (1|individual), data = epi.df)
+multicollinearity(max.mod) # wet weight and dry weight
+
+ww1 <- lmer(tti ~ mpa + lfm + sample_wt + ww_flam_sample + spp + site + year_month + (1|individual), data = epi.df)
+multicollinearity(ww1) # wet weight and lfm
+
+ww2 <- lmer(tti ~ mpa + lfm + ww_flam_sample + spp + site + year_month + (1|individual), data = epi.df)
+multicollinearity(ww2) # wet weight and lfm
+
+ww.mod <- lmer(tti ~ ww_flam_sample + spp + site + year_month + (1|individual), data = epi.df)
+multicollinearity(ww.mod) # all good!
+
+m1 <- lmer(tti ~ mpa + lfm + dw_flam_sample + spp + sample_wt + site + year_month + (1|individual), data = epi.df)
+multicollinearity(m1) # dry weight and lfm
+
+m2 <- lmer(tti ~ mpa + lfm + dw_flam_sample + spp + site + year_month + (1|individual), data = epi.df)
+multicollinearity(m2) # lfm moderate correlation (VIF = 5.97)
+
+m3 <- lmer(tti ~ mpa + lfm + spp + site + year_month + (1|individual), data = epi.df)
+multicollinearity(m3) # all good
+
+m4 <- lmer(tti ~ mpa + dw_flam_sample + spp + site + year_month + (1|individual), data = epi.df)
+multicollinearity(m4) # all good
+
+m5 <- lmer(tti ~ lfm + dw_flam_sample + spp + site + year_month + (1|individual), data = epi.df)
+multicollinearity(m5) # all good
+
+m6 <- lmer(tti ~ mpa + lfm + spp + site + year_month + sample_wt + (1|individual), data = epi.df)
+multicollinearity(m6) # all good
+```
+
+From the above:
+- We can use the following combinations of predictors:
+  - With sample weight:
+    1) MPa + LFM
+  - Without sample weight:
+    2) MPa + LFM + DW
+    3) MPa + DW
+    4) LFM + DW
+
+### Models to test
+mpa.mod: MPa only
+lfm.mod: LFM only
+dw.mod: DW only (no sample_wt)
+ww.mod: WW only (no sample_wt)
+mod1: MPa + LFM + sample_wt
+mod2: MPa + LFM + DW (no sample_wt)
+mod3: MPa + DW (no sample_wt)
+mod4: LFM + DW (no sample_wt)
+
+#### Epiradiator
+##### TTI
+```{r}
+mpa.mod <- lmer(tti ~ mpa + spp + sample_wt + site + year_month + (1|individual), data = epi.df)
+lfm.mod <- lmer(tti ~ lfm + spp + sample_wt + site + year_month + (1|individual), data = epi.df)
+dw.mod <- lmer(tti ~ dw_flam_sample + spp + site + year_month + (1|individual), data = epi.df)
+ww.mod <- lmer(tti ~ ww_flam_sample + spp + site + year_month + (1|individual), data = epi.df)
+mod1 <- lmer(tti ~ mpa + lfm + spp + sample_wt + site + year_month + (1|individual), data = epi.df)
+mod2 <- lmer(tti ~ mpa + lfm + dw_flam_sample + spp + site + year_month + (1|individual), data = epi.df)
+mod3 <- lmer(tti ~ mpa + dw_flam_sample + spp + site + year_month + (1|individual), data = epi.df)
+mod4 <- lmer(tti ~ lfm + dw_flam_sample + spp + sample_wt + site + year_month + (1|individual), data = epi.df)
+# Testing for interaction terms w/ species for best models:
+int1 <- lmer(tti ~ mpa*spp + sample_wt + site + year_month + (1|individual), data = epi.df)
+int2 <- lmer(tti ~ mpa + dw_flam_sample*spp + site + year_month + (1|individual), data = epi.df)
+int3 <- lmer(tti ~ mpa*dw_flam_sample + spp + site + year_month + (1|individual), data = epi.df)
+int4 <- lmer(tti ~ dw_flam_sample*spp + site + year_month + (1|individual), data = epi.df)
+int5 <- lmer(tti ~ lfm + dw_flam_sample*spp + site + year_month + (1|individual), data = epi.df)
+int6 <- lmer(tti ~ lfm + mpa + dw_flam_sample*spp + site + year_month + (1|individual), data = epi.df)
+int7 <- lmer(tti ~ mpa + lfm*spp + sample_wt + site + year_month + (1|individual), data = epi.df)
+int8 <- lmer(tti ~ lfm + mpa*spp + sample_wt + site + year_month + (1|individual), data = epi.df)
+int9 <- lmer(tti ~ lfm + dw_flam_sample + mpa*spp + site + year_month + (1|individual), data = epi.df)
+int10 <- int6 <- lmer(tti ~ dw_flam_sample + mpa + lfm*spp + site + year_month + (1|individual), data = epi.df)
+
+tab_model(mpa.mod, lfm.mod, dw.mod, ww.mod, mod1, mod2, mod3, mod4, int1, int2, int3, int4, int5, int6, int7, int8, int9, int10,
+          show.reflvl = TRUE, 
+          digits = 3, 
+          show.aic = TRUE, 
+          show.ci = FALSE,
+          show.icc = FALSE, 
+         string.pred = "Coeffcient", 
+        dv.labels = c("MPa", "LFM","Dry Weight", "Wet Weight",
+                      "MPa + LFM", "MPa + LFM + DW",
+                      "MPa + DW", "LFM + DW", "Int: MPa*spp", 
+                      "Int: MPa + DW*spp", "Int: MPa*DW + spp",
+                      "Int: DW*spp", "Int: LFM + DW*spp", "Int: LFM + MPa + DW*spp",
+                      "Int: MPa + LFM*spp", "Int: LFM + MPa*spp", 
+                      "Int: LFM + DW + MPa*spp", "Int: DW + MPa + LFM*spp"),
+         title = "predictor analysis: tti, epiradiator",
+  string.p = "P-Value", 
+  p.style = "stars",
+  file = 'mem-model-selection/tti.EPI.mem.html')
+
+# Best model: MPa + DW*spp
+# Best model (w/o interactions): MPa + DW; MPa alone not sig. worse
+# LFM + DW close behind
+```
+
+##### FD
+```{r}
+mpa.mod <- lmer(fd ~ mpa + spp + sample_wt + site + year_month + (1|individual), data = epi.df)
+lfm.mod <- lmer(fd ~ lfm + spp + sample_wt + site + year_month + (1|individual), data = epi.df)
+dw.mod <- lmer(fd ~ dw_flam_sample + spp + site + year_month + (1|individual), data = epi.df)
+ww.mod <- lmer(fd ~ ww_flam_sample + spp + site + year_month + (1|individual), data = epi.df)
+mod1 <- lmer(fd ~ mpa + lfm + spp + sample_wt + site + year_month + (1|individual), data = epi.df)
+mod2 <- lmer(fd ~ mpa + lfm + dw_flam_sample + spp + site + year_month + (1|individual), data = epi.df)
+mod3 <- lmer(fd ~ mpa + dw_flam_sample + spp + site + year_month + (1|individual), data = epi.df)
+mod4 <- lmer(fd ~ lfm + dw_flam_sample + spp + sample_wt + site + year_month + (1|individual), data = epi.df)
+# Testing for interactions with species
+int1 <- lmer(fd ~ dw_flam_sample*spp + site + year_month + (1|individual), data = epi.df)
+int2 <- lmer(fd ~ lfm*spp + site + year_month + (1|individual), data = epi.df)
+int3 <- lmer(fd ~ lfm + dw_flam_sample*spp + site + year_month + (1|individual), data = epi.df)
+int4 <- lmer(fd ~ ww_flam_sample*spp + site + year_month + (1|individual), data = epi.df)
+
+
+tab_model(mpa.mod, lfm.mod, dw.mod, ww.mod, mod1, mod2, mod3, mod4, int1, int2, int3, int4,
+          show.reflvl = TRUE, 
+          digits = 3, 
+          show.aic = TRUE, 
+          show.ci = FALSE,
+          show.icc = FALSE, 
+         string.pred = "Coeffcient", 
+        dv.labels = c("MPa", "LFM","Dry Weight", "Wet Weight",
+                      "MPa + LFM", "MPa + LFM + DW",
+                      "MPa + DW", "LFM + DW", "Int: DW*spp",
+                      "Int: LFM*spp", "Int: LFM + DW*spp", "Int: WW*spp"),
+         title = "predictor analysis: fd, epiradiator",
+  string.p = "P-Value", 
+  p.style = "stars",
+  file = 'mem-model-selection/fd.EPI.mem.html')
+
+# NOTE: No interaction between LFM and spp. DW*spp seems highly important, so going to continue to incorporate interaction terms into best models
+# Best model: DW*spp
+# Best model (w/o interactions): DW alone; LFM + DW not sig. worse, MPa not sig. worse
+# MPa + DW close behind
+```
+
+##### FH
+```{r}
+mpa.mod <- lmer(fh ~ mpa + spp + sample_wt + site + year_month + (1|individual), data = epi.df)
+lfm.mod <- lmer(fh ~ lfm + spp + sample_wt + site + year_month + (1|individual), data = epi.df)
+dw.mod <- lmer(fh ~ dw_flam_sample + spp + site + year_month + (1|individual), data = epi.df)
+ww.mod <- lmer(fh ~ ww_flam_sample + spp + site + year_month + (1|individual), data = epi.df)
+mod1 <- lmer(fh ~ mpa + lfm + spp + sample_wt + site + year_month + (1|individual), data = epi.df)
+mod2 <- lmer(fh ~ mpa + lfm + dw_flam_sample + spp + site + year_month + (1|individual), data = epi.df)
+mod3 <- lmer(fh ~ mpa + dw_flam_sample + spp + site + year_month + (1|individual), data = epi.df)
+mod4 <- lmer(fh ~ lfm + dw_flam_sample + spp + site + year_month + (1|individual), data = epi.df)
+# Interactions
+int1 <- lmer(fh ~ lfm + dw_flam_sample*spp + site + year_month + (1|individual), data = epi.df)
+int2 <- lmer(fh ~ dw_flam_sample*spp + site + year_month + (1|individual), data = epi.df)
+int3 <- mod3 <- lmer(fh ~ mpa + dw_flam_sample*spp + site + year_month + (1|individual), data = epi.df)
+
+tab_model(mpa.mod, lfm.mod, dw.mod, ww.mod, mod1, mod2, mod3, mod4, int1, int2, int3,
+          show.reflvl = TRUE, 
+          digits = 3, 
+          show.aic = TRUE, 
+          show.ci = FALSE,
+          show.icc = FALSE, 
+         string.pred = "Coeffcient", 
+        dv.labels = c("MPa", "LFM","Dry Weight", "Wet Weight",
+                      "MPa + LFM", "MPa + LFM + DW",
+                      "MPa + DW", "LFM + DW", "Int: LFM + DW*spp",
+                      "Int: DW*spp", "Int: MPa + DW*spp"),
+         title = "predictor analysis: fh, epiradiator",
+  string.p = "P-Value", 
+  p.style = "stars",
+  file = 'mem-model-selection/fh.EPI.mem.html')
+
+# Best models:  MPa + DW and MPa + DW*spp, LFM + DW*spp not sig. worse
+```
+
+##### GD
+```{r}
+mpa.mod <- lmer(gd ~ mpa + spp + sample_wt + site + year_month + (1|individual), data = epi.df)
+lfm.mod <- lmer(gd ~ lfm + spp + sample_wt + site + year_month + (1|individual), data = epi.df)
+dw.mod <- lmer(gd ~ dw_flam_sample + spp + site + year_month + (1|individual), data = epi.df)
+ww.mod <- lmer(gd ~ ww_flam_sample + spp + site + year_month + (1|individual), data = epi.df)
+mod1 <- lmer(gd ~ mpa + lfm + spp + sample_wt + site + year_month + (1|individual), data = epi.df)
+mod2 <- lmer(gd ~ mpa + lfm + dw_flam_sample + spp + site + year_month + (1|individual), data = epi.df)
+mod3 <- lmer(gd ~ mpa + dw_flam_sample + spp + site + year_month + (1|individual), data = epi.df)
+mod4 <- lmer(gd ~ lfm + dw_flam_sample + spp + sample_wt + site + year_month + (1|individual), data = epi.df)
+# Interactions
+int1 <- lmer(gd ~ lfm + dw_flam_sample*spp + site + year_month + (1|individual), data = epi.df)
+int2 <- lmer(gd ~ dw_flam_sample*spp + site + year_month + (1|individual), data = epi.df)
+int3 <- lmer(gd ~ mpa + lfm + dw_flam_sample*spp + site + year_month + (1|individual), data = epi.df)
+int4 <- lmer(gd ~ mpa + dw_flam_sample + lfm*spp + site + year_month + (1|individual), data = epi.df)
+int5 <- lmer(gd ~ lfm + dw_flam_sample + mpa*spp + site + year_month + (1|individual), data = epi.df)
+int6 <- lmer(gd ~ mpa*spp + site + year_month + (1|individual), data = epi.df)
+
+tab_model(mpa.mod, lfm.mod, dw.mod, ww.mod, mod1, mod2, mod3, mod4, int1, int2, int3, int4, int5, int6,
+          show.reflvl = TRUE, 
+          digits = 3, 
+          show.aic = TRUE, 
+          show.ci = FALSE,
+          show.icc = FALSE, 
+         string.pred = "Coeffcient", 
+        dv.labels = c("MPa", "LFM","Dry Weight", "Wet Weight",
+                      "MPa + LFM", "MPa + LFM + DW",
+                      "MPa + DW", "LFM + DW", "Int: LFM + DW*spp",
+                      "Int: DW*spp", "Int: MPa + LFM + DW*spp", 
+                      "Int: MPa + DW + LFM*spp", "Int: LFM + DW + MPa*spp",
+                      "Int: MPa*spp"),
+         title = "predictor analysis: gd, epiradiator",
+  string.p = "P-Value", 
+  p.style = "stars",
+  file = 'mem-model-selection/gd.EPI.mem.html')
+
+# Best model: LFM + DW*spp
+```
+
+##### Max. Temp.
+```{r}
+mpa.mod <- lmer(temp_max ~ mpa + spp + sample_wt + site + year_month + (1|individual), data = epi.df)
+lfm.mod <- lmer(temp_max ~ lfm + spp + sample_wt + site + year_month + (1|individual), data = epi.df)
+dw.mod <- lmer(temp_max ~ dw_flam_sample + spp + site + year_month + (1|individual), data = epi.df)
+ww.mod <- lmer(temp_max ~ ww_flam_sample + spp + site + year_month + (1|individual), data = epi.df)
+mod1 <- lmer(temp_max ~ mpa + lfm + spp + sample_wt + site + year_month + (1|individual), data = epi.df)
+mod2 <- lmer(temp_max ~ mpa + lfm + dw_flam_sample + spp + site + year_month + (1|individual), data = epi.df)
+mod3 <- lmer(temp_max ~ mpa + dw_flam_sample + spp + site + year_month + (1|individual), data = epi.df)
+mod4 <- lmer(temp_max ~ lfm + dw_flam_sample + spp + site + year_month + (1|individual), data = epi.df)
+# Interactions
+int1 <- lmer(temp_max ~ mpa + lfm + dw_flam_sample*spp + site + year_month + (1|individual), data = epi.df)
+int2 <- lmer(temp_max ~ dw_flam_sample*spp + site + year_month + (1|individual), data = epi.df)
+int3 <- lmer(temp_max ~ lfm + mpa*spp + sample_wt + site + year_month + (1|individual), data = epi.df)
+int4 <- lmer(temp_max ~ mpa + lfm*spp + sample_wt + site + year_month + (1|individual), data = epi.df)
+int5 <- lmer(temp_max ~ mpa + dw_flam_sample*spp + site + year_month + (1|individual), data = epi.df)
+int6 <- lmer(temp_max ~ mpa*spp + sample_wt + site + year_month + (1|individual), data = epi.df)
+
+tab_model(mpa.mod, lfm.mod, dw.mod, ww.mod, mod1, mod2, mod3, mod4, int1, int2, int3, int4, int5, int6,
+          show.reflvl = TRUE, 
+          digits = 3, 
+          show.aic = TRUE, 
+          show.ci = FALSE,
+          show.icc = FALSE, 
+         string.pred = "Coeffcient", 
+        dv.labels = c("MPa", "LFM","Dry Weight", "Wet Weight",
+                      "MPa + LFM", "MPa + LFM + DW",
+                      "MPa + DW", "LFM + DW", "Int: MPa + LFM + DW*spp",
+                      "Int: DW*spp", "Int: LFM + MPa*spp", "Int: MPa + LFM*spp",
+                      "Int: MPa + DW*spp", "Int: MPa*spp"),
+         title = "predictor analysis: temp_max, epiradiator",
+  string.p = "P-Value", 
+  p.style = "stars",
+  file = 'mem-model-selection/temp_max.EPI.mem.html')
+
+# Best model: MPa + LFM + DW*spp
+# Best model (w/o interactions): MPa + LFM + DW; MPa + LFM not sig. worse, LFM + DW not sig. worse
+# MPa + DW, MPa alone close behind
+```
+
+##### PFG
+```{r}
+mpa.mod <- lmer(pfg ~ mpa + spp + sample_wt + site + year_month + (1|individual), data = epi.df)
+lfm.mod <- lmer(pfg ~ lfm + spp + sample_wt + site + year_month + (1|individual), data = epi.df)
+dw.mod <- lmer(pfg ~ dw_flam_sample + spp + site + year_month + (1|individual), data = epi.df)
+ww.mod <- lmer(pfg ~ ww_flam_sample + spp + site + year_month + (1|individual), data = epi.df)
+mod1 <- lmer(pfg ~ mpa + lfm + spp + sample_wt + site + year_month + (1|individual), data = epi.df)
+mod2 <- lmer(pfg ~ mpa + lfm + dw_flam_sample + spp + site + year_month + (1|individual), data = epi.df)
+mod3 <- lmer(pfg ~ mpa + dw_flam_sample + spp + site + year_month + (1|individual), data = epi.df)
+mod4 <- lmer(pfg ~ lfm + dw_flam_sample + spp + site + year_month + (1|individual), data = epi.df)
+# Interactions
+int1 <-  lmer(pfg ~ lfm + dw_flam_sample*spp + site + year_month + (1|individual), data = epi.df)
+int2 <- lmer(pfg ~ mpa*spp + sample_wt + site + year_month + (1|individual), data = epi.df)
+int3 <- lmer(pfg ~ mpa + dw_flam_sample*spp + site + year_month + (1|individual), data = epi.df)
+int4 <- lmer(pfg ~ mpa + lfm + dw_flam_sample*spp + site + year_month + (1|individual), data = epi.df)
+int5 <- lmer(pfg ~ mpa + dw_flam_sample + lfm*spp + site + year_month + (1|individual), data = epi.df)
+int6 <- lmer(pfg ~ dw_flam_sample + lfm + mpa*spp + site + year_month + (1|individual), data = epi.df)
+
+tab_model(mpa.mod, lfm.mod, dw.mod, ww.mod, mod1, mod2, mod3, mod4, int1, int2, int3, int4, int5, int6,
+          show.reflvl = TRUE, 
+          digits = 3, 
+          show.aic = TRUE, 
+          show.ci = FALSE,
+          show.icc = FALSE, 
+         string.pred = "Coeffcient", 
+        dv.labels = c("MPa", "LFM","Dry Weight", "Wet Weight",
+                      "MPa + LFM", "MPa + LFM + DW",
+                      "MPa + DW", "LFM + DW", "Int: LFM + DW*spp", "Int: MPa*spp", 
+                      "Int: MPa + DW*spp", "Int: MPa + LFM + DW*spp", 
+                      "Int: MPa + DW + LFM*spp", "Int: DW + LFM + MPa*spp"),
+         title = "predictor analysis: pfg, epiradiator",
+  string.p = "P-Value", 
+  p.style = "stars",
+  file = 'mem-model-selection/pfg.EPI.mem.html')
+
+# Best model: LFM + DW*spp
+```
+
+##### GTI
+```{r}
+mpa.mod <- lmer(gti ~ mpa + spp + sample_wt + site + year_month + (1|individual), data = epi.df)
+lfm.mod <- lmer(gti ~ lfm + spp + sample_wt + site + year_month + (1|individual), data = epi.df)
+dw.mod <- lmer(gti ~ dw_flam_sample + spp + site + year_month + (1|individual), data = epi.df)
+ww.mod <- lmer(gti ~ ww_flam_sample + spp + site + year_month + (1|individual), data = epi.df)
+mod1 <- lmer(gti ~ mpa + lfm + spp + sample_wt + site + year_month + (1|individual), data = epi.df)
+mod2 <- lmer(gti ~ mpa + lfm + dw_flam_sample + spp + site + year_month + (1|individual), data = epi.df)
+mod3 <- lmer(gti ~ mpa + dw_flam_sample + spp + site + year_month + (1|individual), data = epi.df)
+mod4 <- lmer(gti ~ lfm + dw_flam_sample + spp + site + year_month + (1|individual), data = epi.df)
+# Interactions
+int1 <- lmer(gti ~ lfm + dw_flam_sample*spp + site + year_month + (1|individual), data = epi.df)
+int2 <- lmer(gti ~ mpa + dw_flam_sample*spp + site + year_month + (1|individual), data = epi.df)
+int3 <- lmer(gti ~ mpa*spp + sample_wt + site + year_month + (1|individual), data = epi.df)
+
+tab_model(mpa.mod, lfm.mod, dw.mod, ww.mod, mod1, mod2, mod3, mod4, int1, int2, int3,
+          show.reflvl = TRUE, 
+          digits = 3, 
+          show.aic = TRUE, 
+          show.ci = FALSE,
+          show.icc = FALSE, 
+         string.pred = "Coeffcient", 
+        dv.labels = c("MPa", "LFM","Dry Weight", "Wet Weight",
+                      "MPa + LFM", "MPa + LFM + DW",
+                      "MPa + DW", "LFM + DW", "Int: LFM + DW*spp",
+                      "Int: MPa + DW*spp", "Int: MPa*spp"),
+         title = "predictor analysis: gti, epiradiator",
+  string.p = "P-Value", 
+  p.style = "stars",
+  file = 'mem-model-selection/gti.EPI.mem.html')
+
+# Best model: LFM + DW*spp
+# Best model (w/o interactions): LFM + DW;  MPa + DW not sig. worse, MPa alone not sig. worse
+# DW alone close behind
+```
+
+##### TTFG
+```{r}
+mpa.mod <- lmer(ttfg ~ mpa + spp + sample_wt + site + year_month + (1|individual), data = epi.df)
+lfm.mod <- lmer(ttfg ~ lfm + spp + sample_wt + site + year_month + (1|individual), data = epi.df)
+dw.mod <- lmer(ttfg ~ dw_flam_sample + spp + site + year_month + (1|individual), data = epi.df)
+ww.mod <- lmer(ttfg ~ ww_flam_sample + spp + site + year_month + (1|individual), data = epi.df)
+mod1 <- lmer(ttfg ~ mpa + lfm + spp + sample_wt + site + year_month + (1|individual), data = epi.df)
+mod2 <- lmer(ttfg ~ mpa + lfm + dw_flam_sample + spp + site + year_month + (1|individual), data = epi.df)
+mod3 <- lmer(ttfg ~ mpa + dw_flam_sample + spp + site + year_month + (1|individual), data = epi.df)
+mod4 <- lmer(ttfg ~ lfm + dw_flam_sample + spp + site + year_month + (1|individual), data = epi.df)
+# Interactions
+int1 <- lmer(ttfg ~ lfm + dw_flam_sample*spp + site + year_month + (1|individual), data = epi.df)
+int2 <- lmer(ttfg ~ mpa*spp + sample_wt + site + year_month + (1|individual), data = epi.df)
+int3 <- lmer(ttfg ~ ww_flam_sample*spp + site + year_month + (1|individual), data = epi.df)
+int4 <- lmer(ttfg ~ dw_flam_sample*spp + site + year_month + (1|individual), data = epi.df)
+
+tab_model(mpa.mod, lfm.mod, dw.mod, ww.mod, mod1, mod2, mod3, mod4, int1, int2, int3, int4,
+          show.reflvl = TRUE, 
+          digits = 3, 
+          show.aic = TRUE, 
+          show.ci = FALSE,
+          show.icc = FALSE, 
+         string.pred = "Coeffcient", 
+        dv.labels = c("MPa", "LFM","Dry Weight", "Wet Weight",
+                      "MPa + LFM", "MPa + LFM + DW",
+                      "MPa + DW", "LFM + DW", "Int: LFM + DW*spp",
+                      "Int: MPa*spp", "Int: WW*spp", "Int: DW*spp"),
+         title = "predictor analysis: ttfg, epiradiator",
+  string.p = "P-Value", 
+  p.style = "stars",
+  file = 'mem-model-selection/ttfg.EPI.mem.html')
+
+# Best model: LFM + DW*spp
+```
+
+#### Hot Plate
+##### TTI
+```{r}
+mpa.mod <- lmer(tti ~ mpa + spp + sample_wt + site + year_month + (1|individual), data = hp.df)
+lfm.mod <- lmer(tti ~ lfm + spp + sample_wt + site + year_month + (1|individual), data = hp.df)
+dw.mod <- lmer(tti ~ dw_flam_sample + spp + site + year_month + (1|individual), data = hp.df)
+ww.mod <- lmer(tti ~ ww_flam_sample + spp + site + year_month + (1|individual), data = hp.df)
+mod1 <- lmer(tti ~ mpa + lfm + spp + sample_wt + site + year_month + (1|individual), data = hp.df)
+mod2 <- lmer(tti ~ mpa + lfm + dw_flam_sample + spp + site + year_month + (1|individual), data = hp.df)
+mod3 <- lmer(tti ~ mpa + dw_flam_sample + spp + site + year_month + (1|individual), data = hp.df)
+mod4 <- lmer(tti ~ lfm + dw_flam_sample + spp + sample_wt + site + year_month + (1|individual), data = hp.df)
+# Interactions
+int1 <- lmer(tti ~ lfm + dw_flam_sample*spp + site + year_month + (1|individual), data = hp.df)
+int2 <- lmer(tti ~ mpa*spp + sample_wt + site + year_month + (1|individual), data = hp.df)
+int3 <- lmer(tti ~ lfm*spp + sample_wt + site + year_month + (1|individual), data = hp.df)
+int4 <- lmer(tti ~ lfm + mpa*spp + sample_wt + site + year_month + (1|individual), data = hp.df)
+int5 <- lmer(tti ~ mpa + lfm*spp + sample_wt + site + year_month + (1|individual), data = hp.df)
+int6 <- lmer(tti ~ mpa + dw_flam_sample*spp + site + year_month + (1|individual), data = hp.df)
+int7 <- lmer(tti ~ lfm + dw_flam_sample + mpa*spp + site + year_month + (1|individual), data = hp.df)
+int8 <- lmer(tti ~ mpa + dw_flam_sample + lfm*spp + site + year_month + (1|individual), data = hp.df)
+int9 <- lmer(tti ~ mpa + lfm + dw_flam_sample*spp + site + year_month + (1|individual), data = hp.df)
+
+tab_model(mpa.mod, lfm.mod, dw.mod, ww.mod, mod1, mod2, mod3, mod4, int1, int2, int3, int4, int5, int6, int7, int8, int9,
+          show.reflvl = TRUE, 
+          digits = 3, 
+          show.aic = TRUE, 
+          show.ci = FALSE,
+          show.icc = FALSE, 
+         string.pred = "Coeffcient", 
+        dv.labels = c("MPa", "LFM","Dry Weight", "Wet Weight",
+                      "MPa + LFM", "MPa + LFM + DW",
+                      "MPa + DW", "LFM + DW", "Int: LFM + DW*spp",
+                      "Int: MPa*spp", "Int: LFM*spp", "Int: LFM + MPa*spp",
+                      "Int: MPa + LFM*spp", "Int: MPa + DW*spp", 
+                      "Int: LFM + DW + MPa*spp", "Int: MPa + DW + LFM*spp",
+                      "Int: LFM + MPa + DW*spp"),
+         title = "predictor analysis: tti, hot plate",
+  string.p = "P-Value", 
+  p.style = "stars",
+  file = 'mem-model-selection/tti.HP.mem.html')
+
+# Best model: LFM + DW*spp
+# MPa*spp close behind
+```
+
+##### FD
+```{r}
+mpa.mod <- lmer(fd ~ mpa + spp + sample_wt + site + year_month + (1|individual), data = hp.df)
+lfm.mod <- lmer(fd ~ lfm + spp + sample_wt + site + year_month + (1|individual), data = hp.df)
+dw.mod <- lmer(fd ~ dw_flam_sample + spp + site + year_month + (1|individual), data = hp.df)
+ww.mod <- lmer(fd ~ ww_flam_sample + spp + site + year_month + (1|individual), data = hp.df)
+mod1 <- lmer(fd ~ mpa + lfm + spp + sample_wt + site + year_month + (1|individual), data = hp.df)
+mod2 <- lmer(fd ~ mpa + lfm + dw_flam_sample + spp + site + year_month + (1|individual), data = hp.df)
+mod3 <- lmer(fd ~ mpa + dw_flam_sample + spp + site + year_month + (1|individual), data = hp.df)
+mod4 <- lmer(fd ~ lfm + dw_flam_sample + spp + sample_wt + site + year_month + (1|individual), data = hp.df)
+# Interactions
+int1 <- lmer(fd ~ dw_flam_sample*spp + site + year_month + (1|individual), data = hp.df)
+int2 <- lmer(fd ~ mpa + dw_flam_sample*spp + site + year_month + (1|individual), data = hp.df)
+int3 <- lmer(fd ~ lfm + dw_flam_sample*spp + site + year_month + (1|individual), data = hp.df)
+int4 <- lmer(fd ~ ww_flam_sample*spp + site + year_month + (1|individual), data = hp.df)
+int5 <- lmer(fd ~ mpa*spp + site + year_month + (1|individual), data = hp.df)
+
+tab_model(mpa.mod, lfm.mod, dw.mod, ww.mod, mod1, mod2, mod3, mod4, int1, int2, int3, int4, int5,
+          show.reflvl = TRUE, 
+          digits = 3, 
+          show.aic = TRUE, 
+          show.ci = FALSE,
+          show.icc = FALSE, 
+         string.pred = "Coeffcient", 
+        dv.labels = c("MPa", "LFM","Dry Weight", "Wet Weight",
+                      "MPa + LFM", "MPa + LFM + DW",
+                      "MPa + DW", "LFM + DW", "Int: DW*spp", "Int: MPa + DW*spp",
+                      "Int: LFM + DW*spp", "Int: WW*spp", "Int: MPa*spp"),
+         title = "predictor analysis: fd, hot plate",
+  string.p = "P-Value", 
+  p.style = "stars",
+  file = 'mem-model-selection/fd.HP.mem.html')
+
+# Best model: DW*spp; MPa + DW*spp not sig. worse
+# Best model (w/o interactions): DW alone; MPa + DW not sig. worse, MPa not sig. worse
+# LFM + DW close behind
+```
+
+##### FH
+```{r}
+mpa.mod <- lmer(fh ~ mpa + spp + sample_wt + site + year_month + (1|individual), data = hp.df)
+lfm.mod <- lmer(fh ~ lfm + spp + sample_wt + site + year_month + (1|individual), data = hp.df)
+dw.mod <- lmer(fh ~ dw_flam_sample + spp + site + year_month + (1|individual), data = hp.df)
+ww.mod <- lmer(fh ~ ww_flam_sample + spp + site + year_month + (1|individual), data = hp.df)
+mod1 <- lmer(fh ~ mpa + lfm + spp + sample_wt + site + year_month + (1|individual), data = hp.df)
+mod2 <- lmer(fh ~ mpa + lfm + dw_flam_sample + spp + site + year_month + (1|individual), data = hp.df)
+mod3 <- lmer(fh ~ mpa + dw_flam_sample + spp + site + year_month + (1|individual), data = hp.df)
+mod4 <- lmer(fh ~ lfm + dw_flam_sample + spp + site + year_month + (1|individual), data = hp.df)
+# Interactions
+int1 <- lmer(fh ~ dw_flam_sample*spp + site + year_month + (1|individual), data = hp.df)
+int2 <- lmer(fh ~ lfm + dw_flam_sample*spp + site + year_month + (1|individual), data = hp.df)
+int3 <- lmer(fh ~ mpa*spp + sample_wt + site + year_month + (1|individual), data = hp.df)
+
+tab_model(mpa.mod, lfm.mod, dw.mod, ww.mod, mod1, mod2, mod3, mod4, int1, int2, int3,
+          show.reflvl = TRUE, 
+          digits = 3, 
+          show.aic = TRUE, 
+          show.ci = FALSE,
+          show.icc = FALSE, 
+         string.pred = "Coeffcient", 
+        dv.labels = c("MPa", "LFM","Dry Weight", "Wet Weight",
+                      "MPa + LFM", "MPa + LFM + DW",
+                      "MPa + DW", "LFM + DW", "Int: DW*spp",
+                      "Int: LFM + DW*spp", "Int: MPa*spp"),
+         title = "predictor analysis: fh, hot plate",
+  string.p = "P-Value", 
+  p.style = "stars",
+  file = 'mem-model-selection/fh.HP.mem.html')
+
+# Best model: LFM + DW*spp; DW*spp not sig. worse
+# Best model (w/o interactions): DW alone; LFM + DW not sig. worse
+# MPa + DW close behind
+```
+
+##### GD
+```{r}
+mpa.mod <- lmer(gd ~ mpa + spp + sample_wt + site + year_month + (1|individual), data = hp.df)
+lfm.mod <- lmer(gd ~ lfm + spp + sample_wt + site + year_month + (1|individual), data = hp.df)
+dw.mod <- lmer(gd ~ dw_flam_sample + spp + site + year_month + (1|individual), data = hp.df)
+ww.mod <- lmer(gd ~ ww_flam_sample + spp + site + year_month + (1|individual), data = hp.df)
+mod1 <- lmer(gd ~ mpa + lfm + spp + sample_wt + site + year_month + (1|individual), data = hp.df)
+mod2 <- lmer(gd ~ mpa + lfm + dw_flam_sample + spp + site + year_month + (1|individual), data = hp.df)
+mod3 <- lmer(gd ~ mpa + dw_flam_sample + spp + site + year_month + (1|individual), data = hp.df)
+mod4 <- lmer(gd ~ lfm + dw_flam_sample + spp + site + year_month + (1|individual), data = hp.df)
+# Interactions
+int1 <- lmer(gd ~ lfm + dw_flam_sample*spp + site + year_month + (1|individual), data = hp.df)
+int2 <- lmer(gd ~ mpa + lfm*spp + sample_wt + site + year_month + (1|individual), data = hp.df)
+int3 <- lmer(gd ~ mpa + lfm + dw_flam_sample*spp + site + year_month + (1|individual), data = hp.df)
+int4 <- lmer(gd ~ dw_flam_sample + lfm + mpa*spp + site + year_month + (1|individual), data = hp.df)
+int5 <- lmer(gd ~ mpa + dw_flam_sample + lfm*spp + site + year_month + (1|individual), data = hp.df)
+int6 <- lmer(gd ~ dw_flam_sample*spp + site + year_month + (1|individual), data = hp.df)
+
+tab_model(mpa.mod, lfm.mod, dw.mod, ww.mod, mod1, mod2, mod3, mod4, int1, int2, int3, int4, int5, int6, 
+          show.reflvl = TRUE, 
+          digits = 3, 
+          show.aic = TRUE, 
+          show.ci = FALSE,
+          show.icc = FALSE, 
+         string.pred = "Coeffcient", 
+        dv.labels = c("MPa", "LFM","Dry Weight", "Wet Weight",
+                      "MPa + LFM", "MPa + LFM + DW",
+                      "MPa + DW", "LFM + DW", "Int: LFM + DW*spp", "Int: MPa + LFM*spp",
+                      "Int: MPa + LFM + DW*spp", "Int: DW + LFM + MPa*spp",
+                      "Int: MPa + DW + LFM*spp", "Int: DW*spp"),
+         title = "predictor analysis: gd, hot plate",
+  string.p = "P-Value", 
+  p.style = "stars",
+  file = 'mem-model-selection/gd.HP.mem.html')
+
+# Best model: LFM + DW*spp
+```
+
+##### Max. Temp.
+```{r}
+mpa.mod <- lmer(temp_max ~ mpa + spp + sample_wt + site + year_month + (1|individual), data = hp.df)
+lfm.mod <- lmer(temp_max ~ lfm + spp + sample_wt + site + year_month + (1|individual), data = hp.df)
+dw.mod <- lmer(temp_max ~ dw_flam_sample + spp + site + year_month + (1|individual), data = hp.df)
+ww.mod <- lmer(temp_max ~ ww_flam_sample + spp + site + year_month + (1|individual), data = hp.df)
+mod1 <- lmer(temp_max ~ mpa + lfm + spp + sample_wt + site + year_month + (1|individual), data = hp.df)
+mod2 <- lmer(temp_max ~ mpa + lfm + dw_flam_sample + spp + site + year_month + (1|individual), data = hp.df)
+mod3 <- lmer(temp_max ~ mpa + dw_flam_sample + spp + site + year_month + (1|individual), data = hp.df)
+mod4 <- lmer(temp_max ~ lfm + dw_flam_sample + spp + sample_wt + site + year_month + (1|individual), data = hp.df)
+# Interactions
+int1 <- lmer(temp_max ~ mpa + dw_flam_sample*spp + site + year_month + (1|individual), data = hp.df)
+int2 <- lmer(temp_max ~ mpa + lfm + dw_flam_sample*spp + site + year_month + (1|individual), data = hp.df)
+int3 <- lmer(temp_max ~ mpa + lfm*spp + sample_wt + site + year_month + (1|individual), data = hp.df)
+int4 <- lmer(temp_max ~ mpa*spp + sample_wt + site + year_month + (1|individual), data = hp.df)
+
+tab_model(mpa.mod, lfm.mod, dw.mod, ww.mod, mod1, mod2, mod3, mod4, int1, int2, int3, int4,
+          show.reflvl = TRUE, 
+          digits = 3, 
+          show.aic = TRUE, 
+          show.ci = FALSE,
+          show.icc = FALSE, 
+         string.pred = "Coeffcient", 
+        dv.labels = c("MPa", "LFM","Dry Weight", "Wet Weight",
+                      "MPa + LFM", "MPa + LFM + DW",
+                      "MPa + DW", "LFM + DW", "Int: MPa + DW*spp",
+                      "Int: MPa + LFM + DW*spp", "Int: MPa + LFM*spp", "Int: MPa*spp"),
+         title = "predictor analysis: temp_max, hot plate",
+  string.p = "P-Value", 
+  p.style = "stars",
+  file = 'mem-model-selection/temp_max.HP.mem.html')
+
+# Best model: MPa + DW*spp; MPa + LFM + DW*spp not sig. worse
+```
+
+##### PFG
+```{r}
+mpa.mod <- lmer(pfg ~ mpa + spp + sample_wt + site + year_month + (1|individual), data = hp.df)
+lfm.mod <- lmer(pfg ~ lfm + spp + sample_wt + site + year_month + (1|individual), data = hp.df)
+dw.mod <- lmer(pfg ~ dw_flam_sample + spp + site + year_month + (1|individual), data = hp.df)
+ww.mod <- lmer(pfg ~ ww_flam_sample + spp + site + year_month + (1|individual), data = hp.df)
+mod1 <- lmer(pfg ~ mpa + lfm + spp + sample_wt + site + year_month + (1|individual), data = hp.df)
+mod2 <- lmer(pfg ~ mpa + lfm + dw_flam_sample + spp + site + year_month + (1|individual), data = hp.df)
+mod3 <- lmer(pfg ~ mpa + dw_flam_sample + spp + site + year_month + (1|individual), data = hp.df)
+mod4 <- lmer(pfg ~ lfm + dw_flam_sample + spp + site + year_month + (1|individual), data = hp.df)
+# Interactions
+int1 <- lmer(pfg ~ lfm + dw_flam_sample*spp + site + year_month + (1|individual), data = hp.df)
+int2 <- lmer(pfg ~ ww_flam_sample*spp + site + year_month + (1|individual), data = hp.df)
+int3 <- lmer(pfg ~ mpa*spp + sample_wt + site + year_month + (1|individual), data = hp.df)
+int4 <- lmer(pfg ~ mpa + lfm*spp + sample_wt + site + year_month + (1|individual), data = hp.df)
+int5 <- lmer(pfg ~ mpa + dw_flam_sample*spp + site + year_month + (1|individual), data = hp.df)
+
+tab_model(mpa.mod, lfm.mod, dw.mod, ww.mod, mod1, mod2, mod3, mod4, int1, int2, int3, int4, int5,
+          show.reflvl = TRUE, 
+          digits = 3, 
+          show.aic = TRUE, 
+          show.ci = FALSE,
+          show.icc = FALSE, 
+         string.pred = "Coeffcient", 
+        dv.labels = c("MPa", "LFM","Dry Weight", "Wet Weight",
+                      "MPa + LFM", "MPa + LFM + DW",
+                      "MPa + DW", "LFM + DW", "Int: LFM + DW*spp", "Int: WW*spp",
+                      "Int: MPa*spp", "Int: MPa + LFM*spp", "Int: MPa + DW*spp"),
+         title = "predictor analysis: pfg, hot plate",
+  string.p = "P-Value", 
+  p.style = "stars",
+  file = 'mem-model-selection/pfg.HP.mem.html')
+
+# Best model: LFM + DW*spp
+```
+
+##### GTI
+```{r}
+mpa.mod <- lmer(gti ~ mpa + spp + sample_wt + site + year_month + (1|individual), data = hp.df)
+lfm.mod <- lmer(gti ~ lfm + spp + sample_wt + site + year_month + (1|individual), data = hp.df)
+dw.mod <- lmer(gti ~ dw_flam_sample + spp + site + year_month + (1|individual), data = hp.df)
+ww.mod <- lmer(gti ~ ww_flam_sample + spp + site + year_month + (1|individual), data = hp.df)
+mod1 <- lmer(gti ~ mpa + lfm + spp + sample_wt + site + year_month + (1|individual), data = hp.df)
+mod2 <- lmer(gti ~ mpa + lfm + dw_flam_sample + spp + site + year_month + (1|individual), data = hp.df)
+mod3 <- lmer(gti ~ mpa + dw_flam_sample + spp + site + year_month + (1|individual), data = hp.df)
+mod4 <- lmer(gti ~ lfm + dw_flam_sample + spp + site + year_month + (1|individual), data = hp.df)
+# Interactions
+int1 <- lmer(gti ~ lfm + dw_flam_sample*spp + site + year_month + (1|individual), data = hp.df)
+int2 <- lmer(gti ~ mpa*spp + sample_wt + site + year_month + (1|individual), data = hp.df)
+int3 <- lmer(gti ~ mpa + lfm*spp + sample_wt + site + year_month + (1|individual), data = hp.df)
+int4 <- lmer(gti ~ lfm + mpa*spp + sample_wt + site + year_month + (1|individual), data = hp.df)
+int5 <- lmer(gti ~ mpa + lfm + dw_flam_sample*spp + site + year_month + (1|individual), data = hp.df)
+
+tab_model(mpa.mod, lfm.mod, dw.mod, ww.mod, mod1, mod2, mod3, mod4, int1, int2, int3, int4, int5,
+          show.reflvl = TRUE, 
+          digits = 3, 
+          show.aic = TRUE, 
+          show.ci = FALSE,
+          show.icc = FALSE, 
+         string.pred = "Coeffcient", 
+        dv.labels = c("MPa", "LFM","Dry Weight", "Wet Weight",
+                      "MPa + LFM", "MPa + LFM + DW",
+                      "MPa + DW", "LFM + DW", "Int: LFM + DW*spp", "Int: MPa*spp",
+                      "Int: MPa + LFM*spp", "Int: LFM + MPa*spp", 
+                      "Int: MPa + LFM + DW*spp"),
+         title = "predictor analysis: gti, hot plate",
+  string.p = "P-Value", 
+  p.style = "stars",
+  file = 'mem-model-selection/gti.HP.mem.html')
+
+# Best model: LFM + DW*spp
+```
+
+##### TTFG
+```{r}
+mpa.mod <- lmer(ttfg ~ mpa + spp + sample_wt + site + year_month + (1|individual), data = hp.df)
+lfm.mod <- lmer(ttfg ~ lfm + spp + sample_wt + site + year_month + (1|individual), data = hp.df)
+dw.mod <- lmer(ttfg ~ dw_flam_sample + spp + site + year_month + (1|individual), data = hp.df)
+ww.mod <- lmer(ttfg ~ ww_flam_sample + spp + site + year_month + (1|individual), data = hp.df)
+mod1 <- lmer(ttfg ~ mpa + lfm + spp + sample_wt + site + year_month + (1|individual), data = hp.df)
+mod2 <- lmer(ttfg ~ mpa + lfm + dw_flam_sample + spp + site + year_month + (1|individual), data = hp.df)
+mod3 <- lmer(ttfg ~ mpa + dw_flam_sample + spp + site + year_month + (1|individual), data = hp.df)
+mod4 <- lmer(ttfg ~ lfm + dw_flam_sample + spp + site + year_month + (1|individual), data = hp.df)
+# Interactions
+int1 <- lmer(ttfg ~ mpa + dw_flam_sample*spp + site + year_month + (1|individual), data = hp.df)
+int2 <- lmer(ttfg ~ lfm + dw_flam_sample*spp + site + year_month + (1|individual), data = hp.df)
+int3 <- lmer(ttfg ~ mpa*spp + sample_wt + site + year_month + (1|individual), data = hp.df)
+int4 <- lmer(ttfg ~ lfm + mpa*spp + sample_wt + site + year_month + (1|individual), data = hp.df)
+int5 <- lmer(ttfg ~ mpa + lfm*spp + site + year_month + (1|individual), data = hp.df)
+
+tab_model(mpa.mod, lfm.mod, dw.mod, ww.mod, mod1, mod2, mod3, mod4, int1, int2, int3, int4, int5,
+          show.reflvl = TRUE, 
+          digits = 3, 
+          show.aic = TRUE, 
+          show.ci = FALSE,
+          show.icc = FALSE, 
+         string.pred = "Coeffcient", 
+        dv.labels = c("MPa", "LFM","Dry Weight", "Wet Weight",
+                      "MPa + LFM", "MPa + LFM + DW",
+                      "MPa + DW", "LFM + DW", "Int: MPa + DW*spp",
+                      "Int: LFM + DW*spp", "Int: MPa*spp", "Int: LFM + MPa*spp",
+                      "Int: MPa + LFM*spp"),
+         title = "predictor analysis: ttfg, hot plate",
+  string.p = "P-Value", 
+  p.style = "stars",
+  file = 'mem-model-selection/ttfg.HP.mem.html')
+
+# Best model: LFM + DW*spp
+```
+
+# ------------------------------
+# MEM Selection Table
+```{r}
+col1 <- c('Time to Ignition', ' ', ' ', 'Flame Duration', ' ', ' ', 'Flame Height', ' ', 'Glow Duration', ' ', ' ', 'Maximum Temperature', ' ', 'Post-Flame Glow', ' ', ' ', 'Glow to Ignition', ' ', 'Time to First Glow')
+col2 <- c('MPa*** + DW* x species', ' ', ' ', 'DW x species', 'WW x species', ' ', 'MPa + DW x species', 'DW x species', 'MPa + LFM + DW x species', 'DW x species','LFM + DW x species', 'MPa*** + LFM* + DW* x species', 'MPa** + DW x species', 'MPa** + [DW x species]*', 'MPa*** + LFM + [DW x species]**', 'LFM + [DW x species]*', 'MPa + DW x species', ' ', '[WW*** x spp]**')
+col3 <- c('MPa + [DW*** x species]*', 'LFM + MPa + DW** x species', 'LFM + [DW** x species]*', 'DW x species', 'WW x species', 'MPa + DW x species', 'DW* x species', 'LFM + DW** x species', 'MPa + LFM* + [DW** x species]**', 'LFM + [DW** x species]**', 'DW x species','MPa*** + DW** x species', 'MPa*** + LFM + DW** x species', 'MPa + [DW* x species]**', 'LFM + [DW x species]**', ' ', 'MPa + LFM + DW** x species', 'LFM + DW** x species', 'MPa** + DW x species')
+col4 <- c('651.189', ' ', ' ', '513.814', '515.805', ' ', '522.753', '523.215', '860.247', '860.494', '862.221', '884.899', '886.737', '828.631', '831.333', '832.698', '653.906', ' ', '576.627')
+col5 <- c('723.571', '726.364', '727.353', '572.756', '573.225', '573.969', '477.555', '482.359', '842.114', '845.501', '846.865', '737.287', '739.601', '809.005', '813.056', ' ', '737.883', '739.439', '752.668')
+col6 <- c('0.345 / 0.420', ' ', ' ', '0.126 / 0.137', '0.098 / NA', ' ', '0.187 / NA', '0.157 / NA', '0.332 / 0.405', '0.325 / 0.402', '0.333 / 0.399', '0.224 / NA', '0.193 / NA', '0.343 / 0.419', '0.341 / 0.416', '0.343 / 0.416', '0.164 / NA', ' ', '0.419 / 0.423')
+col7 <- c('0.482 / NA', '0.481 / NA', '0.483 / NA', '0.184 / 0.335', '0.192 / 0.307', '0.192 / 0.326', '0.277 / NA', '0.295 / NA', '0.290 / 0.343', '0.283 / 0.349', '0.251 / 0.378', '0.404 / 0.603', '0.402 / 0.624', '0.289 / 0.345', '0.287 / 0.335', ' ', '0.256 / 0.349', '0.254 / 0.355', '0.185 / 0.287')
+
+kable.df <- data.frame(col1, col2, col3, col4, col5, col6, col7)
+```
+
+```{r}
+kable.df[1,4:5] <- cell_spec(kable.df[1,4:5], 'html', bold = T)
+kable.df[4,4:5] <- cell_spec(kable.df[4,4:5], 'html', bold = T)
+kable.df[5,4:5] <- cell_spec(kable.df[5,4:5], 'html', bold = T)
+kable.df[6,5] <- cell_spec(kable.df[6,5], 'html', bold = T)
+kable.df[7,4:5] <- cell_spec(kable.df[7,4:5], 'html', bold = T)
+kable.df[8,4] <- cell_spec(kable.df[8,4], 'html', bold = T)
+kable.df[9:14,4] <- cell_spec(kable.df[9:14,4], 'html', bold = T)
+kable.df[9,5] <- cell_spec(kable.df[9,5], 'html', bold = T)
+kable.df[12,5] <- cell_spec(kable.df[12,5], 'html', bold = T)
+kable.df[14,5] <- cell_spec(kable.df[14,5], 'html', bold = T)
+kable.df[17,4:5] <- cell_spec(kable.df[17,4:5], 'html', bold = T)
+kable.df[18,5] <- cell_spec(kable.df[18,5], 'html', bold = T)
+kable.df[19,4:5] <- cell_spec(kable.df[19,4:5], 'html', bold = T)
+
+kable.df %>% 
+  kable(format = 'html', escape = F, col.names = c('Flam. Metric', 'Epiradiator', 'Hot Plate', 'Epiradiator','Hot Plate', 'Epiradiator', 'Hot Plate')) %>% 
+  kable_styling(bootstrap_options = c('hover', 'bordered', 'condensed'), fixed_thead = T) %>% 
+  row_spec(c(0:19), color = 'black') %>% 
+  column_spec(1, bold = T, border_left = T, border_right = T) %>% 
+  column_spec(c(3,5,7), border_right = T) %>% 
+  row_spec(c(1:3, 7:8, 12:13, 17:18), background = '#F9F6EE') %>% 
+  add_header_above(c(" ", "Top Model(s)" = 2, "AIC" = 2, "Marginal R2 / Conditional R2" = 2), color = 'black', border_left = T, border_right = T) %>% 
+  save_kable('mem-model-selection/MEM_kable.html')
+```
+

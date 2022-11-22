@@ -1,0 +1,249 @@
+---
+title: "Binomial Regressions"
+author: "Joe Celebrezze"
+date: "3/16/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Introduction
+This .Rmd is for the binomial regressions of ignitions vs. non-ignitions in the method comparison dataset
+See scripts/LOCAL/5.0_figures_2020.Rmd for the binomial regressions for the local species
+
+# Loading in necessary packages
+```{r, include = FALSE}
+library(tidyverse)
+library(cowplot)
+library(here)
+here = here::here
+select = dplyr::select
+library(janitor) # For data wrangling purposes including clean_names()
+#Add in packages as necessary so no redundant packages
+```
+
+# Loading in datasets
+Side note:
+Oh boy. The dataset that we have been using has only the ignitions (no non-ignitions), so we are going to need to do some data wrangling prior to doing the binomial regressions. Rather than mess with the 4000+ line code where the data wrangling was initially done, I am just going to do the data wrangling myself -- good practice, right? 
+*eyes narrow* 
+right?
+Let's see how this goes!
+```{r, include = FALSE}
+seki.raw.data <- read_csv(here("raw-data/SEKI_flammability.csv"))
+local.raw.data <- read_csv(here("processed-data/compiled-datasets/LOCAL/local_flam_data_all.csv"))
+```
+
+# Data Wrangling (Yee-haw!)
+
+## Local Dataset
+```{r}
+local.data <- local.raw.data %>% 
+  clean_names() %>% 
+  mutate(lfm = lfm_n_as_imputed) %>% 
+  select(5:7, 13:38, lfm) %>%  #drop columns we dont want
+  mutate(location = "local") %>% 
+  unite(individual_round, c("individual", "round"), remove = FALSE)
+```
+
+Changing mpa to negative
+```{r}
+local.data <- local.data %>% 
+  filter(mpa > 0) %>% 
+  mutate(mpa = mpa*-1)
+```
+
+## SEKI Dataset
+```{r}
+seki.data <- seki.raw.data %>% 
+  clean_names() %>% 
+  unite(individual, c("year", "month", "spp", "sample"), remove = FALSE) %>% 
+  unite(individual_round, c("individual", "round"), remove = FALSE) %>% 
+  unite(year_month, c("year", "month"), remove = FALSE) %>% 
+  select(-ttms, -bottle_wt) %>% 
+  mutate(location = "seki")
+```
+
+## Combining the two
+```{r}
+all_methods_long <- rbind(seki.data, local.data)
+
+all_methods_epi <- all_methods_long %>% 
+  filter(model == "EPI")
+
+all_methods_hp <- all_methods_long %>% 
+  filter(model == "HP")
+
+#Make a dataset that only has the rounds where we have paired EPI and HP samples
+paired_methods_wide <- merge(all_methods_epi, all_methods_hp, by.x = "individual_round", by.y = "individual_round", suffixes = c("_epi", "_hp"))
+
+paired_methods_epi <- paired_methods_wide %>% 
+  select(1:31) %>% 
+  rename_with(~str_remove(., '_epi'))
+
+paired_methods_hp <- paired_methods_wide %>% 
+  select(1, 32:61) %>% 
+  rename_with(~str_remove(., '_hp'))
+
+paired_methods_long <- bind_rows(paired_methods_epi, paired_methods_hp)
+paired_methods_long <- paired_methods_long %>% 
+  mutate(dw_flam_sample = (sample_wt * 100)/lfm)
+```
+
+## Writing new csv. files (in case we need these datasets again...)
+```{r}
+write_csv(paired_methods_long, here("processed-data", "compiled-datasets", "METHODS", "bothmethods_and_locations_long_noignitionsincluded.csv"))
+
+write_csv(paired_methods_wide, here("processed-data", "compiled-datasets", "METHODS", "bothmethods_and_locations_wide_noignitionsincluded.csv"))
+```
+
+## Filtering out manual ignitions, species not-of-interest
+```{r}
+main.df <- paired_methods_long %>% 
+  filter(spp != "QUKE",  spp != "PIJE", spp != "ABCO") %>% 
+  filter(ignition != 2)
+```
+
+Changing up species, model names:
+```{r}
+main.df <- main.df %>% 
+  mutate(Species = case_when(
+    spp == "ADFA" ~ "A. fasciculatum", 
+    spp == "CEME" ~ "C. megacarpus",
+    spp == "CECO" ~ "C. cordulatus",
+    spp == "ARPA" ~ "A. patula")) %>% 
+  mutate(Model = case_when(
+    model == "HP" ~ "Hot Plate",
+    model == "EPI" ~ "Epiradiator"
+  ))
+```
+
+# Binomial Regression - Stats Stuff
+Since, for the rest of the methods comparison analyses, we have focused on ADFA, ARPA, CECO and CEME, these are the species we will focus on with the binomial regression
+
+ADFA and CEME ignite all the time -- don't expect binomial regressions to work
+
+## ADFA
+```{r}
+adfa.df <- main.df %>% 
+  filter(spp == "ADFA")
+
+m1 <- glm(ignition ~ lfm + site + sample_wt + model, data = adfa.df, family = "binomial")
+summary(m1)
+#not sig
+
+m2 <- glm(ignition ~ mpa + site + sample_wt + model, data = adfa.df, family = "binomial")
+summary(m2)
+#not sig
+
+m3 <- glm(ignition ~ dw_flam_sample + site + sample_wt + model, data = adfa.df, family = "binomial")
+summary(m3)
+#not sig
+```
+
+## ARPA
+```{r}
+arpa.df <- main.df %>% 
+  filter(spp == "ARPA")
+
+m1 <- glm(ignition ~ lfm + site + sample_wt + model, data = arpa.df, family = "binomial")
+summary(m1)
+#not sig
+
+m2 <- glm(ignition ~ mpa + site + sample_wt + model, data = arpa.df, family = "binomial")
+summary(m2)
+#not sig
+
+m3 <- glm(ignition ~ dw_flam_sample + site + sample_wt + model, data = arpa.df, family = "binomial")
+summary(m3)
+#not sig
+```
+
+## CECO
+```{r}
+ceco.df <- main.df %>% 
+  filter(spp == "CECO") %>% 
+  filter(lfm > 0)
+
+m1 <- glm(ignition ~ lfm + site + sample_wt + model, data = ceco.df, family = "binomial")
+summary(m1)
+#not sig
+
+m2 <- glm(ignition ~ mpa + site + sample_wt + model, data = ceco.df, family = "binomial")
+summary(m2)
+#not sig
+
+m3 <- glm(ignition ~ dw_flam_sample + site + sample_wt + model, data = ceco.df, family = "binomial")
+summary(m3)
+#not sig
+```
+
+## CEME
+```{r}
+ceme.df <- main.df %>% 
+  filter(spp == "CEME")
+
+m1 <- glm(ignition ~ lfm + site + sample_wt + model, data = ceme.df, family = "binomial")
+summary(m1)
+#not sig
+
+m2 <- glm(ignition ~ mpa + site + sample_wt + model, data = ceme.df, family = "binomial")
+summary(m2)
+#not sig
+
+m3 <- glm(ignition ~ dw_flam_sample + site + sample_wt + model, data = ceme.df, family = "binomial")
+summary(m3)
+#not sig
+```
+
+# Data Visualization
+## All species
+```{r}
+main.df %>% 
+  ggplot(aes(x=mpa, y=ignition)) + 
+  geom_point(alpha=.5) +
+  facet_grid(model~spp) +
+  stat_smooth(method="glm", se=FALSE, method.args = list(family=binomial)) +
+  theme_bw() +
+  labs(x = "Water Potential", y = "Ignition?", title = "Binomial Regression")
+
+ggsave("figures/binomialregression.jpg", height = 7, width = 10)
+```
+
+## ARPA and CECO only
+```{r}
+mpa.bin.reg <- main.df %>% 
+  filter(spp == "ARPA" | spp == "CECO") %>% 
+  ggplot(aes(x=mpa, y=ignition)) + 
+  scale_y_continuous(breaks = c(0,1)) +
+  geom_point(alpha=.5) +
+  facet_grid(Model~Species) +
+  stat_smooth(method="glm", se=FALSE, method.args = list(family=binomial), color = 'black') +
+  theme_bw() +
+  theme(axis.title = element_text(face = 'bold', size = 14),
+        strip.text.y = element_blank(),
+        axis.text.y = element_text(size = 12),
+        strip.text.x = element_text(face = 'bold.italic', size = 14)) +
+  labs(x = "Water Potential", y = "Ignition?")
+
+lfm.bin.reg <- main.df %>% 
+  filter(spp == "ARPA" | spp == "CECO") %>%
+  filter(lfm > 20) %>% 
+  ggplot(aes(x=lfm, y=ignition)) + 
+  scale_y_continuous(breaks = c(0,1)) +
+  geom_point(alpha=.5) +
+  facet_grid(Model~Species) +
+  stat_smooth(method="glm", se=FALSE, method.args = list(family=binomial), color = 'black') +
+  theme_bw() +
+  theme(axis.title.x = element_text(face = 'bold', size = 14),
+        axis.title.y = element_blank(),
+        axis.text.y = element_blank(),
+        strip.text.x = element_text(face = 'bold.italic', size = 14),
+        strip.text.y = element_text(face = 'bold', size = 14)) +
+  labs(x = "Live Fuel Moisture (%)", y = "Ignition?")
+
+cowplot::plot_grid(ncol = 2, mpa.bin.reg, lfm.bin.reg)
+
+ggsave("figures/binomialregression.2spp.jpg", height = 7, width = 14)
+```

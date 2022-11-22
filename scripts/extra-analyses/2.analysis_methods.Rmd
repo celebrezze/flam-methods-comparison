@@ -1,0 +1,68 @@
+---
+title: "Method comparison - "
+author: "Indra Boving"
+date: "8/16/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
+library(tidyverse)
+library(here)
+here = here::here
+library(corrplot)
+library(janitor)
+select = dplyr::select
+col3 = hcl.colors(10, "YlOrRd", rev = TRUE) #color scale to use for consistency 
+```
+
+```{r, include = FALSE}
+
+methods_analysis_data_long <- read_csv(here("processed-data", "compiled-datasets", "METHODS", "bothmethods_bothlocations_long.csv"), show_col_types = FALSE)
+
+methods_analysis_epi <- methods_analysis_data_long %>% 
+  filter(model == "EPI")
+
+methods_analysis_hp <- methods_analysis_data_long %>% 
+  filter(model == "HP")
+
+methods_analysis_wide <- read_csv(here("processed-data", "compiled-datasets", "METHODS", "bothmethods_bothlocations_wide.csv"))
+```
+
+Seasonal mins and maxs from 2016 - 2020:
+
+https://www.sbbg.org/about/onsite-weather-station-live-fuel-moisture 
+
+```{r}
+adfa_min <- 55
+adfa_max <- 110
+
+ceme_min <- 55
+ceme_max <- 140
+```
+
+1:1 plot of flam index
+```{r}
+methods_analysis_wide %>% 
+ggplot(aes(y = flam_index_epi, x = flam_index_hp, color = spp_hp)) +
+  geom_point(size = 1) +
+  geom_abline() +
+  labs(y = "EPI", 
+       x = "HP", 
+       title = "Flammability index (0-20)") +
+  ylim(0,20) +
+  xlim(0,20) +
+  coord_equal()
+```
+```{r}
+methods_analysis_wide %>% 
+ggplot(aes(y = scale(flam_index_epi), x = scale(flam_index_hp), color = spp_hp)) +
+  geom_point(size = 1) +
+  geom_abline() +
+  labs(y = "EPI", 
+       x = "HP", 
+       title = "Flammability index (0-20)") +
+  #ylim(0,20) +
+  #xlim(0,20) +
+  coord_equal()
+```

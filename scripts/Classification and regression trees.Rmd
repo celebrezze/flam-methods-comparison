@@ -1,0 +1,248 @@
+---
+title: "Classification and Regression Trees"
+author: "Joe Celebrezze"
+date: "4/5/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Loading in necessary packages
+```{r, include = FALSE}
+library(tidyverse)
+select = dplyr::select
+library(here)
+here = here::here
+library(rpart) # for classification and regression tree analysis
+library(rpart.plot) # for cart visualization -- nicer than just plot()
+#Add in packages as necessary so no redundant packages
+```
+
+# Loading in dataset
+```{r, include = FALSE}
+main_df <- read_csv(here("processed-data/compiled-datasets/METHODS/bothmethods_bothlocations_long.csv"))
+```
+
+# Data wrangling
+```{r}
+#Selecting columns of interest
+df1 <- main_df %>% 
+  select(spp, model, mpa, fh, ttfg, gti, tti, fd, gd, pfg, dw_flam_sample,
+         lfm_outliers_out, start_temp, location, temp_max, ignition_temp, sample_wt)
+```
+
+# Try 1
+Going to try a relatively simple one with only species, model and water status
+```{r}
+tti.cfit <- rpart(tti ~ spp + model + mpa, data = df1, method = "class", cp = 0.011765)
+print(tti.cfit)
+printcp(tti.cfit)
+prp(tti.cfit, type = 5, branch = 1)
+```
+
+cp = cost-penalty parameter; limits the complexity of the tree
+  pruning parameter, tells R how high up to prune the tree
+  try out 0.001
+  
+First lowest xerror and add standard deviation then choose the first xerror level below that
+  
+Including all variables might not affect the top of the tree which is what matters for us
+
+Try to predict ignition = 1 or 0
+
+Normalize by sample weight? Scale and center?
+
+# Post-meeting-with-Max
+
+# Data Wrangling
+
+## Normalizing flam. metrics
+```{r}
+df_norm <- df1 %>% 
+  mutate(tti_norm = tti/sample_wt) %>% 
+  mutate(fd_norm = fd/sample_wt)
+# Splitting into hp and epi dataframes
+hpdf_norm <- df_norm %>% 
+  filter(model == "HP")
+epidf_norm <- df_norm %>% 
+  filter(model == "EPI")
+```
+
+## Scaling/centering flam. metrics
+```{r}
+# Splitting dataset by epi vs. hot plate prior to scaling/centering
+epi_df <- df1 %>% 
+  filter(model == "EPI") %>% 
+  na.omit()
+hp_df <- df1 %>% 
+  filter(model == "HP") %>% 
+  na.omit()
+
+
+epidf_sc <- epi_df %>% 
+  mutate(fh = fh - mean(fh), fd = fd - mean(fd), ttfg = ttfg - mean(ttfg), gti = gti -
+          mean(gti), tti = tti - mean(tti), gd = gd - mean(gd), pfg = pfg - mean(pfg),
+          temp_max = temp_max - mean(temp_max)) %>%  #centering
+  mutate(fh = scale(fh), fd = scale(fd), ttfg = scale(ttfg), gti = scale(gti), tti =
+           scale(tti), gd = scale(gd), pfg = scale(pfg), temp_max = scale(temp_max)) #scaled
+
+hpdf_sc <- hp_df %>% 
+  mutate(fh = fh - mean(fh), fd = fd - mean(fd), ttfg = ttfg - mean(ttfg), gti = gti -
+          mean(gti), tti = tti - mean(tti), gd = gd - mean(gd), pfg = pfg - mean(pfg),
+          temp_max = temp_max - mean(temp_max)) %>%  #centering
+  mutate(fh = scale(fh), fd = scale(fd), ttfg = scale(ttfg), gti = scale(gti), tti =
+           scale(tti), gd = scale(gd), pfg = scale(pfg), temp_max = scale(temp_max)) #scaled
+
+df_sc <- rbind(hpdf_sc, epidf_sc) # combining two methods together in one dataset
+```
+
+## Normalizing and then Scaling/Centering
+For now, just focusing on time to ignition and flame duration, so I hashed out all of the other flam. metrics (but will likely need to return to them and streamline the code a bit)
+```{r}
+epidf_nsc <- epidf_norm %>% 
+  na.omit() %>% 
+  mutate(tti_norm = tti_norm - mean(tti_norm), fd_norm = fd_norm - mean(fd_norm)) %>% #centered
+  mutate(tti_norm = scale(tti_norm), fd_norm = scale(fd_norm)) #scaled
+
+  #mutate(fh_norm = fh_norm - mean(fh_norm), fd_norm = fd_norm - mean(fd_norm), ttfg_norm = ttfg_norm - mean(ttfg_norm), gti = gti -
+          #mean(gti), tti = tti - mean(tti), gd = gd - mean(gd), pfg = pfg - mean(pfg),
+          #temp_max = temp_max - mean(temp_max)) %>%  #centering
+  #mutate(fh_norm = scale(fh_norm), fd_norm = scale(fd_norm), ttfg_norm = scale(ttfg_norm), gti = scale(gti), tti =
+           #scale(tti), gd = scale(gd), pfg = scale(pfg), temp_max = scale(temp_max)) #scaled
+
+hpdf_nsc <- hpdf_norm %>% 
+  na.omit() %>% 
+  mutate(tti_norm = tti_norm - mean(tti_norm), fd_norm = fd_norm - mean(fd_norm)) %>% #centered
+  mutate(tti_norm = scale(tti_norm), fd_norm = scale(fd_norm)) #scaled
+
+  #mutate(fh_norm = fh_norm - mean(fh_norm), fd_norm = fd_norm - mean(fd_norm), ttfg_norm = ttfg_norm - mean(ttfg_norm), gti = gti -
+          #mean(gti), tti = tti - mean(tti), gd = gd - mean(gd), pfg = pfg - mean(pfg),
+          #temp_max = temp_max - mean(temp_max)) %>%  #centering
+  #mutate(fh_norm = scale(fh_norm), fd_norm = scale(fd_norm), ttfg_norm = scale(ttfg_norm), gti = scale(gti), tti =
+           #scale(tti), gd = scale(gd), pfg = scale(pfg), temp_max = scale(temp_max)) #scaled
+
+df_nsc <- rbind(hpdf_nsc, epidf_nsc)
+```
+
+
+# TTI
+
+## Normalized by sample weight
+```{r}
+tti.norm.cfit <- rpart(tti_norm ~ spp + mpa, data = df_norm, method = "class")
+printcp(tti.norm.cfit)
+prp(tti.norm.cfit, type = 5, branch = 1)
+# Type = determines the appearance of the tree -- I liked type = 5 the most. Branch = 1 means square-shouldered branches; branch = 0 are angular branches and anything in between 0 and 1 are varying levels of squareness
+```
+Okay, so when normalized by sample weight, model is not a major split in the data! This is interesting.
+
+Also, mess with prp plotting later -- there are SO many arguments in this one function!
+
+Splitting into hot plate and epiradiator to see how trees compare
+```{r}
+tti.n.hp.cfit <- rpart(tti_norm ~ spp + mpa, data = hpdf_norm, method = "class")
+printcp(tti.n.hp.cfit)
+prp(tti.n.hp.cfit, type = 5, branch = 1)
+
+tti.n.epi.cfit <- rpart(tti_norm ~ spp + mpa, data = epidf_norm, method = "class")
+printcp(tti.n.epi.cfit)
+prp(tti.n.epi.cfit, type = 5, branch = 1)
+```
+
+## Scaled and Centered
+
+### Two models together
+```{r}
+tti.sc.cfit <- rpart(tti ~ spp + mpa + model + sample_wt, data = df_sc, method = "class")
+# Including sample.wt in the above to try and see if that could be what is driving initial split rather than model
+printcp(tti.sc.cfit)
+prp(tti.sc.cfit, type = 5, branch = 1)
+```
+
+### Two models split up
+```{r}
+tti.sc.hp.cfit <- rpart(tti ~ spp + mpa + sample_wt, data = hpdf_sc, method = "class")
+printcp(tti.sc.hp.cfit)
+prp(tti.sc.hp.cfit, type = 5, branch = 1)
+# Interestingly enough, sample weight appears to be a MAJOR driver in time to ignition for the hot plate chamber
+
+tti.sc.epi.cfit <- rpart(tti ~ spp + mpa + sample_wt, data = epidf_sc, method = "class")
+printcp(tti.sc.epi.cfit)
+prp(tti.sc.epi.cfit, type = 5, branch = 1)
+```
+
+## Normalized and then Scaled and Centered
+
+### Two models together
+```{r}
+tti.nsc.cfit <- rpart(tti_norm ~ spp + mpa, data = df_nsc, method = "class")
+printcp(tti.nsc.cfit)
+prp(tti.nsc.cfit, type = 5, branch = 1)
+```
+
+### Models split up
+```{r}
+tti.nsc.hp.cfit <- rpart(tti_norm ~ spp + mpa, data = hpdf_nsc, method = "class")
+printcp(tti.nsc.hp.cfit)
+prp(tti.nsc.hp.cfit, type = 5, branch = 1)
+
+tti.nsc.epi.cfit <- rpart(tti_norm ~ spp + mpa, data = epidf_nsc, method = "class")
+printcp(tti.nsc.epi.cfit)
+prp(tti.nsc.epi.cfit, type = 5, branch = 1)
+```
+
+# FLAME DURATION
+
+## No data manipulation
+```{r}
+fd.cfit <- rpart(fd ~ spp + model + mpa, data = df1, method = "class", cp = 0.013)
+printcp(fd.cfit)
+prp(fd.cfit, type = 5, branch = 1)
+
+fd.cfit2 <- rpart(fd ~ spp + model + mpa + sample_wt, data = df1, method = "class", cp = 0.017)
+printcp(fd.cfit2)
+prp(fd.cfit2, type = 5, branch = 1)
+```
+
+## Normalized
+### Both Methods
+```{r}
+fd.norm.cfit <- rpart(fd_norm ~ spp + mpa + model, data = df_norm, method = "class")
+printcp(fd.norm.cfit)
+prp(fd.norm.cfit, type = 5, branch = 1)
+```
+
+### Methods side-by-side
+```{r}
+fd.n.hp.cfit <- rpart(fd_norm ~ spp + mpa, data = hpdf_norm, method = "class")
+printcp(fd.n.hp.cfit)
+prp(fd.n.hp.cfit, type = 5, branch = 1)
+
+fd.n.epi.cfit <- rpart(fd_norm ~ spp + mpa, data = epidf_norm, method = "class")
+printcp(fd.n.epi.cfit)
+prp(fd.n.epi.cfit, type = 5, branch = 1)
+```
+
+## Scaled and Centered
+### Both Methods
+```{r}
+tti.sc.cfit <- rpart(tti ~ spp + mpa + model + sample_wt, data = df_sc, method = "class")
+# Including sample.wt in the above to try and see if that could be what is driving initial split rather than model
+printcp(tti.sc.cfit)
+prp(tti.sc.cfit, type = 5, branch = 1)
+```
+
+### Methods side-by-side
+```{r}
+tti.sc.hp.cfit <- rpart(tti ~ spp + mpa + sample_wt, data = hpdf_sc, method = "class")
+printcp(tti.sc.hp.cfit)
+prp(tti.sc.hp.cfit, type = 5, branch = 1)
+# Interestingly enough, sample weight appears to be a MAJOR driver in time to ignition for the hot plate chamber
+
+tti.sc.epi.cfit <- rpart(tti ~ spp + mpa + sample_wt, data = epidf_sc, method = "class")
+printcp(tti.sc.epi.cfit)
+prp(tti.sc.epi.cfit, type = 5, branch = 1)
+```
+

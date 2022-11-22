@@ -1,0 +1,244 @@
+---
+title: "Converting HP Data into EPI format"
+author: "Joe Celebrezze"
+date: '2022-09-13'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Loading in necessary packages
+```{r, include = FALSE}
+library(tidyverse)
+select = dplyr::select
+library(here)
+here = here::here
+library(ggpubr) # To arrange multiple plots with ggarrange
+library(gtsummary) # For summary tables
+library(gt) # For summary tables
+library(remef) # To remove partial effects for visualization
+library(lme4)
+library(sjPlot)
+library(psych)
+library(gridExtra)
+library(grid)
+#Add in packages as necessary so no redundant packages
+```
+
+# Loading in datasets
+```{r, include = FALSE}
+main_df <- read_csv(here("processed-data/compiled-datasets/METHODS/bothmethods_bothlocations_long.csv"))
+wide_df <- read_csv(here("processed-data/compiled-datasets/METHODS/bothmethods_bothlocations_wide.csv"))
+```
+
+# Taking out NA values
+For the two individuals we are taking out -- These have NAs as tti values and keeping these in screws up the data analysis, and we have no way of imputing the data with any sort of confidence
+For the ignition = 0 values, we are only interested in instances when the sample ignited for the following analyses
+```{r}
+main_df <- main_df %>% 
+  filter(individual_round != "2020_September_ADFA_1.2_1") %>% 
+  filter(individual_round != "2020_September_ADFA_2.6_9") %>% 
+  filter(ignition == 1)
+
+wide_df <- wide_df %>% 
+  filter(individual_round != "2020_September_ADFA_1.2_1") %>% 
+  filter(individual_round != "2020_September_ADFA_2.6_9") %>% 
+  filter(ignition_epi == 1)
+```
+
+# Scaling and Centering
+
+Below, I scaled and centered the flam. metrics according to each model. Without separating by model, it scales/centers by the results (i.e. by standard deviations, means) of both models together in one pool which does not make sense when comparing the two models separately.
+
+```{r}
+epi_df <- main_df %>% 
+  filter(model == "EPI")
+hp_df <- main_df %>% 
+  filter(model == "HP")
+
+
+epi_df1 <- epi_df %>% 
+  mutate(fh = fh - mean(fh), fd = fd - mean(fd), ttfg = ttfg - mean(ttfg), gti = gti -
+          mean(gti), tti = tti - mean(tti), gd = gd - mean(gd), pfg = pfg - mean(pfg),
+          temp_max = temp_max - mean(temp_max), sample_wt = sample_wt - mean(sample_wt),
+         dw_flam_sample = dw_flam_sample - mean(dw_flam_sample)) %>%  #centering
+  mutate(fh = scale(fh), fd = scale(fd), ttfg = scale(ttfg), gti = scale(gti), tti =
+           scale(tti), gd = scale(gd), pfg = scale(pfg), temp_max = scale(temp_max),
+           sample_wt = scale(sample_wt), dw_flam_sample = scale(dw_flam_sample)) #scaled
+
+hp_df1 <- hp_df %>% 
+  mutate(fh = fh - mean(fh), fd = fd - mean(fd), ttfg = ttfg - mean(ttfg), gti = gti -
+          mean(gti), tti = tti - mean(tti), gd = gd - mean(gd), pfg = pfg - mean(pfg),
+          temp_max = temp_max - mean(temp_max), sample_wt = sample_wt - mean(sample_wt),
+         dw_flam_sample = dw_flam_sample - mean(dw_flam_sample)) %>%  #centering
+  mutate(fh = scale(fh), fd = scale(fd), ttfg = scale(ttfg), gti = scale(gti), tti =
+           scale(tti), gd = scale(gd), pfg = scale(pfg), temp_max = scale(temp_max),
+           sample_wt = scale(sample_wt), dw_flam_sample = scale(dw_flam_sample)) #scaled
+```
+
+Stitching epi_df1 and hp_df1 together:
+```{r}
+both_df1 <- bind_rows(epi_df1, hp_df1)
+```
+
+# Looking at differences in means
+```{r}
+epi_df %>% 
+  select(tti, fd, fh, gd, gti, pfg, ttfg, temp_max, sample_wt) %>% 
+  summary()
+
+hp_df %>% 
+  select(tti, fd, fh, gd, gti, pfg, ttfg, temp_max, sample_wt) %>% 
+  summary()
+
+epi.means <- c(39.12, 6.681, 8.811, 121.53, 24.01, 89.05, 14.61, 316.6, 0.5108)
+hp.means <- c(94.86, 17.26, 22.85, 151.3, 23.62, 108.3, 70.28, 300.1, 2.1363)
+div.means <- hp.means/epi.means
+div.means
+```
+
+# Looking at normalized values
+Normalizing using sample weight
+```{r}
+normalized_df <- main_df %>% 
+  select(tti, fd, fh, gd, sample_wt, mpa, lfm_outliers_out, spp, model, year_month) %>% 
+  mutate(tti = tti/sample_wt, fd = fd/sample_wt, fh = fh/sample_wt, gd = gd/sample_wt)
+```
+
+```{r}
+normalized_df %>% 
+  select(tti, fd, fh, gd, model) %>% 
+  filter(model == "EPI") %>% 
+  summary()
+epi.means <- c(76.95, 13.103, 17.307, 238.71)
+
+normalized_df %>% 
+  select(tti, fd, fh, gd, model) %>% 
+  filter(model == "HP") %>% 
+  summary()
+hp.means <- c(54.564, 9.344, 12.494, 80.461)
+
+div.means <- epi.means/hp.means
+```
+
+From the above, we see -- after normalization by sample weight -- TTI, FD and FH have similar conversion factors to make the means of the EPI (normalized) and the HP (normalized) similar (conv factor = ~1.4), but glow duration acts differently which matches the PCA results as well. The conversion factor for GD = ~3.0. Going to use these conversion factors on the HP values and then attempt to calculate a flammability proxy by using a PCA on this renewed dataset.
+
+# Conversion factors
+```{r}
+epi_norm_df <- normalized_df %>% 
+  filter(model == "EPI")
+
+hp_conv_df <- normalized_df %>% 
+  filter(model == "HP") %>% 
+  mutate(tti = 1.4*tti, fd = 1.4*fd, fh = 1.4*fh, gd = 3.0*gd)
+
+conv_df <- rbind(epi_norm_df, hp_conv_df)
+```
+
+# PCA
+Here I am going to do a PCA on the new dataset to see how heavily each of the four metrics are loaded on the principal components to get a better sense of how we want to calculate a flam. proxy
+```{r}
+#decisions for plotting:
+choices = 1:2 
+scale = 1
+obs.scale = 1 - scale
+var.scale = scale
+ellipse.prob = 0.68
+labels.size = 3
+circle.prob = 0.69
+choices = 1:2
+
+#Run PCA
+pcobj <- conv_df %>% 
+  select(tti, fd, fh, gd) %>% 
+  prcomp(center = TRUE, scale = TRUE) #Running PCA
+
+# extract PCA components: 
+nobs.factor <- sqrt(nrow(pcobj$x) - 1)
+    d <- pcobj$sdev
+    u <- sweep(pcobj$x, 2, 1/(d * nobs.factor), FUN = "*")
+    v <- pcobj$rotation
+
+  choices <- pmin(choices, ncol(u))
+  df.u <- as.data.frame(sweep(u[, choices], 2, d[choices]^obs.scale, 
+                              FUN = "*"))
+  v <- sweep(v, 2, d^var.scale, FUN = "*")
+  df.v <- as.data.frame(v[, choices])
+  names(df.u) <- c("PC1", "PC2")
+  names(df.v) <- names(df.u)
+  df.u <- df.u * nobs.factor
+
+  r <- sqrt(qchisq(circle.prob, df = 2)) * prod(colMeans(df.u^2))^(1/4)
+  
+v.scale <- rowSums(v^2)
+df.v <- r * df.v/sqrt(max(v.scale)) 
+df.v <- df.v %>% mutate(PC1, PC2)
+df.v$Variables <- rownames(v) 
+PCAloadings = df.v
+#df.v = dataset with loadings 
+```
+
+The following are the loadings for PC1:
+tti: 1.1216275
+fh: 0.8717786
+fd: 0.8168248
+gd: 1.2105129
+
+To simplify the formula a bit, I am going to try 1.15 for TTI and GD and then 0.85 for FH and FD
+
+# Trying out some flammability proxies
+1) Adding together tti, fh, fd, gd after multiplying by above loading estimates
+```{r}
+conv_df <- conv_df %>% 
+  mutate(flam.proxy.add = 1.15*tti+0.85*fh+0.85*fd+1.15*gd)
+
+ggplot(conv_df, aes(x = flam.proxy.add, y = mpa, color = model)) +
+  geom_point() +
+  geom_smooth(method = 'lm', se = F)
+```
+This makes GD way too involved in the calculation of the flam. proxy
+
+2) Scaling prior to adding together
+```{r}
+conv_df <- conv_df %>% 
+  dplyr::group_by(model) %>% 
+  mutate(tti.scaled = scale(tti), fh.scaled = scale(fh), fd.scaled = scale(fd), gd.scaled = scale(gd)) %>% 
+  mutate(flam.proxy.scale.add = 1.15*tti.scaled+0.85*fh.scaled+0.85*fd.scaled+1.15*gd.scaled) %>% 
+  ungroup()
+
+ggplot(conv_df, aes(x = flam.proxy.scale.add, y = gd, color = model)) +
+  geom_point() +
+  geom_smooth(method = 'lm', se = F)
+```
+This looks better, but it does not make conceptual sense to add all of these variables together. TTI, at least, should be subtracted, as a higher value represents *less* ignitable
+
+3) Scaled values, subtracting tti
+```{r}
+conv_df <- conv_df %>% 
+  mutate(flam.proxy.scale.subtract = -1.15*tti.scaled + 0.85*fh.scaled + 0.85*fd.scaled + 1.15*gd.scaled)
+
+ggplot(conv_df, aes(y = flam.proxy.scale.subtract, x = mpa, color = model)) +
+  geom_point() +
+  geom_smooth(method = 'lm', se = F)
+```
+This looks like the best option yet, but let's try some other ways of calculating the proxy
+
+4) Multiplying values
+In order to multiply values in a way that makes sense, we need to shift the scaled data so that the minimum value = 1 and we need to flip the TTI data so that high values represent highly ignitable samples
+```{r}
+conv_df %>% 
+  select(tti.scaled, fh.scaled, fd.scaled, gd.scaled) %>% 
+  summary()
+
+conv_df <- conv_df %>% 
+  mutate(tti.scaled.pos = (tti.scaled -4.323980)*-1, fh.scaled.pos = fh.scaled + 3.0338229, fd.scaled.pos = fd.scaled + 2.290741, gd.scaled.pos = gd.scaled + 3.536216) %>% 
+  mutate(flam.proxy.multiply = tti.scaled.pos*fh.scaled.pos*fd.scaled.pos*gd.scaled.pos)
+
+ggplot(conv_df, aes(y = flam.proxy.multiply, x = mpa, color = model)) +
+  geom_point() +
+  geom_smooth(method = 'lm', se = F)
+```
+This worsened the proxy relative to (3)
+

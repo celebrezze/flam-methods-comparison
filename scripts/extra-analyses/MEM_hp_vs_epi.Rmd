@@ -1,0 +1,400 @@
+---
+title: "Mixed Effects Models for Methods Paper"
+author: "Joe Celebrezze"
+date: "4/8/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Loading in necessary packages
+```{r, include = FALSE}
+library(tidyverse)
+select = dplyr::select
+library(here)
+here = here::here
+library(lme4) #for mixed effects models
+library(MuMIn)
+#Add in packages as necessary so no redundant packages
+```
+
+# Loading in datasets
+```{r, include = FALSE}
+main_df <- read_csv(here("processed-data/compiled-datasets/METHODS/bothmethods_bothlocations_long.csv"))
+```
+
+# Data Wrangling
+Note: I think the dw_flam_sample values are off. To me, they don't make much sense, so -- instead -- I used lfm and sample weight to calculate dry weight and water weight of the samples. I did so by solving the following system of equations:
+
+sample_wt = dry weight + water weight
+lfm = (water weight/dry weight) * 100
+
+```{r}
+vd_main_df <- main_df %>% 
+  filter(ignition == 1) %>% # Only looking at samples that ignited
+  select(fh, tti, ttfg, fd, gd, gti, temp_max, mpa, 
+         lfm_outliers_out, spp, model, location, 
+         precip_2mo, individual, sample_wt) %>% 
+  mutate(dry_wt = sample_wt/(0.01*lfm_outliers_out+1)) %>%  # I know dry_wt was already the name of a column in main_df, but it isn't a useful column and it is a useful name, so I am taking that name for vd_main_df but it means the dry weight of the sample being burned in this case
+  mutate(water_wt = sample_wt - dry_wt) %>% 
+  na.omit()
+  
+# I selected all flam. traits (going to do mem for each one) and the water content/status metrics as well as potential random effects in location, time (precip_2mo used as an indication of time), and individual
+```
+
+## Normalizing flam. metrics
+```{r}
+vd_main_df <- vd_main_df %>% 
+  mutate(fh_norm = fh/sample_wt, tti_norm = tti/sample_wt, ttfg_norm = ttfg/sample_wt, fd_norm = fd/sample_wt, gd_norm = gd/sample_wt, gti_norm = gti/sample_wt, temp_max_norm = temp_max/sample_wt)
+```
+
+# Model Selection
+Starting with maximal model and then using dredge() to narrow out predictor variables
+
+## Hot Plate
+
+### No data manipulation
+
+#### Maximal model
+```{r}
+hpMEMfh <- lmer(data = vd_main_df, subset = model == "HP", fh ~ mpa + spp + sample_wt + lfm_outliers_out + (1|precip_2mo) + (1|location) + (1|individual)) # precip_2mo is a time proxy that represents the amount of precipitation over the past two months
+
+hpMEMtti <- lmer(data = vd_main_df, subset = model == "HP", tti ~ mpa + spp + sample_wt + lfm_outliers_out + (1|precip_2mo) + (1|location) + (1|individual))
+
+hpMEMfd <- lmer(data = vd_main_df, subset = model == "HP", fd ~ mpa + spp + sample_wt + lfm_outliers_out + (1|precip_2mo) + (1|location) + (1|individual))
+
+hpMEMgti <- lmer(data = vd_main_df, subset = model == "HP", gti ~ mpa + spp + sample_wt + lfm_outliers_out + (1|precip_2mo) + (1|location) + (1|individual))
+
+hpMEMttfg <- lmer(data = vd_main_df, subset = model == "HP", ttfg ~ mpa + spp + sample_wt + lfm_outliers_out + (1|precip_2mo) + (1|location) + (1|individual))
+
+hpMEMtemp_max <- lmer(data = vd_main_df, subset = model == "HP", temp_max ~ mpa + spp + sample_wt + lfm_outliers_out + (1|precip_2mo) + (1|location) + (1|individual))
+
+hpMEMgd <- lmer(data = vd_main_df, subset = model == "HP", gd ~ mpa + spp + sample_wt + lfm_outliers_out + (1|precip_2mo) + (1|location) + (1|individual))
+```
+
+#### Dredging
+```{r}
+options(na.action = "na.fail")
+# Flame height
+hpDREDGEfh <- dredge(hpMEMfh)
+head(hpDREDGEfh)
+## Keep: sample.wt and spp; AIC = 487.4
+# Time to ignition
+hpDREDGEtti <- dredge(hpMEMtti)
+head(hpDREDGEtti)
+## Keep: sample.wt and spp; AIC = 740.3 (note: model with mpa is not significantly worse)
+# Flame duration
+hpDREDGEfd <- dredge(hpMEMfd)
+head(hpDREDGEfd)
+## Keep: sample.wt and spp; AIC = 581.5 (note: model with mpa is not significantly worse)
+# Glow to ignition
+hpDREDGEgti <- dredge(hpMEMgti)
+head(hpDREDGEgti)
+## Keep: sample weight, mpa and spp; AIC = 751.9
+# Time to first glow
+hpDREDGEttfg <- dredge(hpMEMttfg)
+head(hpDREDGEttfg)
+## Keep: sample weight, mpa and spp; AIC = 757.2
+# Temp max
+hpDREDGEtemp_max <- dredge(hpMEMtemp_max)
+head(hpDREDGEtemp_max)
+## Keep: sample weight, mpa and spp; AIC = 749.9 (note: model with lfm is not significantly worse)
+# Glow duration
+hpDREDGEgd <- dredge(hpMEMgd)
+head(hpDREDGEgd)
+## Keep: sample weight, lfm, mpa and spp; AIC = 868.3 (note: model without lfm is not significantly worse)
+```
+
+### Dry Weight and Wet Weight
+Because sample weight itself could be split into both dry weight of the sample and water weight of the sample and this could provide us with a bit more information about what exactly is driving the significance of the sample weight, I am going to run models with dry weight and water weight of the samples
+
+I will exclude sample weight (for obvious reasons) but also lfm because lfm is used to calculate water weight and dry weight
+
+#### Models
+I went with the name: hpMEMfh2 since this time sample_wt is split into two variables -- dry weight and water weight -- and since this is the second set of models run
+```{r}
+hpMEMfh2 <- lmer(data = vd_main_df, subset = model == "HP", fh ~ mpa + spp + dry_wt + water_wt + (1|precip_2mo) + (1|location) + (1|individual)) # precip_2mo is a time proxy that represents the amount of precipitation over the past two months
+
+hpMEMtti2 <- lmer(data = vd_main_df, subset = model == "HP", tti ~ mpa + spp + dry_wt + water_wt + (1|precip_2mo) + (1|location) + (1|individual))
+
+hpMEMfd2 <- lmer(data = vd_main_df, subset = model == "HP", fd ~ mpa + spp + dry_wt + water_wt + (1|precip_2mo) + (1|location) + (1|individual))
+
+hpMEMgti2 <- lmer(data = vd_main_df, subset = model == "HP", gti ~ mpa + spp + dry_wt + water_wt + (1|precip_2mo) + (1|location) + (1|individual))
+
+hpMEMttfg2 <- lmer(data = vd_main_df, subset = model == "HP", ttfg ~ mpa + spp + dry_wt + water_wt + (1|precip_2mo) + (1|location) + (1|individual))
+
+hpMEMtemp_max2 <- lmer(data = vd_main_df, subset = model == "HP", temp_max ~ mpa + spp + dry_wt + water_wt + (1|precip_2mo) + (1|location) + (1|individual))
+
+hpMEMgd2 <- lmer(data = vd_main_df, subset = model == "HP", gd ~ mpa + spp + dry_wt + water_wt + (1|precip_2mo) + (1|location) + (1|individual))
+```
+
+#### Dredging
+Note: if errors pop up here, it could be because the na.action is not set to na.fail; if you re-run the line of code above (in Hot Plate > No data manipulation > Dredging), it should run no problem
+```{r}
+# Flame height
+hpDREDGEfh2 <- dredge(hpMEMfh2)
+head(hpDREDGEfh2)
+## Keep: water_wt, dry_wt and spp; AIC = 482.4 (note: model w/o water_wt not significantly worse)
+# Time to ignition
+hpDREDGEtti2 <- dredge(hpMEMtti2)
+head(hpDREDGEtti2)
+## Keep: water_wt, dry_wt and spp; AIC = 734.5 (note: model with mpa not significantly worse)
+# Flame duration
+hpDREDGEfd2 <- dredge(hpMEMfd2)
+head(hpDREDGEfd2)
+## Keep: water_wt, dry_wt and spp; AIC = 577.8 (note: model w/ mpa not sig. worse)
+# Glow to ignition
+hpDREDGEgti2 <- dredge(hpMEMgti2)
+head(hpDREDGEgti2)
+## Keep: water_wt, dry_wt, mpa and spp (all variables); AIC = 745.8
+# Time to first glow
+hpDREDGEttfg2 <- dredge(hpMEMttfg2)
+head(hpDREDGEttfg2)
+## Keep: water_wt, dry_wt, mpa and spp (all variables); AIC = 750.7
+# Temp max
+hpDREDGEtemp_max2 <- dredge(hpMEMtemp_max2)
+head(hpDREDGEtemp_max2)
+## Keep: water_wt, dry_wt, mpa and spp (all variables); AIC = 743
+# Glow duration
+hpDREDGEgd2 <- dredge(hpMEMgd2)
+head(hpDREDGEgd2)
+## Keep: water_wt, dry_wt, mpa and spp (all variables); AIC = 861.8 (note:model w/o mpa not sig. worse)
+```
+Take-aways: It appears that BOTH water weight and dry weight play a role for the hot plate
+
+### Normalized
+Normalizing by sample_wt
+#### Models
+```{r}
+hpMEMfh_norm <- lmer(data = vd_main_df, subset = model == "HP", fh_norm ~ mpa + spp + lfm_outliers_out + (1|precip_2mo) + (1|location) + (1|individual))
+
+hpMEMtti_norm <- lmer(data = vd_main_df, subset = model == "HP", tti_norm ~ mpa + spp + lfm_outliers_out + (1|precip_2mo) + (1|location) + (1|individual))
+
+hpMEMfd_norm <- lmer(data = vd_main_df, subset = model == "HP", fd_norm ~ mpa + spp + lfm_outliers_out + (1|precip_2mo) + (1|location) + (1|individual))
+
+hpMEMgti_norm <- lmer(data = vd_main_df, subset = model == "HP", gti_norm ~ mpa + spp + lfm_outliers_out + (1|precip_2mo) + (1|location) + (1|individual))
+
+hpMEMttfg_norm <- lmer(data = vd_main_df, subset = model == "HP", ttfg_norm ~ mpa + spp + lfm_outliers_out + (1|precip_2mo) + (1|location) + (1|individual))
+
+hpMEMtemp_max_norm <- lmer(data = vd_main_df, subset = model == "HP", temp_max_norm ~ mpa + spp + lfm_outliers_out + (1|precip_2mo) + (1|location) + (1|individual))
+
+hpMEMgd_norm <- lmer(data = vd_main_df, subset = model == "HP", gd_norm ~ mpa + spp + lfm_outliers_out + (1|precip_2mo) + (1|location) + (1|individual))
+```
+
+#### Dredging
+```{r}
+# Flame height
+hpDREDGEfh_norm <- dredge(hpMEMfh_norm)
+head(hpDREDGEfh_norm)
+# Keep: mpa and spp; AIC = 449.6 (note: w/ lfm not sig. worse)
+# Time to ignition
+hpDREDGEtti_norm <- dredge(hpMEMtti_norm)
+head(hpDREDGEtti_norm)
+# Keep: mpa and spp; AIC = 693.2
+# Flame duration
+hpDREDGEfd_norm <- dredge(hpMEMfd_norm)
+head(hpDREDGEfd_norm)
+# Keep: mpa and spp; AIC = 521 (note: not sig. worse w/o mpa)
+# Glow to ignition
+hpDREDGEgti_norm <- dredge(hpMEMgti_norm)
+head(hpDREDGEgti_norm)
+# Keep: mpa and spp' AIC = 661.8 (note: not sig. worse w/o mpa)
+# Time to first glow
+hpDREDGEttfg_norm <- dredge(hpMEMttfg_norm)
+head(hpDREDGEttfg_norm)
+# Keep: mpa and spp; AIC = 700.9
+# Temp max
+hpDREDGEtemp_max_norm <- dredge(hpMEMtemp_max_norm)
+head(hpDREDGEtemp_max_norm)
+# Keep: lfm, mpa and spp; AIC = 834.7 (not sig. worse w/o mpa)
+# Glow duration
+hpDREDGEgd_norm <- dredge(hpMEMgd_norm)
+head(hpDREDGEgd_norm)
+# Keep: mpa and spp; AIC = 760.8
+```
+
+## Epiradiator
+
+### No data manipulation
+
+#### Maximal model
+```{r}
+epiMEMfh <- lmer(data = vd_main_df, subset = model == "EPI", fh ~ mpa + spp + sample_wt + lfm_outliers_out + (1|precip_2mo) + (1|location) + (1|individual)) # precip_2mo is a time proxy that represents the amount of precipitation over the past two months
+
+epiMEMtti <- lmer(data = vd_main_df, subset = model == "EPI", tti ~ mpa + spp + sample_wt + lfm_outliers_out + (1|precip_2mo) + (1|location) + (1|individual))
+
+epiMEMfd <- lmer(data = vd_main_df, subset = model == "EPI", fd ~ mpa + spp + sample_wt + lfm_outliers_out + (1|precip_2mo) + (1|location) + (1|individual))
+
+epiMEMgti <- lmer(data = vd_main_df, subset = model == "EPI", gti ~ mpa + spp + sample_wt + lfm_outliers_out + (1|precip_2mo) + (1|location) + (1|individual))
+
+epiMEMttfg <- lmer(data = vd_main_df, subset = model == "EPI", ttfg ~ mpa + spp + sample_wt + lfm_outliers_out + (1|precip_2mo) + (1|location) + (1|individual))
+
+epiMEMtemp_max <- lmer(data = vd_main_df, subset = model == "EPI", temp_max ~ mpa + spp + sample_wt + lfm_outliers_out + (1|precip_2mo) + (1|location) + (1|individual))
+
+epiMEMgd <- lmer(data = vd_main_df, subset = model == "EPI", gd ~ mpa + spp + sample_wt + lfm_outliers_out + (1|precip_2mo) + (1|location) + (1|individual))
+```
+
+#### Dredging
+```{r}
+options(na.action = "na.fail")
+# Flame height
+epiDREDGEfh <- dredge(epiMEMfh)
+head(epiDREDGEfh)
+## Keep: sample.wt, mpa and spp; AIC = 545.5
+# Time to ignition
+epiDREDGEtti <- dredge(epiMEMtti)
+head(epiDREDGEtti)
+## Keep: sample.wt, mpa and spp; AIC = 677.7
+# Flame duration
+epiDREDGEfd <- dredge(epiMEMfd)
+head(epiDREDGEfd)
+## Keep: sample.wt and spp; AIC = 537.1
+# Glow to ignition
+epiDREDGEgti <- dredge(epiMEMgti)
+head(epiDREDGEgti)
+## Keep: sample weight, mpa and spp; AIC = 686.4
+# Time to first glow
+epiDREDGEttfg <- dredge(epiMEMttfg)
+head(epiDREDGEttfg)
+## Keep: sample weight and spp; AIC = 611.8 (with mpa, not sig. worse)
+# Temp max
+epiDREDGEtemp_max <- dredge(epiMEMtemp_max)
+head(epiDREDGEtemp_max)
+## Keep: sample weight, mpa, lfm and spp; AIC = 921.9 (w/o lfm, not sig. worse)
+# Glow duration
+epiDREDGEgd <- dredge(epiMEMgd)
+head(epiDREDGEgd)
+## Keep: sample weight, mpa and spp; AIC = 898.6 (w/o mpa, not sig. worse)
+```
+
+### Dry Weight and Water Weight
+#### Models
+```{r}
+epiMEMfh2 <- lmer(data = vd_main_df, subset = model == "EPI", fh ~ mpa + spp + dry_wt + water_wt + (1|precip_2mo) + (1|location) + (1|individual)) # precip_2mo is a time proxy that represents the amount of precipitation over the past two months
+
+epiMEMtti2 <- lmer(data = vd_main_df, subset = model == "EPI", tti ~ mpa + spp + dry_wt + water_wt + (1|precip_2mo) + (1|location) + (1|individual))
+
+epiMEMfd2 <- lmer(data = vd_main_df, subset = model == "EPI", fd ~ mpa + spp + dry_wt + water_wt + (1|precip_2mo) + (1|location) + (1|individual))
+
+epiMEMgti2 <- lmer(data = vd_main_df, subset = model == "EPI", gti ~ mpa + spp + dry_wt + water_wt + (1|precip_2mo) + (1|location) + (1|individual))
+
+epiMEMttfg2 <- lmer(data = vd_main_df, subset = model == "EPI", ttfg ~ mpa + spp + dry_wt + water_wt + (1|precip_2mo) + (1|location) + (1|individual))
+
+epiMEMtemp_max2 <- lmer(data = vd_main_df, subset = model == "EPI", temp_max ~ mpa + spp + dry_wt + water_wt + (1|precip_2mo) + (1|location) + (1|individual))
+
+epiMEMgd2 <- lmer(data = vd_main_df, subset = model == "EPI", gd ~ mpa + spp + dry_wt + water_wt + (1|precip_2mo) + (1|location) + (1|individual))
+```
+
+#### Dredging
+```{r}
+#options(na.action = "na.fail") If errors pop up, run this line and try again before troubleshooting further
+# Flame height
+epiDREDGEfh2 <- dredge(epiMEMfh2)
+head(epiDREDGEfh2)
+## Keep: water_wt, dry_wt, spp; AIC = 538.3 (note: not sig. worse with mpa)
+# Time to ignition
+epiDREDGEtti2 <- dredge(epiMEMtti2)
+head(epiDREDGEtti2)
+## Keep: water_wt, dry_wt, mpa and spp (all variables); AIC = 669.9
+# Flame duration
+epiDREDGEfd2 <- dredge(epiMEMfd2)
+head(epiDREDGEfd2)
+## Keep: water_wt, dry_wt, mpa and spp (all variables);  AIC = 532.4 (w/o mpa not sig. worse)
+# Glow to ignition
+epiDREDGEgti2 <- dredge(epiMEMgti2)
+head(epiDREDGEgti2)
+## Keep: water_wt, dry_wt, mpa and spp (all variables); AIC = 675.9
+# Time to first glow
+epiDREDGEttfg2 <- dredge(epiMEMttfg2)
+head(epiDREDGEttfg2)
+## Keep: water_wt, dry_wt and spp; AIC = 603.5
+# Temp max
+epiDREDGEtemp_max2 <- dredge(epiMEMtemp_max2)
+head(epiDREDGEtemp_max2)
+## Keep: water_wt, dry_wt, mpa and spp (all variables); AIC = 908.5
+# Glow duration
+epiDREDGEgd2 <- dredge(epiMEMgd2)
+head(epiDREDGEgd2)
+## Keep: water_wt, dry_wt, mpa and spp (all variables); AIC = 888.9 (w/o mpa not sig. worse)
+```
+Take-aways: Again -- like the hot plate -- both dry weight and water weight play a role. In the epiradiator, mpa is a chosen predictor in the model selection process for 5/7 of the flam. metrics vs. 4/7 in the hot plate.
+
+### Normalized
+#### Models
+```{r}
+epiMEMfh_norm <- lmer(data = vd_main_df, subset = model == "EPI", fh_norm ~ mpa + spp + lfm_outliers_out + (1|precip_2mo) + (1|location) + (1|individual))
+
+epiMEMtti_norm <- lmer(data = vd_main_df, subset = model == "EPI", tti_norm ~ mpa + spp + lfm_outliers_out + (1|precip_2mo) + (1|location) + (1|individual))
+
+epiMEMfd_norm <- lmer(data = vd_main_df, subset = model == "EPI", fd_norm ~ mpa + spp + lfm_outliers_out + (1|precip_2mo) + (1|location) + (1|individual))
+
+epiMEMgti_norm <- lmer(data = vd_main_df, subset = model == "EPI", gti_norm ~ mpa + spp + lfm_outliers_out + (1|precip_2mo) + (1|location) + (1|individual))
+
+epiMEMttfg_norm <- lmer(data = vd_main_df, subset = model == "EPI", ttfg_norm ~ mpa + spp + lfm_outliers_out + (1|precip_2mo) + (1|location) + (1|individual))
+
+epiMEMtemp_max_norm <- lmer(data = vd_main_df, subset = model == "EPI", temp_max_norm ~ mpa + spp + lfm_outliers_out + (1|precip_2mo) + (1|location) + (1|individual))
+
+epiMEMgd_norm <- lmer(data = vd_main_df, subset = model == "EPI", gd_norm ~ mpa + spp + lfm_outliers_out + (1|precip_2mo) + (1|location) + (1|individual))
+```
+
+#### Dredging
+```{r}
+# Flame height
+epiDREDGEfh_norm <- dredge(epiMEMfh_norm)
+head(epiDREDGEfh_norm)
+# Keep: mpa and spp; AIC = 674.3
+# Time to ignition
+epiDREDGEtti_norm <- dredge(epiMEMtti_norm)
+head(epiDREDGEtti_norm)
+# Keep: mpa and spp; AIC = 808.5
+# Flame duration
+epiDREDGEfd_norm <- dredge(epiMEMfd_norm)
+head(epiDREDGEfd_norm)
+# Keep: spp; AIC = 661.3 (w/ mpa not sig. worse)
+# Glow to ignition
+epiDREDGEgti_norm <- dredge(epiMEMgti_norm)
+head(epiDREDGEgti_norm)
+# Keep: mpa and spp; AIC = 819.5 (not sig. worse with lfm)
+# Time to first glow
+epiDREDGEttfg_norm <- dredge(epiMEMttfg_norm)
+head(epiDREDGEttfg_norm)
+# Keep: mpa and spp; AIC = 731.4 (w/o mpa not sig. worse)
+# Temp max
+epiDREDGEtemp_max_norm <- dredge(epiMEMtemp_max_norm)
+head(epiDREDGEtemp_max_norm)
+# Keep: lfm, mpa and spp; AIC = 1111.7 (w/o lfm not sig. worse)
+# Glow duration
+epiDREDGEgd_norm <- dredge(epiMEMgd_norm)
+head(epiDREDGEgd_norm)
+# Keep: mpa and spp; AIC = 1025.8
+```
+
+Setting na.action back to default
+```{r}
+options(na.action = "na.omit")
+```
+
+# AIC Dataframe
+```{r}
+flam.metric <- c(rep(c("Flame Height", "Time to Ignition", "Flame Duration", "Glow to Ignition", "Time to First Glow", "Maximum Temperature", "Glow Duration"), 2))
+model <- c(rep("HP", 7), rep ("EPI", 7))
+aic.no.manipulation <- c(487.4, 740.3, 581.5, 751.9, 757.2, 749.9, 868.3, 545.5, 677.7, 527.1, 686.4, 611.8, 921.9, 898.6)
+aic.dry.wt.water.wt <- c(482.4, 734.5, 577.8, 745.8, 750.7, 743, 861.8, 538.3, 669.9, 532.4, 675.9, 603.5, 908.5, 888.9)
+aic.normalized <- c(449.6, 693.2, 521, 661.8, 700.9, 834.7, 760.8, 674.3, 808.5, 661.3, 819.5, 731.4, 1111.7, 1025.8)
+
+aic.df <- data.frame(flam.metric, model, aic.no.manipulation, aic.dry.wt.water.wt, aic.normalized)
+```
+
+
+# Conclusions of Model Selection
+Since we will be using the mixed effects models in the water content vs. flam. graphs as well as the variance decomposition, we may want to select slightly different models for each. 
+
+For the variance decomposition, the most common explanatory variables should be chosen for ALL of the mixed effect models. Secondly, since sample weight was significant in all of the models when there was no data manipulation of the flam. metrics, it makes sense to me to normalize the flam. metrics prior to running the mixed effects models in effort to account for the variability in sample weight and its effects on the flammability metrics. This will also simplify the variance decomposition by only having two explanatory variables of interest for both models.
+
+The mixed effects models will have the following fixed effects: water potential (mpa) and species (spp)
+
+After running the mixed effects models with the wet weight and the dry weight separated, I think it might be a good idea to try the variance decomposition process with the maximal models as well.
+      --            --            --            --            --            --
+For the water content/status vs. flam. graphs, it makes sense to use the models that were "best suited" (note: there is a caveat here that since we will be visualizing water status or water content vs. the flam. metrics, water status (mpa) or water content (lfm) should ALWAYS be included in the model regardless of if they were selected for in the model selection process) for each individual flam. metric since we are not comparing all of the flam. metrics to each other at one time. Instead, each graph will have the flam. metric vs. the water status or content. Since we are interested in the actual flam. metric in these cases, we should not use the normalized values as those would be difficult to interpret. Therefore, the mixed effects models utilized for each chamber design and each flam. metric will vary depending on the above model selection process.

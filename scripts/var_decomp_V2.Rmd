@@ -1,0 +1,730 @@
+---
+title: "Variance Decomposition (V2)"
+author: "Joe Celebrezze"
+date: "8/3/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+I am redoing the variance decomposition based on the updated mixed effects model selection in MEM_separating_HPandEPI.Rmd
+
+# Loading in necessary packages
+```{r, include = FALSE}
+library(tidyverse)
+select = dplyr::select
+rename = dplyr::rename
+library(here)
+here = here::here
+library(vars) #for variance decomposition
+library(lme4) #for mixed effects models
+library(reshape2) #for "melting" dataframe into longer form (variance decomposition)
+library(MuMIn) # extracting r squared values of mixed effects models
+library(grid)
+library(gridExtra)
+library(cowplot)
+col3 = hcl.colors(10, "YlOrRd", rev = TRUE) #color scale to use for consistency 
+#Add in packages as necessary so no redundant packages
+```
+
+# Loading in datasets
+```{r, include = FALSE}
+paired_methods_long <- read.csv(here("processed-data", "compiled-datasets", "METHODS", "bothm_bothl_manual_ignitions_in.csv"))
+```
+
+# Data Wrangling
+```{r}
+paired_methods_long <- paired_methods_long %>% 
+  filter(ignition == 1) %>% # Only looking at samples that ignited
+  select(fh, tti, ttfg, fd, gd, gti, pfg, temp_max, mpa, 
+         lfm_outliers_out, spp, model, location, ignition, site,
+         year_month, dw_flam_sample, ww_flam_sample, individual, sample_wt) %>% 
+  na.omit() %>% 
+  rename(lfm = lfm_outliers_out)
+# I selected all flam. traits (going to do mem for each one) and the water content/status metrics as well as potential random effects in location, time (precip_2mo used as an indication of time), and individual
+  
+epi.df <- paired_methods_long %>% 
+  filter(model == "EPI") # n = 96
+
+hp.df <- paired_methods_long %>% 
+  filter(model == "HP") # n = 83
+```
+
+For this version of the variance decomposition, I am choosing the model that performed the best across the board of flam. metrics in the MEM selection. This is to say that these models may not be the best for each flam. metric, but -- on average -- I think they should represent the best.
+
+The selected models include:
+- dry weight * spp interaction term
+- LFM
+- Covariates:
+  - year_month
+  - spp (in interaction term)
+  - site
+- Random effect of individual
+
+# -----------------------------
+# DW + LFM Models
+## Epiradiator
+```{r}
+epiMEMtti <- lmer(tti ~ lfm + dw_flam_sample*spp + year_month + site + (1|individual), data = epi.df)
+epiMEMfh <- lmer(fh ~ lfm + dw_flam_sample*spp + year_month + site + (1|individual), data = epi.df)
+epiMEMgd <- lmer(gd ~ lfm + dw_flam_sample*spp + year_month + site + (1|individual), data = epi.df)
+epiMEMfd <- lmer(fd ~ lfm + dw_flam_sample*spp + year_month + site + (1|individual), data = epi.df)
+epiMEMgti <- lmer(gti ~ lfm + dw_flam_sample*spp + year_month + site + (1|individual), data = epi.df)
+epiMEMttfg <- lmer(ttfg ~ lfm + dw_flam_sample*spp + year_month + site + (1|individual), data = epi.df)
+epiMEMpfg <- lmer(pfg ~ lfm + dw_flam_sample*spp + year_month + site + (1|individual), data = epi.df)
+epiMEMtemp <- lmer(temp_max ~ lfm + dw_flam_sample*spp + year_month + site + (1|individual), data = epi.df)
+```
+
+## Hot Plate
+```{r}
+hpMEMtti <- lmer(tti ~ lfm + dw_flam_sample*spp + year_month + site + (1|individual), data = hp.df)
+hpMEMfh <- lmer(fh ~ lfm + dw_flam_sample*spp + year_month + site + (1|individual), data = hp.df)
+hpMEMgd <- lmer(gd ~ lfm + dw_flam_sample*spp + year_month + site + (1|individual), data = hp.df)
+hpMEMfd <- lmer(fd ~ lfm + dw_flam_sample*spp + year_month + site + (1|individual), data = hp.df)
+hpMEMgti <- lmer(gti ~ lfm + dw_flam_sample*spp + year_month + site + (1|individual), data = hp.df)
+hpMEMttfg <- lmer(ttfg ~ lfm + dw_flam_sample*spp + year_month + site + (1|individual), data = hp.df)
+hpMEMpfg <- lmer(pfg ~ lfm + dw_flam_sample*spp + year_month + site + (1|individual), data = hp.df)
+hpMEMtemp <- lmer(temp_max ~ lfm + dw_flam_sample*spp + year_month + site + (1|individual), data = hp.df)
+```
+
+# Extracting R Squared Values
+## Epiradiator
+```{r}
+epiMEMlist <- list(epiMEMfh, epiMEMtti, epiMEMfd, epiMEMgti, epiMEMttfg, epiMEMtemp, epiMEMgd, epiMEMpfg) #first make a list of all the models
+epiR2 <- lapply(epiMEMlist, r.squaredGLMM) #then apply the r.squaredGLMM() function to all of the models on that list
+```
+
+## Hot Plate
+Repeating the same process as above
+```{r}
+hpMEMlist <- list(hpMEMfh, hpMEMtti, hpMEMfd, hpMEMgti, hpMEMttfg, hpMEMtemp, hpMEMgd, hpMEMpfg) 
+hpR2 <- lapply(hpMEMlist, r.squaredGLMM) 
+```
+
+## Dataframe
+```{r}
+# Long
+flam.metric <- c(rep(c("Flame Height", "Time to Ignition", "Flame Duration", "Glow to Ignition", "Time to First Glow", "Maximum Temp.", "Glow Duration", "Post-Flame Glow"), 2)) # making a vector for the flam. metrics (long df)
+R2m <- c(epiR2[[1]][1], epiR2[[2]][1], epiR2[[3]][1], epiR2[[4]][1], epiR2[[5]][1], epiR2[[6]][1], epiR2[[7]][1], epiR2[[8]][1], hpR2[[1]][1], hpR2[[2]][1], hpR2[[3]][1], hpR2[[4]][1], hpR2[[5]][1], hpR2[[6]][1], hpR2[[7]][1], hpR2[[8]][1]) # making a vector for the maginal r squared values 
+model <- c(rep("EPI", 8), rep("HP", 8)) # so we can assign the above values to the correct model
+vd_R2_df_long <- data.frame(flam.metric, R2m, model)
+vd_R2_df_long <- vd_R2_df_long %>% 
+  mutate(Model = case_when(
+    model == "EPI" ~ "Epiradiator",
+    model == "HP" ~ "Hot Plate")
+         )
+
+# Wide
+R2m_hp <- c(hpR2[[1]][1], hpR2[[2]][1], hpR2[[3]][1], hpR2[[4]][1], hpR2[[5]][1], hpR2[[6]][1], hpR2[[7]][1], hpR2[[8]][1]) # Only for hot plate
+R2m_epi <- c(epiR2[[1]][1], epiR2[[2]][1], epiR2[[3]][1], epiR2[[4]][1], epiR2[[5]][1], epiR2[[6]][1], epiR2[[7]][1], epiR2[[8]][1]) # Only for epiradiator
+flamm.metric <- c("Flame Height", "Time to Ignition", "Flame Duration", "Glow to Ignition", "Time to First Glow", "Maximum Temperature", "Glow Duration", "Post-Flame Glow") # Vector name is lame -- sorry
+vd_R2_df_wide <- data.frame(flamm.metric, R2m_hp, R2m_epi)
+```
+
+# Data Visualization
+
+## Scatterplot
+```{r}
+ggplot(vd_R2_df_wide, aes(x = R2m_hp, y = R2m_epi, color = flamm.metric)) + 
+  geom_point(size = 3) +
+  geom_abline(cex = 1) +
+  scale_x_continuous(limits = c(0, 0.5)) +
+  scale_y_continuous(limits = c(0, 0.5)) +
+  labs(x = expression(bold(paste("Hot Plate Marginal ", R^2))), y = expression(bold(paste("Epiradiator Marginal ", R^2))), color = "Flammability Metric") +
+  scale_color_manual(values = c('#1165C1', '#309AF1', "#66BEF9", "#FADC8A", "#F7C252", "#F18000", "#EB5500", "#7D0025")) + #color scale to use for consistency 
+  theme_bw() +
+  theme(axis.title = element_text(face = 'bold', size = 16),
+        legend.title = element_text(face = 'bold', size = 16),
+        axis.text = element_text(size = 12),
+        legend.text = element_text(size = 14))
+
+ggsave("figures/R2.comparison.scatterplot.jpg", height = 7, width = 10)
+```
+
+## Barplot
+```{r}
+ggplot(vd_R2_df_long, aes(x = flam.metric, y = R2m, fill = Model)) +
+  geom_bar(position = "dodge", stat = "identity") +
+  labs(x = "Flammability Metric", y = expression(bold(paste("Marginal ", R^2)))) +
+  theme_bw() +
+  theme(axis.title = element_text(face = 'bold', size = 22),
+        legend.title = element_text(face = 'bold', size = 22),
+        axis.text = element_text(face = 'bold', size = 13.5),
+        legend.text = element_text(size = 18))
+
+ggsave("figures/vardecomp.barplot.jpg", height = 6, width = 17)
+```
+
+# ------------------------------
+# Trial 2: Using Top Models
+# R SQUARED
+## Epiradiator
+```{r}
+epiMEMtti1 <- lmer(tti ~ mpa + dw_flam_sample*spp + year_month + site + (1|individual), data = epi.df)
+epiMEMfd1 <- lmer(fd ~ dw_flam_sample*spp + year_month + site + (1|individual), data = epi.df)
+epiMEMfd2 <- lmer(fd ~ ww_flam_sample*spp + year_month + site + (1|individual), data = epi.df)
+epiMEMfh1 <- lmer(fh ~ mpa + dw_flam_sample*spp + year_month + site + (1|individual), data = epi.df)
+epiMEMfh2 <- lmer(fh ~ dw_flam_sample*spp + year_month + site + (1|individual), data = epi.df)
+epiMEMgd1 <- lmer(gd ~ mpa + lfm + dw_flam_sample*spp + year_month + site + (1|individual), data = epi.df)
+epiMEMgd2 <- lmer(gd ~ dw_flam_sample*spp + year_month + site + (1|individual), data = epi.df)
+epiMEMgd3 <- lmer(gd ~ lfm + dw_flam_sample*spp + year_month + site + (1|individual), data = epi.df)
+epiMEMtemp1 <- lmer(temp_max ~ mpa + lfm + dw_flam_sample*spp + year_month + site + (1|individual), data = epi.df)
+epiMEMtemp2 <- lmer(temp_max ~ mpa + dw_flam_sample*spp + year_month + site + (1|individual), data = epi.df)
+epiMEMpfg1 <- lmer(pfg ~ mpa + dw_flam_sample*spp + year_month + site + (1|individual), data = epi.df)
+epiMEMgti1 <- lmer(gti ~ mpa + dw_flam_sample*spp + year_month + site + (1|individual), data = epi.df)
+epiMEMttfg1 <- lmer(ttfg ~ ww_flam_sample*spp + year_month + site + (1|individual), data = epi.df)
+```
+
+## Hot Plate
+```{r}
+hpMEMtti1 <- lmer(tti ~ mpa + dw_flam_sample*spp + year_month + site + (1|individual), data = hp.df)
+hpMEMfd1 <- lmer(fd ~ dw_flam_sample*spp + year_month + site + (1|individual), data = hp.df)
+hpMEMfd2 <- lmer(fd ~ ww_flam_sample*spp + year_month + site + (1|individual), data = hp.df)
+hpMEMfd3 <- lmer(fd ~ mpa + dw_flam_sample*spp + year_month + site + (1|individual), data = hp.df)
+hpMEMfh1 <- lmer(fh ~ dw_flam_sample*spp + year_month + site + (1|individual), data = hp.df)
+hpMEMgd1 <- lmer(gd ~ mpa + lfm + dw_flam_sample*spp + year_month + site + (1|individual), data = hp.df)
+hpMEMtemp1 <- lmer(temp_max ~ mpa + dw_flam_sample*spp + year_month + site + (1|individual), data = hp.df)
+hpMEMpfg1 <- lmer(pfg ~ mpa + dw_flam_sample*spp + year_month + site + (1|individual), data = hp.df)
+hpMEMgti1 <- lmer(gti ~ mpa + lfm + dw_flam_sample*spp + year_month + site + (1|individual), data = hp.df)
+hpMEMgti2 <- lmer(gti ~ lfm + dw_flam_sample*spp + year_month + site + (1|individual), data = hp.df)
+hpMEMttfg1 <- lmer(ttfg ~ mpa + dw_flam_sample*spp + year_month + site + (1|individual), data = hp.df)
+```
+
+# Extracting R Squared Values
+## Epiradiator
+```{r}
+epiMEMlist <- list(epiMEMtti1, epiMEMfd1, epiMEMfd2, epiMEMfh1, epiMEMfh2, epiMEMgd1, epiMEMgd2, epiMEMgd3, epiMEMtemp1, epiMEMtemp2, epiMEMpfg1, epiMEMgti1, epiMEMttfg1) #first make a list of all the models
+epiR2 <- lapply(epiMEMlist, r.squaredGLMM) #then apply the r.squaredGLMM() function to all of the models on that list
+```
+
+## Hot Plate
+Repeating the same process as above
+```{r}
+hpMEMlist <- list(hpMEMtti1, hpMEMfd1, hpMEMfd2, hpMEMfd3, hpMEMfh1, hpMEMgd1, hpMEMtemp1, hpMEMpfg1, hpMEMgti1, hpMEMgti2, hpMEMttfg1) 
+hpR2 <- lapply(hpMEMlist, r.squaredGLMM) 
+```
+
+## Dataframe
+```{r}
+# Long
+flam.metric <- c("Time to Ignition", "Flame Duration", "Flame Duration", "Flame Height", "Flame Height", "Glow Duration", "Glow Duration", "Glow Duration", "Max. Temp.", "Max. Temp.", "Post-Flame Glow", "Glow to Ignition", "Time to First Glow", "Time to Ignition", "Flame Duration", "Flame Duration", "Flame Duration", "Flame Height", "Glow Duration", "Max. Temp.", "Post-Flame Glow", "Glow to Ignition", "Glow to Ignition", "Time to First Glow") # making a vector for the flam. metrics (long df)
+R2m <- c(epiR2[[1]][1], epiR2[[2]][1], epiR2[[3]][1], epiR2[[4]][1], epiR2[[5]][1], epiR2[[6]][1], epiR2[[7]][1], epiR2[[8]][1], epiR2[[9]][1], epiR2[[10]][1], epiR2[[11]][1], epiR2[[12]][1], epiR2[[13]][1], hpR2[[1]][1], hpR2[[2]][1], hpR2[[3]][1], hpR2[[4]][1], hpR2[[5]][1], hpR2[[6]][1], hpR2[[7]][1], hpR2[[8]][1], hpR2[[9]][1], hpR2[[10]][1], hpR2[[11]][1]) # making a vector for the maginal r squared values 
+model <- c(rep("EPI", 13), rep("HP", 11)) # so we can assign the above values to the correct model
+vd_R2_df_long <- data.frame(flam.metric, R2m, model)
+vd_R2_df_long <- vd_R2_df_long %>% 
+  mutate(Model = case_when(
+    model == "EPI" ~ "Epiradiator",
+    model == "HP" ~ "Hot Plate")
+         )
+
+# Wide
+R2m_hp <- c(hpR2[[1]][1], hpR2[[2]][1], hpR2[[3]][1], hpR2[[4]][1], hpR2[[5]][1], 0, hpR2[[6]][1], 0, 0, hpR2[[7]][1], 0, hpR2[[8]][1], hpR2[[9]][1], hpR2[[10]][1], hpR2[[11]][1]) # Only for hot plate
+R2m_epi <- c(epiR2[[1]][1], epiR2[[2]][1], epiR2[[3]][1], 0, epiR2[[4]][1], epiR2[[5]][1], epiR2[[6]][1], epiR2[[7]][1], epiR2[[8]][1], epiR2[[9]][1], epiR2[[10]][1], epiR2[[11]][1], epiR2[[12]][1], 0, epiR2[[13]][1]) # Only for epiradiator
+flamm.metric <- c("Time to Ignition 1", "Flame Duration 1", "Flame Duration 2", "Flame Duration 3", "Flame Height 1", "Flame Height 2", "Glow Duration 1", "Glow Duration 2", "Glow Duration 3", "Max. Temp. 1", "Max. Temp. 2", "Post-Flame Glow 1", "Glow to Ignition 1", "Glow to Ignition 2", "Time to First Glow 1") # Vector name is lame -- sorry
+vd_R2_df_wide <- data.frame(flamm.metric, R2m_hp, R2m_epi)
+```
+
+# Side-by-Side Stacked Bar Plot
+Now is where things get a little bit more difficult. I am planning on making stacked bar plots showing the contributions of each primary predictor in the model.
+
+## Preparing Dataset
+To prepare the dataset, I need to figure out the respective contributions of specific predictors towards the overall R2 of the model
+
+Reordering Factors
+```{r}
+vd_R2_df_wide$flamm.metric <- factor(vd_R2_df_wide$flamm.metric, levels=c("Time to Ignition 1", "Flame Duration 1", "Flame Duration 2", "Flame Duration 3", "Flame Height 1", "Flame Height 2", "Glow Duration 1", "Glow Duration 2", "Glow Duration 3", "Max. Temp. 1", "Max. Temp. 2", "Post-Flame Glow 1", "Glow to Ignition 1", "Glow to Ignition 2", "Time to First Glow 1"))
+```
+
+### Contributions
+
+To figure out contributions of each predictor in each model, I have to compare R2 values for models with and without predictors of interest. The difference represents the individual predictors' contribution to the R2.
+
+#### Epiradiator
+
+##### TTI
+For this model, we have mpa + DW x spp, so we can visualize the impact of 5 things: mpa, dw, species, and covariates
+
+*NOTE* : What about dw x species interaction term??
+
+To do so, I made 6 models (top model selected in model selection and then 5 models without the 5 things we are trying to look at as identified above). Then, I extracted the R2 values. Then, I subtracted R2 values to get a sense of the relative contributions:
+For MPa: 1-2, for dw: 1-3, for spp: 1-4, etc.
+
+Then, I made a dataframe w/ the following columns: 'flam metric', 'total R2m', 'contributions', 'predictor of interest', 'model'
+```{r}
+epiMEMtti1 <- lmer(tti ~ mpa + dw_flam_sample*spp + year_month + site + (1|individual), data = epi.df)
+epiMEMtti1.Rmpa <- lmer(tti ~ dw_flam_sample*spp + year_month + site + (1|individual), data = epi.df)
+epiMEMtti1.Rdw <- lmer(tti ~ mpa + spp + year_month + site + (1|individual), data = epi.df)
+epiMEMtti1.Rspp <- lmer(tti ~ mpa + dw_flam_sample + year_month + site + (1|individual), data = epi.df)
+epiMEMtti1.Rcov <- lmer(tti ~ mpa + dw_flam_sample*spp + (1|individual), data = epi.df)
+epiMEMtti1.list <- list(epiMEMtti1, epiMEMtti1.Rmpa, epiMEMtti1.Rdw, epiMEMtti1.Rspp, epiMEMtti1.Rcov)
+epiR2tti1.contr <- lapply(epiMEMtti1.list, r.squaredGLMM)
+
+R2m.contr <- c(epiR2tti1.contr[[1]][1] - epiR2tti1.contr[[2]][1], epiR2tti1.contr[[1]][1] - epiR2tti1.contr[[3]][1], epiR2tti1.contr[[1]][1] - epiR2tti1.contr[[4]][1], epiR2tti1.contr[[1]][1] - epiR2tti1.contr[[5]][1], epiR2tti1.contr[[1]][1] - (epiR2tti1.contr[[1]][1] - epiR2tti1.contr[[2]][1]) - (epiR2tti1.contr[[1]][1] - epiR2tti1.contr[[3]][1]) - (epiR2tti1.contr[[1]][1] - epiR2tti1.contr[[4]][1]) - (epiR2tti1.contr[[1]][1] - epiR2tti1.contr[[5]][1]))
+predictor <- c('MPa', 'Dry Wt.', 'Species', 'Covariates', 'Other')
+flam.metric <- c(rep('Time to Ignition', 5))
+model <- c(rep('EPI', 5))
+R2m <- c(rep(0.34093253, 5))
+epi.tti1.df <- data.frame(flam.metric, model, R2m, R2m.contr, predictor)
+```
+
+##### FD
+Now I have to repeat the above process for each of the metrics
+
+*NOTE*: In the case of FD1, the contributions of all of the metrics separately = more than the overall R2... How is this possible?
+```{r}
+# FD 1
+epiMEMfd1 <- lmer(fd ~ dw_flam_sample*spp + year_month + site + (1|individual), data = epi.df)
+epiMEMfd1.Rdw <- lmer(fd ~ spp + year_month + site + (1|individual), data = epi.df)
+epiMEMfd1.Rspp <- lmer(fd ~ dw_flam_sample + year_month + site + (1|individual), data = epi.df)
+epiMEMfd1.Rcov <- lmer(fd ~ dw_flam_sample*spp + (1|individual), data = epi.df)
+epiMEMfd1.list <- list(epiMEMfd1, epiMEMfd1.Rdw, epiMEMfd1.Rspp, epiMEMfd1.Rcov)
+epiR2fd1.contr <- lapply(epiMEMfd1.list, r.squaredGLMM)
+
+R2m.contr <- c(epiR2fd1.contr[[1]][1] - epiR2fd1.contr[[2]][1], epiR2fd1.contr[[1]][1] - epiR2fd1.contr[[3]][1], epiR2fd1.contr[[1]][1] - epiR2fd1.contr[[4]][1])
+predictor <- c('Dry Wt.', 'Species', 'Covariates')
+flam.metric <- c(rep('Flame Duration 1', 3))
+model <- c(rep('EPI', 3))
+R2m <- c(rep(0.12374718, 3))
+epi.fd1.df <- data.frame(flam.metric, model, R2m, R2m.contr, predictor)
+
+# FD 2
+epiMEMfd2 <- lmer(fd ~ ww_flam_sample*spp + year_month + site + (1|individual), data = epi.df)
+epiMEMfd2.Rww <- lmer(fd ~ spp + year_month + site + (1|individual), data = epi.df)
+epiMEMfd2.Rspp <- lmer(fd ~ ww_flam_sample + year_month + site + (1|individual), data = epi.df)
+epiMEMfd2.Rcov <- lmer(fd ~ ww_flam_sample*spp + (1|individual), data = epi.df)
+epiMEMfd2.list <- list(epiMEMfd2, epiMEMfd2.Rww, epiMEMfd2.Rspp, epiMEMfd2.Rcov)
+epiR2fd2.contr <- lapply(epiMEMfd2.list, r.squaredGLMM)
+
+R2m.contr <- c(epiR2fd2.contr[[1]][1] - epiR2fd2.contr[[2]][1], epiR2fd2.contr[[1]][1] - epiR2fd2.contr[[3]][1], epiR2fd2.contr[[1]][1] - epiR2fd2.contr[[4]][1], epiR2fd2.contr[[1]][1] - (epiR2fd2.contr[[1]][1] - epiR2fd2.contr[[2]][1]) - (epiR2fd2.contr[[1]][1] - epiR2fd2.contr[[3]][1]) - (epiR2fd2.contr[[1]][1] - epiR2fd2.contr[[4]][1]))
+predictor <- c('Wet Wt.', 'Species', 'Covariates', 'Other')
+flam.metric <- c(rep('Flame Duration 2', 4))
+model <- c(rep('EPI', 4))
+R2m <- c(rep(0.09605499, 4))
+epi.fd2.df <- data.frame(flam.metric, model, R2m, R2m.contr, predictor)
+
+# FD 3 (Blank)
+R2m.contr <- c(rep(0, 5))
+predictor <- c('MPa', 'Dry Wt.', 'Species', 'Covariates', 'Other')
+flam.metric <- c(rep('Flame Duration 3', 5))
+model <- c(rep('EPI', 5))
+R2m <- c(rep(0, 5))
+epi.fd3.df <- data.frame(flam.metric, model, R2m, R2m.contr, predictor)
+```
+
+##### FH
+```{r}
+# FH 1
+epiMEMfh1 <- lmer(fh ~ mpa + dw_flam_sample*spp + year_month + site + (1|individual), data = epi.df)
+epiMEMfh1.Rmpa <- lmer(fh ~ dw_flam_sample*spp + year_month + site + (1|individual), data = epi.df)
+epiMEMfh1.Rdw <- lmer(fh ~ mpa + spp + year_month + site + (1|individual), data = epi.df)
+epiMEMfh1.Rspp <- lmer(fh ~ mpa + dw_flam_sample + year_month + site + (1|individual), data = epi.df)
+epiMEMfh1.Rcov <- lmer(fh ~ mpa + dw_flam_sample*spp + (1|individual), data = epi.df)
+epiMEMfh1.list <- list(epiMEMfh1, epiMEMfh1.Rmpa, epiMEMfh1.Rdw, epiMEMfh1.Rspp, epiMEMfh1.Rcov)
+epiR2fh1.contr <- lapply(epiMEMfh1.list, r.squaredGLMM)
+
+R2m.contr <- c(epiR2fh1.contr[[1]][1] - epiR2fh1.contr[[2]][1], epiR2fh1.contr[[1]][1] - epiR2fh1.contr[[3]][1], epiR2fh1.contr[[1]][1] - epiR2fh1.contr[[4]][1], epiR2fh1.contr[[1]][1] - epiR2fh1.contr[[5]][1], epiR2fh1.contr[[1]][1] - (epiR2fh1.contr[[1]][1] - epiR2fh1.contr[[2]][1]) - (epiR2fh1.contr[[1]][1] - epiR2fh1.contr[[3]][1]) - (epiR2fh1.contr[[1]][1] - epiR2fh1.contr[[4]][1]) - (epiR2fh1.contr[[1]][1] - epiR2fh1.contr[[5]][1]))
+predictor <- c('MPa', 'Dry Wt.', 'Species', 'Covariates', 'Other')
+flam.metric <- c(rep('Flame Height 1', 5))
+model <- c(rep('EPI', 5))
+R2m <- c(rep(0.18288674, 5))
+epi.fh1.df <- data.frame(flam.metric, model, R2m, R2m.contr, predictor)
+
+# FH 2
+epiMEMfh2 <- lmer(fh ~ dw_flam_sample*spp + year_month + site + (1|individual), data = epi.df)
+epiMEMfh2.Rdw <- lmer(fh ~ spp + year_month + site + (1|individual), data = epi.df)
+epiMEMfh2.Rspp <- lmer(fh ~ dw_flam_sample + year_month + site + (1|individual), data = epi.df)
+epiMEMfh2.Rcov <- lmer(fh ~ dw_flam_sample*spp + (1|individual), data = epi.df)
+epiMEMfh2.list <- list(epiMEMfh2, epiMEMfh2.Rdw, epiMEMfh2.Rspp, epiMEMfh2.Rcov)
+epiR2fh2.contr <- lapply(epiMEMfh2.list, r.squaredGLMM)
+
+R2m.contr <- c(epiR2fh2.contr[[1]][1] - epiR2fh2.contr[[2]][1], epiR2fh2.contr[[1]][1] - epiR2fh2.contr[[3]][1], epiR2fh2.contr[[1]][1] - epiR2fh2.contr[[4]][1], epiR2fh2.contr[[1]][1] - (epiR2fh2.contr[[1]][1] - epiR2fh2.contr[[2]][1]) - (epiR2fh2.contr[[1]][1] - epiR2fh2.contr[[3]][1]) - (epiR2fh2.contr[[1]][1] - epiR2fh2.contr[[4]][1]))
+predictor <- c('Dry Wt.', 'Species', 'Covariates', 'Other')
+flam.metric <- c(rep('Flame Height 2', 4))
+model <- c(rep('EPI', 4))
+R2m <- c(rep(0.15477169, 4))
+epi.fh2.df <- data.frame(flam.metric, model, R2m, R2m.contr, predictor)
+```
+
+##### GD
+*NOTE*: In the case of gd1, the contribution of mpa is negative... why?
+```{r}
+# GD 1
+epiMEMgd1 <- lmer(gd ~ mpa + lfm + dw_flam_sample*spp + year_month + site + (1|individual), data = epi.df)
+epiMEMgd1.Rmpa <- lmer(gd ~ lfm + dw_flam_sample*spp + year_month + site + (1|individual), data = epi.df)
+epiMEMgd1.Rdw <- lmer(gd ~ mpa + lfm + spp + year_month + site + (1|individual), data = epi.df)
+epiMEMgd1.Rlfm <-lmer(gd ~ mpa + dw_flam_sample*spp + year_month + site + (1|individual), data = epi.df)
+epiMEMgd1.Rspp <- lmer(gd ~ mpa + dw_flam_sample + year_month + site + (1|individual), data = epi.df)
+epiMEMgd1.Rcov <- lmer(gd ~ mpa + dw_flam_sample*spp + (1|individual), data = epi.df)
+epiMEMgd1.list <- list(epiMEMgd1, epiMEMgd1.Rmpa, epiMEMgd1.Rdw, epiMEMgd1.Rlfm, epiMEMgd1.Rspp, epiMEMgd1.Rcov)
+epiR2gd1.contr <- lapply(epiMEMgd1.list, r.squaredGLMM)
+
+R2m.contr <- c(epiR2gd1.contr[[1]][1] - epiR2gd1.contr[[2]][1], epiR2gd1.contr[[1]][1] - epiR2gd1.contr[[3]][1], epiR2gd1.contr[[1]][1] - epiR2gd1.contr[[4]][1], epiR2gd1.contr[[1]][1] - epiR2gd1.contr[[5]][1], epiR2gd1.contr[[1]][1] - epiR2gd1.contr[[6]][1], epiR2gd1.contr[[1]][1] - (epiR2gd1.contr[[1]][1] - epiR2gd1.contr[[2]][1]) - (epiR2gd1.contr[[1]][1] - epiR2gd1.contr[[3]][1]) - (epiR2gd1.contr[[1]][1] - epiR2gd1.contr[[4]][1]) - (epiR2gd1.contr[[1]][1] - epiR2gd1.contr[[5]][1]) - (epiR2gd1.contr[[1]][1] - epiR2gd1.contr[[6]][1]))
+predictor <- c('MPa', 'Dry Wt.', 'LFM', 'Species', 'Covariates', 'Other')
+flam.metric <- c(rep('Glow Duration 1', 6))
+model <- c(rep('EPI', 6))
+R2m <- c(rep(0.18288674, 6))
+epi.gd1.df <- data.frame(flam.metric, model, R2m, R2m.contr, predictor)
+
+# GD 2
+epiMEMgd2 <- lmer(gd ~ dw_flam_sample*spp + year_month + site + (1|individual), data = epi.df)
+epiMEMgd2.Rdw <- lmer(gd ~ spp + year_month + site + (1|individual), data = epi.df)
+epiMEMgd2.Rspp <- lmer(gd ~ dw_flam_sample + year_month + site + (1|individual), data = epi.df)
+epiMEMgd2.Rcov <- lmer(gd ~ dw_flam_sample*spp + (1|individual), data = epi.df)
+epiMEMgd2.list <- list(epiMEMgd2, epiMEMgd2.Rdw, epiMEMgd2.Rspp, epiMEMgd2.Rcov)
+epiR2gd2.contr <- lapply(epiMEMgd2.list, r.squaredGLMM)
+
+R2m.contr <- c(epiR2gd2.contr[[1]][1] - epiR2gd2.contr[[2]][1], epiR2gd2.contr[[1]][1] - epiR2gd2.contr[[3]][1], epiR2gd2.contr[[1]][1] - epiR2gd2.contr[[4]][1], epiR2gd2.contr[[1]][1] - (epiR2gd2.contr[[1]][1] - epiR2gd2.contr[[2]][1]) - (epiR2gd2.contr[[1]][1] - epiR2gd2.contr[[3]][1]) - (epiR2gd2.contr[[1]][1] - epiR2gd2.contr[[4]][1]))
+predictor <- c('Dry Wt.', 'Species', 'Covariates', 'Other')
+flam.metric <- c(rep('Glow Duration 2', 4))
+model <- c(rep('EPI', 4))
+R2m <- c(rep(0.31976498, 4))
+epi.gd2.df <- data.frame(flam.metric, model, R2m, R2m.contr, predictor)
+
+# GD 3
+epiMEMgd3 <- lmer(gd ~ lfm + dw_flam_sample*spp + year_month + site + (1|individual), data = epi.df)
+epiMEMgd3.Rlfm <- lmer(gd ~ dw_flam_sample*spp + year_month + site + (1|individual), data = epi.df)
+epiMEMgd3.Rdw <- lmer(gd ~ lfm + spp + year_month + site + (1|individual), data = epi.df)
+epiMEMgd3.Rspp <- lmer(gd ~ lfm + dw_flam_sample + year_month + site + (1|individual), data = epi.df)
+epiMEMgd3.Rcov <- lmer(gd ~ lfm + dw_flam_sample*spp + (1|individual), data = epi.df)
+epiMEMgd3.list <- list(epiMEMgd3, epiMEMgd3.Rlfm, epiMEMgd3.Rdw, epiMEMgd3.Rspp, epiMEMgd3.Rcov)
+epiR2gd3.contr <- lapply(epiMEMgd3.list, r.squaredGLMM)
+
+R2m.contr <- c(epiR2gd3.contr[[1]][1] - epiR2gd3.contr[[2]][1], epiR2gd3.contr[[1]][1] - epiR2gd3.contr[[3]][1], epiR2gd3.contr[[1]][1] - epiR2gd3.contr[[4]][1], epiR2gd3.contr[[1]][1] - epiR2gd3.contr[[5]][1], epiR2gd3.contr[[1]][1] - (epiR2gd3.contr[[1]][1] - epiR2gd3.contr[[2]][1]) - (epiR2gd3.contr[[1]][1] - epiR2gd3.contr[[3]][1]) - (epiR2gd3.contr[[1]][1] - epiR2gd3.contr[[4]][1]) - (epiR2gd3.contr[[1]][1] - epiR2gd3.contr[[5]][1]))
+predictor <- c('LFM', 'Dry Wt.', 'Species', 'Covariates', 'Other')
+flam.metric <- c(rep('Glow Duration 3', 5))
+model <- c(rep('EPI', 5))
+R2m <- c(rep(0.33009445, 5))
+epi.gd3.df <- data.frame(flam.metric, model, R2m, R2m.contr, predictor)
+```
+
+Will do the remaining 4 metrics after discussing the existing figure with Indra!
+
+##### All together
+```{r}
+epiR2.contr <- rbind(epi.tti1.df, epi.fd1.df, epi.fd2.df, epi.fd3.df, epi.fh1.df, epi.fh2.df, epi.gd1.df, epi.gd2.df, epi.gd3.df)
+```
+
+#### Hot Plate
+##### TTI
+*NOTE*: Negative contribution by mpa and a HUGE contribution by 'other' ... Why?
+```{r}
+hpMEMtti1 <- lmer(tti ~ mpa + dw_flam_sample*spp + year_month + site + (1|individual), data = hp.df)
+hpMEMtti1.Rmpa <- lmer(tti ~ dw_flam_sample*spp + year_month + site + (1|individual), data = hp.df)
+hpMEMtti1.Rdw <- lmer(tti ~ mpa + spp + year_month + site + (1|individual), data = hp.df)
+hpMEMtti1.Rspp <- lmer(tti ~ mpa + dw_flam_sample + year_month + site + (1|individual), data = hp.df)
+hpMEMtti1.Rcov <- lmer(tti ~ mpa + dw_flam_sample*spp + (1|individual), data = hp.df)
+hpMEMtti1.list <- list(hpMEMtti1, hpMEMtti1.Rmpa, hpMEMtti1.Rdw, hpMEMtti1.Rspp, hpMEMtti1.Rcov)
+hpR2tti1.contr <- lapply(hpMEMtti1.list, r.squaredGLMM)
+
+R2m.contr <- c(hpR2tti1.contr[[1]][1] - hpR2tti1.contr[[2]][1], hpR2tti1.contr[[1]][1] - hpR2tti1.contr[[3]][1], hpR2tti1.contr[[1]][1] - hpR2tti1.contr[[4]][1], hpR2tti1.contr[[1]][1] - hpR2tti1.contr[[5]][1], hpR2tti1.contr[[1]][1] - (hpR2tti1.contr[[1]][1] - hpR2tti1.contr[[2]][1]) - (hpR2tti1.contr[[1]][1] - hpR2tti1.contr[[3]][1]) - (hpR2tti1.contr[[1]][1] - hpR2tti1.contr[[4]][1]) - (hpR2tti1.contr[[1]][1] - hpR2tti1.contr[[5]][1]))
+predictor <- c('MPa', 'Dry Wt.', 'Species', 'Covariates', 'Other')
+flam.metric <- c(rep('Time to Ignition', 5))
+model <- c(rep('HP', 5))
+R2m <- c(rep(0.4824225, 5))
+hp.tti1.df <- data.frame(flam.metric, model, R2m, R2m.contr, predictor)
+```
+
+##### FD
+```{r}
+# FD 1
+hpMEMfd1 <- lmer(fd ~ dw_flam_sample*spp + year_month + site + (1|individual), data = hp.df)
+hpMEMfd1.Rdw <- lmer(fd ~ spp + year_month + site + (1|individual), data = hp.df)
+hpMEMfd1.Rspp <- lmer(fd ~ dw_flam_sample + year_month + site + (1|individual), data = hp.df)
+hpMEMfd1.Rcov <- lmer(fd ~ dw_flam_sample*spp + (1|individual), data = hp.df)
+hpMEMfd1.list <- list(hpMEMfd1, hpMEMfd1.Rdw, hpMEMfd1.Rspp, hpMEMfd1.Rcov)
+hpR2fd1.contr <- lapply(hpMEMfd1.list, r.squaredGLMM)
+
+R2m.contr <- c(hpR2fd1.contr[[1]][1] - hpR2fd1.contr[[2]][1], hpR2fd1.contr[[1]][1] - hpR2fd1.contr[[3]][1], hpR2fd1.contr[[1]][1] - hpR2fd1.contr[[4]][1], hpR2fd1.contr[[1]][1] - (hpR2fd1.contr[[1]][1] - hpR2fd1.contr[[2]][1]) - (hpR2fd1.contr[[1]][1] - hpR2fd1.contr[[3]][1]) - (hpR2fd1.contr[[1]][1] - hpR2fd1.contr[[4]][1]))
+predictor <- c('Dry Wt.', 'Species', 'Covariates', 'Other')
+flam.metric <- c(rep('Flame Duration 1', 4))
+model <- c(rep('HP', 4))
+R2m <- c(rep(0.1844440, 4))
+hp.fd1.df <- data.frame(flam.metric, model, R2m, R2m.contr, predictor)
+
+# FD 2
+hpMEMfd2 <- lmer(fd ~ ww_flam_sample*spp + year_month + site + (1|individual), data = hp.df)
+hpMEMfd2.Rww <- lmer(fd ~ spp + year_month + site + (1|individual), data = hp.df)
+hpMEMfd2.Rspp <- lmer(fd ~ ww_flam_sample + year_month + site + (1|individual), data = hp.df)
+hpMEMfd2.Rcov <- lmer(fd ~ ww_flam_sample*spp + (1|individual), data = hp.df)
+hpMEMfd2.list <- list(hpMEMfd2, hpMEMfd2.Rww, hpMEMfd2.Rspp, hpMEMfd2.Rcov)
+hpR2fd2.contr <- lapply(hpMEMfd2.list, r.squaredGLMM)
+
+R2m.contr <- c(hpR2fd2.contr[[1]][1] - hpR2fd2.contr[[2]][1], hpR2fd2.contr[[1]][1] - hpR2fd2.contr[[3]][1], hpR2fd2.contr[[1]][1] - hpR2fd2.contr[[4]][1], hpR2fd2.contr[[1]][1] - (hpR2fd2.contr[[1]][1] - hpR2fd2.contr[[2]][1]) - (hpR2fd2.contr[[1]][1] - hpR2fd2.contr[[3]][1]) - (hpR2fd2.contr[[1]][1] - hpR2fd2.contr[[4]][1]))
+predictor <- c('Wet Wt.', 'Species', 'Covariates', 'Other')
+flam.metric <- c(rep('Flame Duration 2', 4))
+model <- c(rep('HP', 4))
+R2m <- c(rep(0.1921120, 4))
+hp.fd2.df <- data.frame(flam.metric, model, R2m, R2m.contr, predictor)
+
+# FD 3
+hpMEMfd3 <- lmer(fd ~ mpa + dw_flam_sample*spp + year_month + site + (1|individual), data = hp.df)
+hpMEMfd3.Rmpa <- lmer(fd ~ dw_flam_sample*spp + year_month + site + (1|individual), data = hp.df)
+hpMEMfd3.Rdw <- lmer(fd ~ mpa + spp + year_month + site + (1|individual), data = hp.df)
+hpMEMfd3.Rspp <- lmer(fd ~ mpa + dw_flam_sample + year_month + site + (1|individual), data = hp.df)
+hpMEMfd3.Rcov <- lmer(fd ~ mpa + dw_flam_sample*spp + (1|individual), data = hp.df)
+hpMEMfd3.list <- list(hpMEMfd3, hpMEMfd3.Rmpa, hpMEMfd3.Rdw, hpMEMfd3.Rspp, hpMEMfd3.Rcov)
+hpR2fd3.contr <- lapply(hpMEMfd3.list, r.squaredGLMM)
+
+R2m.contr <- c(hpR2fd3.contr[[1]][1] - hpR2fd3.contr[[2]][1], hpR2fd3.contr[[1]][1] - hpR2fd3.contr[[3]][1], hpR2fd3.contr[[1]][1] - hpR2fd3.contr[[4]][1], hpR2fd3.contr[[1]][1] - hpR2fd3.contr[[5]][1], hpR2fd3.contr[[1]][1] - (hpR2fd3.contr[[1]][1] - hpR2fd3.contr[[2]][1]) - (hpR2fd3.contr[[1]][1] - hpR2fd3.contr[[3]][1]) - (hpR2fd3.contr[[1]][1] - hpR2fd3.contr[[4]][1]) - (hpR2fd3.contr[[1]][1] - hpR2fd3.contr[[5]][1]))
+predictor <- c('MPa', 'Dry Wt.', 'Species', 'Covariates', 'Other')
+flam.metric <- c(rep('Flame Duration 3', 5))
+model <- c(rep('HP', 5))
+R2m <- c(rep(0.1920711, 5))
+hp.fd3.df <- data.frame(flam.metric, model, R2m, R2m.contr, predictor)
+```
+
+##### FH
+```{r}
+hpMEMfh1 <- lmer(fh ~ dw_flam_sample*spp + year_month + site + (1|individual), data = hp.df)
+hpMEMfh1.Rdw <- lmer(fh ~ spp + year_month + site + (1|individual), data = hp.df)
+hpMEMfh1.Rspp <- lmer(fh ~ dw_flam_sample + year_month + site + (1|individual), data = hp.df)
+hpMEMfh1.Rcov <- lmer(fh ~ dw_flam_sample*spp + (1|individual), data = hp.df)
+hpMEMfh1.list <- list(hpMEMfh1, hpMEMfh1.Rdw, hpMEMfh1.Rspp, hpMEMfh1.Rcov)
+hpR2fh1.contr <- lapply(hpMEMfh1.list, r.squaredGLMM)
+
+R2m.contr <- c(hpR2fh1.contr[[1]][1] - hpR2fh1.contr[[2]][1], hpR2fh1.contr[[1]][1] - hpR2fh1.contr[[3]][1], hpR2fh1.contr[[1]][1] - hpR2fh1.contr[[4]][1], hpR2fh1.contr[[1]][1] - (hpR2fh1.contr[[1]][1] - hpR2fh1.contr[[2]][1]) - (hpR2fh1.contr[[1]][1] - hpR2fh1.contr[[3]][1]) - (hpR2fh1.contr[[1]][1] - hpR2fh1.contr[[4]][1]))
+predictor <- c('Dry Wt.', 'Species', 'Covariates', 'Other')
+flam.metric <- c(rep('Flame Height 1', 4))
+model <- c(rep('HP', 4))
+R2m <- c(rep(0.2767286, 4))
+hp.fh1.df <- data.frame(flam.metric, model, R2m, R2m.contr, predictor)
+
+# FH 2 (blank)
+R2m.contr <- c(rep(0, 4))
+predictor <- c('Dry Wt.', 'Species', 'Covariates', 'Other')
+flam.metric <- c(rep('Flame Height 2', 4))
+model <- c(rep('HP', 4))
+R2m <- c(rep(0, 4))
+hp.fh2.df <- data.frame(flam.metric, model, R2m, R2m.contr, predictor)
+```
+
+##### GD
+*NOTE*: Another instance where the contributions > total R2 value. I think this method may be inherently flawed...
+```{r}
+hpMEMgd1 <- lmer(gd ~ mpa + lfm + dw_flam_sample*spp + year_month + site + (1|individual), data = hp.df)
+hpMEMgd1.Rmpa <- lmer(gd ~ lfm + dw_flam_sample*spp + year_month + site + (1|individual), data = hp.df)
+hpMEMgd1.Rdw <- lmer(gd ~ mpa + lfm + spp + year_month + site + (1|individual), data = hp.df)
+hpMEMgd1.Rlfm <-lmer(gd ~ mpa + dw_flam_sample*spp + year_month + site + (1|individual), data = hp.df)
+hpMEMgd1.Rspp <- lmer(gd ~ mpa + dw_flam_sample + year_month + site + (1|individual), data = hp.df)
+hpMEMgd1.Rcov <- lmer(gd ~ mpa + dw_flam_sample*spp + (1|individual), data = hp.df)
+hpMEMgd1.list <- list(hpMEMgd1, hpMEMgd1.Rmpa, hpMEMgd1.Rdw, hpMEMgd1.Rlfm, hpMEMgd1.Rspp, hpMEMgd1.Rcov)
+hpR2gd1.contr <- lapply(hpMEMgd1.list, r.squaredGLMM)
+
+R2m.contr <- c(hpR2gd1.contr[[1]][1] - hpR2gd1.contr[[2]][1], hpR2gd1.contr[[1]][1] - hpR2gd1.contr[[3]][1], hpR2gd1.contr[[1]][1] - hpR2gd1.contr[[4]][1], hpR2gd1.contr[[1]][1] - hpR2gd1.contr[[5]][1], hpR2gd1.contr[[1]][1] - hpR2gd1.contr[[6]][1])
+predictor <- c('MPa', 'Dry Wt.', 'LFM', 'Species', 'Covariates')
+flam.metric <- c(rep('Glow Duration 1', 5))
+model <- c(rep('HP', 5))
+R2m <- c(rep(0.2895701, 5))
+hp.gd1.df <- data.frame(flam.metric, model, R2m, R2m.contr, predictor)
+
+# GD 2 (blank)
+R2m.contr <- c(rep(0, 4))
+predictor <- c('Dry Wt.', 'Species', 'Covariates', 'Other')
+flam.metric <- c(rep('Glow Duration 2', 4))
+model <- c(rep('HP', 4))
+R2m <- c(rep(0, 4))
+hp.gd2.df <- data.frame(flam.metric, model, R2m, R2m.contr, predictor)
+
+# GD 3 (blank)
+R2m.contr <- c(rep(0, 5))
+predictor <- c('LFM', 'Dry Wt.', 'Species', 'Covariates', 'Other')
+flam.metric <- c(rep('Glow Duration 3', 5))
+model <- c(rep('HP', 5))
+R2m <- c(rep(0, 5))
+hp.gd3.df <- data.frame(flam.metric, model, R2m, R2m.contr, predictor)
+```
+
+##### All together
+```{r}
+hpR2.contr <- rbind(hp.tti1.df, hp.fd1.df, hp.fd2.df, hp.fd3.df, hp.fh1.df, hp.fh2.df, hp.gd1.df, hp.gd2.df, hp.gd3.df)
+```
+
+#### EPI + HP
+```{r}
+R2.contr.df <- rbind(epiR2.contr, hpR2.contr)
+```
+
+## Visualization
+### w/o contributions
+First, to try and make sure the visualization is going to work out okay and look good, I am going to try it without the added complication of the contributions of the predictors
+
+Setting up the middle of the plot
+```{r}
+g.mid<-ggplot(vd_R2_df_wide, aes(x=1, y=flamm.metric)) +
+  geom_text(aes(label=flamm.metric)) +
+  geom_segment(aes(x=0.94,xend=0.96,yend=flamm.metric)) +
+  geom_segment(aes(x=1.04,xend=1.065,yend=flamm.metric)) +
+  ggtitle("") +
+  ylab(NULL) +
+  scale_x_continuous(expand=c(0,0),limits=c(0.94,1.065)) +
+  scale_y_discrete(limits = rev) +
+  theme(axis.title=element_blank(),
+        panel.grid=element_blank(),
+        axis.text.y=element_blank(),
+        axis.ticks.y=element_blank(),
+        panel.background=element_blank(),
+        axis.text.x=element_text(color=NA),
+        axis.ticks.x=element_line(color=NA),
+        plot.margin = unit(c(1,-1,1,-1), "mm"))
+g.mid
+```
+
+Setting up the barplots for each side
+```{r}
+g1 <- ggplot(data = vd_R2_df_wide, aes(x = flamm.metric, y = R2m_epi)) +
+  labs(title = "Epiradiator Marginal R Squared") +
+  geom_bar(stat = "identity") +
+  scale_x_discrete(limits = rev) +
+  theme_bw() +
+  theme(axis.title.x = element_blank(), axis.title.y = element_blank(), 
+        axis.ticks.y = element_blank(), axis.text.y = element_blank(),
+        plot.margin = unit(c(1,-1,1,0), "mm")) +
+  scale_y_reverse(limits = c(0.5, 0)) + coord_flip()
+
+g2 <- ggplot(data = vd_R2_df_wide, aes(x = flamm.metric, y = R2m_hp)) +
+  labs(title = "Hot Plate Marginal R Squared") +
+  ylim(0, 0.5) +
+  geom_bar(stat = "identity") +
+  scale_x_discrete(limits = rev) +
+  theme_bw() +
+  theme(axis.title.x = element_blank(), axis.title.y = element_blank(), 
+        axis.ticks.y = element_blank(), axis.text.y = element_blank(),
+        plot.margin = unit(c(1,0,1,-1), "mm")) +
+  coord_flip()
+```
+
+Arranging the 3 plots
+```{r}
+gg1 <- ggplot_gtable(ggplot_build(g1))
+gg2 <- ggplot_gtable(ggplot_build(g2))
+gg.mid <- ggplot_gtable(ggplot_build(g.mid))
+
+grid.arrange(gg1,gg.mid,gg2,ncol=3,widths=c(4,3,4))
+```
+Looks good! Now let's do it with contributions
+
+### MAIN: w/ contributions
+Setting up the middle of the plot
+```{r}
+g.mid<-vd_R2_df_wide[1:9,] %>% 
+  ggplot(aes(x=1, y=flamm.metric)) +
+  geom_text(aes(label=flamm.metric)) +
+  geom_segment(aes(x=0.94,xend=0.96,yend=flamm.metric)) +
+  geom_segment(aes(x=1.04,xend=1.065,yend=flamm.metric)) +
+  ggtitle("") +
+  ylab(NULL) +
+  scale_x_continuous(expand=c(0,0),limits=c(0.94,1.065)) +
+  scale_y_discrete(limits = rev) +
+  theme(axis.title=element_blank(),
+        panel.grid=element_blank(),
+        axis.text.y=element_blank(),
+        axis.ticks.y=element_blank(),
+        panel.background=element_blank(),
+        axis.text.x=element_text(color=NA),
+        axis.ticks.x=element_line(color=NA),
+        plot.margin = unit(c(1,-1,1,-1), "mm"))
+g.mid
+```
+
+Setting up the barplots for each side
+```{r}
+R2.contr.df$flam.metric <- factor(R2.contr.df$flam.metric, levels=c("Time to Ignition", "Flame Duration 1", "Flame Duration 2", "Flame Duration 3", "Flame Height 1", "Flame Height 2", "Glow Duration 1", "Glow Duration 2", "Glow Duration 3"))
+R2.contr.df$predictor <- factor(R2.contr.df$predictor, levels=c("Dry Wt.", "MPa", "LFM", "Wet Wt.", "Species", "Covariates", "Other"))
+
+g1 <- R2.contr.df %>% 
+  filter(model == "EPI") %>% 
+  ggplot(aes(x = flam.metric, y = R2m.contr, fill = predictor)) +
+  labs(title = "Epiradiator Marginal R Squared") +
+  geom_bar(position = 'stack', stat = "identity") +
+  scale_x_discrete(limits = rev) +
+  theme_bw() +
+  scale_fill_manual(values = c('#000000', '#05668D', '#3E8914', '#D80032', '#DECCCC', '#571F4E', '#40F99B')) +
+  theme(axis.title.x = element_blank(), axis.title.y = element_blank(), 
+        axis.ticks.y = element_blank(), axis.text.y = element_blank(),
+        plot.title = element_text(face = 'bold', size = 10),
+        legend.position = 'none',
+        plot.margin = unit(c(1,-1,1,0), "mm")) +
+  scale_y_reverse(limits = c(0.5, 0)) + coord_flip()
+g1
+
+g2 <- R2.contr.df %>% 
+  filter(model == "HP") %>% 
+  ggplot(aes(x = flam.metric, y = R2m.contr, fill = predictor)) +
+  labs(title = "Hot Plate Marginal R Squared") +
+  ylim(0, 0.5) +
+  geom_bar(position = 'stack', stat = "identity") +
+  scale_x_discrete(limits = rev) +
+  theme_bw() +
+  scale_fill_manual(values = c('#000000', '#05668D', '#3E8914', '#D80032', '#DECCCC', '#571F4E', '#40F99B')) +
+  theme(axis.title.x = element_blank(), axis.title.y = element_blank(), 
+        axis.ticks.y = element_blank(), axis.text.y = element_blank(),
+        plot.title = element_text(face = 'bold', size = 10),
+        legend.position = 'none',
+        plot.margin = unit(c(1,0,1,-1), "mm")) +
+  coord_flip()
+g2
+```
+
+Arranging the 3 plots, adding a legend
+```{r}
+pred.legend <- get_legend(
+  ggplot(data = R2.contr.df, aes(x = flam.metric, y = R2m.contr, fill = predictor)) +
+  labs(fill = "Predictor") +
+  geom_bar(position = 'stack', stat = "identity") +
+  theme(legend.title = element_text(face = 'bold'),
+        legend.position = 'right') +
+  scale_fill_manual(values = c('#000000', '#05668D', '#3E8914', '#D80032', '#DECCCC', '#571F4E', '#40F99B'))
+)
+
+gg1 <- ggplot_gtable(ggplot_build(g1))
+gg2 <- ggplot_gtable(ggplot_build(g2))
+gg.mid <- ggplot_gtable(ggplot_build(g.mid))
+
+plots <- grid.arrange(gg1, gg.mid, gg2, pred.legend, ncol=4,widths=c(4,3,4,2.5))
+
+ggsave('figures/MEM.visualization.vardecomp.jpg', plot = plots, width = 10, height = 4)
+```
+
+
+# DOMINANCE ANALYSIS
+Using dominance analysis/relative weights analysis
+```{r}
+#install.packages('domir')
+library(domir)
+?domin
+```
+
+## Epiradiator
+```{r}
+epiMEMtti1 <- lmer(tti ~ mpa + dw_flam_sample*spp + year_month + site + (1|individual), data = epi.df)
+epiMEMfd1 <- lmer(fd ~ dw_flam_sample*spp + year_month + site + (1|individual), data = epi.df)
+epiMEMfd2 <- lmer(fd ~ ww_flam_sample*spp + year_month + site + (1|individual), data = epi.df)
+epiMEMfh1 <- lmer(fh ~ mpa + dw_flam_sample*spp + year_month + site + (1|individual), data = epi.df)
+epiMEMfh2 <- lmer(fh ~ dw_flam_sample*spp + year_month + site + (1|individual), data = epi.df)
+epiMEMgd1 <- lmer(gd ~ mpa + lfm + dw_flam_sample*spp + year_month + site + (1|individual), data = epi.df)
+epiMEMgd2 <- lmer(gd ~ dw_flam_sample*spp + year_month + site + (1|individual), data = epi.df)
+epiMEMgd3 <- lmer(gd ~ lfm + dw_flam_sample*spp + year_month + site + (1|individual), data = epi.df)
+epiMEMtemp1 <- lmer(temp_max ~ mpa + lfm + dw_flam_sample*spp + year_month + site + (1|individual), data = epi.df)
+epiMEMtemp2 <- lmer(temp_max ~ mpa + dw_flam_sample*spp + year_month + site + (1|individual), data = epi.df)
+epiMEMpfg1 <- lmer(pfg ~ mpa + dw_flam_sample*spp + year_month + site + (1|individual), data = epi.df)
+epiMEMgti1 <- lmer(gti ~ mpa + dw_flam_sample*spp + year_month + site + (1|individual), data = epi.df)
+epiMEMttfg1 <- lmer(ttfg ~ ww_flam_sample*spp + year_month + site + (1|individual), data = epi.df)
+```
+
+## Hot Plate
+```{r}
+hpMEMtti1 <- lmer(tti ~ mpa + dw_flam_sample*spp + year_month + site + (1|individual), data = hp.df)
+domin(hpMEMtti1, reg = lm, list("summary", "r.squared"),  data = hp.df)
+hpMEMfd1 <- lmer(fd ~ dw_flam_sample*spp + year_month + site + (1|individual), data = hp.df)
+hpMEMfd2 <- lmer(fd ~ ww_flam_sample*spp + year_month + site + (1|individual), data = hp.df)
+hpMEMfd3 <- lmer(fd ~ mpa + dw_flam_sample*spp + year_month + site + (1|individual), data = hp.df)
+hpMEMfh1 <- lmer(fh ~ dw_flam_sample*spp + year_month + site + (1|individual), data = hp.df)
+hpMEMgd1 <- lmer(gd ~ mpa + lfm + dw_flam_sample*spp + year_month + site + (1|individual), data = hp.df)
+hpMEMtemp1 <- lmer(temp_max ~ mpa + dw_flam_sample*spp + year_month + site + (1|individual), data = hp.df)
+hpMEMpfg1 <- lmer(pfg ~ mpa + dw_flam_sample*spp + year_month + site + (1|individual), data = hp.df)
+hpMEMgti1 <- lmer(gti ~ mpa + lfm + dw_flam_sample*spp + year_month + site + (1|individual), data = hp.df)
+hpMEMgti2 <- lmer(gti ~ lfm + dw_flam_sample*spp + year_month + site + (1|individual), data = hp.df)
+hpMEMttfg1 <- lmer(ttfg ~ mpa + dw_flam_sample*spp + year_month + site + (1|individual), data = hp.df)
+```

@@ -1,0 +1,426 @@
+---
+title: 'Segmented Regressions by Species: HP'
+author: "Joe Celebrezze"
+date: "8/4/2022"
+output: html_document
+---
+
+The following script shows the segmented regressions using mixed effects models for the epiradiator model. I decided to split the segmented regressions into two scripts, as the last time I did segmented regressions, it took 10-15 minutes for the script to get going after I opened it and this time the script was going to be even bigger, so I felt it would be necessary to split the analysis into two scripts.
+
+# Setup
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(here)
+library(lme4) # mixed effects models
+library(nlme) # mixed effects models -- more compatible with 'segmented'
+library(segmented)
+here = here::here
+select = dplyr::select
+col3 = hcl.colors(10, "YlOrRd", rev = TRUE) #color scale to use for consistency 
+```
+
+Dataframe:
+```{r}
+paired_methods_long <- read.csv(here("processed-data", "compiled-datasets", "METHODS", "bothm_bothl_manual_ignitions_in.csv"))
+
+paired_methods_long.ig <- paired_methods_long %>% 
+  filter(ignition == 1)
+
+hp.df <- paired_methods_long.ig %>% 
+  filter(model == "HP")
+```
+
+# Scaling and Centering
+```{r}
+hp.df <- hp.df %>% 
+  mutate(fh = fh - mean(fh), fd = fd - mean(fd), ttfg = ttfg - mean(ttfg), gti = gti -
+          mean(gti), tti = tti - mean(tti), gd = gd - mean(gd), pfg = pfg - mean(pfg),
+          temp_max = temp_max - mean(temp_max)) %>%  #centering
+  mutate(fh = scale(fh), fd = scale(fd), ttfg = scale(ttfg), gti = scale(gti), tti =
+           scale(tti), gd = scale(gd), pfg = scale(pfg), temp_max = scale(temp_max)) #scaled
+```
+
+# Split by Species
+```{r}
+hp.df.ceme <- hp.df %>% 
+  filter(spp == "CEME")
+hp.df.adfa <- hp.df %>% 
+  filter(spp == "ADFA")
+```
+
+# Maximums for LFM, MPa
+```{r}
+max.lfm.adfa <- max(hp.df.adfa$lfm)
+max.mpa.adfa <- max(hp.df.adfa$mpa)
+
+max.lfm.ceme <- max(hp.df.ceme$lfm)
+max.mpa.ceme <- max(hp.df.ceme$mpa)
+```
+
+# PV Curve Data
+```{r}
+pv_summary_df_timing <- read_csv(here("processed-data", "compiled-datasets", "pv_summary_df_timing.csv"))
+
+# ADFA
+## LFM
+mean_lfm_adfa <- pv_summary_df_timing %>% 
+  filter(spp == "ADFA" & timing == "fall") %>% 
+  pull(mean_lfm)
+upr_lfm_adfa <- pv_summary_df_timing %>% 
+  filter(spp == "ADFA" & timing == "fall") %>% 
+  pull(upr_lfm)
+lwr_lfm_adfa <- pv_summary_df_timing %>% 
+  filter(spp == "ADFA" & timing == "fall") %>% 
+  pull(lwr_lfm)
+## MPa
+mean_mpa_adfa <- pv_summary_df_timing %>% 
+  filter(spp == "ADFA" & timing == "fall") %>% 
+  pull(mean_tlp)
+upr_mpa_adfa <- pv_summary_df_timing %>% 
+  filter(spp == "ADFA" & timing == "fall") %>% 
+  pull(upr)
+lwr_mpa_adfa <- pv_summary_df_timing %>% 
+  filter(spp == "ADFA" & timing == "fall") %>% 
+  pull(lwr)
+
+# CEME
+## LFM
+mean_lfm_ceme <- pv_summary_df_timing %>% 
+  filter(spp == "CEME" & timing == "fall") %>% 
+  pull(mean_lfm)
+upr_lfm_ceme <- pv_summary_df_timing %>% 
+  filter(spp == "CEME" & timing == "fall") %>% 
+  pull(upr_lfm)
+lwr_lfm_ceme <- pv_summary_df_timing %>% 
+  filter(spp == "CEME" & timing == "fall") %>% 
+  pull(lwr_lfm)
+## MPa
+mean_mpa_ceme <- pv_summary_df_timing %>% 
+  filter(spp == "CEME" & timing == "fall") %>% 
+  pull(mean_tlp)
+upr_mpa_ceme <- pv_summary_df_timing %>% 
+  filter(spp == "CECO" & timing == "fall") %>% 
+  pull(upr)
+lwr_mpa_ceme <- pv_summary_df_timing %>% 
+  filter(spp == "CEME" & timing == "fall") %>% 
+  pull(lwr)
+```
+
+# Plotting Functions
+Note: x.variable and y.variable must be inputted as character strings.
+
+I split the function into two so that we could customize the plots for LFM and MPa separately and also make the lines of code shorter and neater by involving more default values for arguments in the function
+
+```{r}
+rsegplot.lfm <- function(model, dataframe, x.variable = 'lfm', y.variable, max.x, x.lab = 'Live Fuel Moisture (%)', y.lab = NULL, tlp = NULL, tlp.upper = NULL, tlp.lower = NULL) {
+  
+p <- summary.segmented(model)$psi[2]
+m <- slope(model, .coef = fixef(model))[[1]][[1]]
+b <- intercept(model, .coef = fixef(model))[[1]][[1]]
+m2 <- slope(model, .coef = fixef(model))[[1]][[2]]
+b2 <- intercept(model, .coef = fixef(model))[[1]][[2]]
+yvar <- dataframe[,y.variable]
+xvar <- dataframe[,x.variable]
+confint <- confint.segmented(model, x.variable, .coef=fixef(model))
+lower <- confint[2]
+upper <- confint[3]
+ymax <- max(yvar)
+ymin <- min(yvar)
+
+wacky <- plot(xvar, yvar, xlim = c(0, max.x), ylim = c(ymin-0.05*ymin, ymax+0.05*ymax), 
+              xlab = x.lab, ylab = y.lab,
+              pch = 16, cex.lab = 1.3)
+polygon(x = c(lower, upper, upper, lower), y = c(ymax + 0.2*ymax, ymax +0.2*ymax, ymin - 30, ymin - 30), col = alpha('gray', 0.3), lty = 2)
+abline(v = tlp, col = alpha('#00C368', 0.7), cex = 3)
+polygon(x = c(tlp.lower, tlp.upper, tlp.upper, tlp.lower), y = c(ymax +0.2*ymax, ymax +0.2*ymax, ymin -30, ymin -30), col = alpha('#00C368', 0.3), border = alpha('#00C368', 0.6))
+for(z in 1:length(xvar)){
+  if(z < p){
+    segments(x0 = 0, x1 = p, y0 = b, y1 = m*((b2 - b)/(m - m2))+b, lwd = 3, col = "#9D0208")
+  }else{
+    segments(x0 = p, x1 = max.x, y0 = m2*((b - b2)/(m2 - m))+b2 , y1 = m2*max.x + b2, lwd = 3, col = "#9D0208")}}
+return(wacky)
+}
+```
+
+```{r}
+rsegplot.mpa <- function(model, dataframe, x.variable = 'mpa', y.variable, max.x = max.mpa, x.lab = 'Water Potential (MPa)', y.lab = NULL, tlp = NULL, tlp.upper = NULL, tlp.lower = NULL) 
+  {
+p <- summary.segmented(model)$psi[2]
+m <- slope(model, .coef = fixef(model))[[1]][[1]]
+b <- intercept(model, .coef = fixef(model))[[1]][[1]]
+m2 <- slope(model, .coef = fixef(model))[[1]][[2]]
+b2 <- intercept(model, .coef = fixef(model))[[1]][[2]]
+yvar <- dataframe[,y.variable]
+xvar <- dataframe[,x.variable]
+confint <- confint.segmented(model, x.variable, .coef=fixef(model))
+lower <- confint[2]
+upper <- confint[3]
+ymax <- max(yvar)
+ymin <- min(yvar)
+
+wacky <- plot(xvar, yvar, xlim = c(-10, 0), ylim = c(ymin-1, ymax+1), 
+              xlab = x.lab, ylab = y.lab,
+              pch = 16, cex.lab = 1.1)
+polygon(x = c(lower, upper, upper, lower), y = c(ymax +1.5, ymax +1.5, ymin -1.5, ymin -1.5), col = alpha('gray', 0.3), lty = 2)
+abline(v = tlp, col = alpha('#00C368', 0.8), cex = 3)
+polygon(x = c(tlp.lower, tlp.upper, tlp.upper, tlp.lower), y = c(ymax +1.5, ymax +1.5, ymin -1.5, ymin -1.5), col = alpha('#00C368', 0.3), border = alpha('#00C368', 0.7))
+abline(a = b, b = m, lwd = 3, col = "#9D0208")
+for(j in 1:length(xvar)){
+  if(j < p){
+    segments(x0 = -10, x1 = p, y0 = (-10*m) + b , y1 = m2*((b - b2)/(m2 - m))+b2, lwd = 3, col = "#9D0208")
+  }
+  else{
+    segments(x0 = p, x1 = max.x, y0 = m2*((b - b2)/(m2 - m))+b2, y1 = b2, lwd = 3, col = "#9D0208")
+  }
+    }
+return(wacky)
+}
+```
+
+# -------------------------------
+
+# CEME
+## Predictor: LFM
+### TTI
+No threshold detected
+
+### GTI
+```{r}
+o.mod<-lme(gti~lfm + site, random=~1|individual, data=hp.df.ceme)
+os.mod<-segmented.default(o.mod, ~lfm, npsi=list(lfm=1))
+#summarizing results (note the '.coef' argument)
+summary.segmented(os.mod)
+
+rsegplot.lfm(os.mod, hp.df.ceme, y.variable = 'gti', y.lab = "Glow to Ignition", tlp = mean_lfm_ceme, tlp.lower = lwr_lfm_ceme, tlp.upper = upr_lfm_ceme, max.x = max.lfm.ceme)
+```
+
+### FD
+```{r}
+o.mod<-lme(fd~lfm + site, random=~1|individual, data=hp.df.ceme)
+os.mod<-segmented.default(o.mod, ~lfm, npsi=list(lfm=1))
+#summarizing results (note the '.coef' argument)
+summary.segmented(os.mod)
+
+rsegplot.lfm(os.mod, hp.df.ceme, y.variable = 'fd', y.lab = "Flame Duration", tlp = mean_lfm_ceme, tlp.lower = lwr_lfm_ceme, tlp.upper = upr_lfm_ceme, max.x = max.lfm.ceme)
+```
+
+### FH
+No threshold detected
+
+### Max. Temp.
+No threshold detected
+
+### GD
+```{r}
+o.mod<-lme(gd~lfm + site, random=~1|individual, data=hp.df.ceme)
+os.mod<-segmented.default(o.mod, ~lfm, npsi=list(lfm=1))
+#summarizing results (note the '.coef' argument)
+summary.segmented(os.mod)
+
+rsegplot.lfm(os.mod, hp.df.ceme, y.variable = 'gd', y.lab = "Glow Duration", tlp = mean_lfm_ceme, tlp.lower = lwr_lfm_ceme, tlp.upper = upr_lfm_ceme, max.x = max.lfm.ceme)
+```
+
+### PFG
+No threshold detected
+
+### TTFG
+No threshold detected
+
+## Predictor: MPa
+### TTI
+No threshold detected
+
+### GTI
+```{r}
+o.mod<-lme(gti~mpa + site, random=~1|individual, data=hp.df.ceme)
+os.mod<-segmented.default(o.mod, ~mpa, npsi=list(mpa=1))
+#summarizing results (note the '.coef' argument)
+summary.segmented(os.mod)
+
+rsegplot.mpa(os.mod, hp.df.ceme, y.variable = 'gti', y.lab = "Glow to Ignition", tlp = mean_mpa_ceme, tlp.lower = lwr_mpa_ceme, tlp.upper = upr_mpa_ceme, max.x = max.mpa.ceme)
+```
+
+### FD
+No threshold detected
+
+### FH
+No threshold detected
+
+### Max. Temp.
+No threshold detected
+
+### GD
+No threshold detected
+
+### PFG
+No threshold detected
+
+### TTFG
+No threshold detected
+
+# ADFA
+## Predictor: LFM
+### TTI
+```{r}
+o.mod<-lme(tti~lfm + site, random=~1|individual, data=hp.df.adfa)
+os.mod<-segmented.default(o.mod, ~lfm, npsi=list(lfm=1))
+#summarizing results (note the '.coef' argument)
+summary.segmented(os.mod)
+
+rsegplot.lfm(os.mod, hp.df.adfa, y.variable = 'tti', y.lab = "Time to Ignition", tlp = mean_lfm_adfa, tlp.lower = lwr_lfm_adfa, tlp.upper = upr_lfm_adfa, max.x = max.lfm.adfa)
+```
+
+### GTI
+```{r}
+o.mod<-lme(gti~lfm + site, random=~1|individual, data=hp.df.adfa)
+os.mod<-segmented.default(o.mod, ~lfm, npsi=list(lfm=1))
+#summarizing results (note the '.coef' argument)
+summary.segmented(os.mod)
+
+rsegplot.lfm(os.mod, hp.df.adfa, y.variable = 'gti', y.lab = "Glow to Ignition", tlp = mean_lfm_adfa, tlp.lower = lwr_lfm_adfa, tlp.upper = upr_lfm_adfa, max.x = max.lfm.adfa)
+```
+
+### FD
+```{r}
+o.mod<-lme(fd~lfm + site, random=~1|individual, data=hp.df.adfa)
+os.mod<-segmented.default(o.mod, ~lfm, npsi=list(lfm=1))
+#summarizing results (note the '.coef' argument)
+summary.segmented(os.mod)
+
+rsegplot.lfm(os.mod, hp.df.adfa, y.variable = 'fd', y.lab = "Flame Duration", tlp = mean_lfm_adfa, tlp.lower = lwr_lfm_adfa, tlp.upper = upr_lfm_adfa, max.x = max.lfm.adfa)
+```
+
+### FH
+```{r}
+o.mod<-lme(fh~lfm + site, random=~1|individual, data=hp.df.adfa)
+os.mod<-segmented.default(o.mod, ~lfm, npsi=list(lfm=1))
+#summarizing results (note the '.coef' argument)
+summary.segmented(os.mod)
+
+rsegplot.lfm(os.mod, hp.df.adfa, y.variable = 'fh', y.lab = "Flame Height", tlp = mean_lfm_adfa, tlp.lower = lwr_lfm_adfa, tlp.upper = upr_lfm_adfa, max.x = max.lfm.adfa)
+```
+
+### Max. Temp.
+```{r}
+o.mod<-lme(temp_max~lfm + site, random=~1|individual, data=hp.df.adfa)
+os.mod<-segmented.default(o.mod, ~lfm, npsi=list(lfm=1))
+#summarizing results (note the '.coef' argument)
+summary.segmented(os.mod)
+
+rsegplot.lfm(os.mod, hp.df.adfa, y.variable = 'temp_max', y.lab = "Max. Temp.", tlp = mean_lfm_adfa, tlp.lower = lwr_lfm_adfa, tlp.upper = upr_lfm_adfa, max.x = max.lfm.adfa)
+```
+
+### GD
+```{r}
+o.mod<-lme(gd~lfm + site, random=~1|individual, data=hp.df.adfa)
+os.mod<-segmented.default(o.mod, ~lfm, npsi=list(lfm=1))
+#summarizing results (note the '.coef' argument)
+summary.segmented(os.mod)
+
+rsegplot.lfm(os.mod, hp.df.adfa, y.variable = 'gd', y.lab = "Glow Duration", tlp = mean_lfm_adfa, tlp.lower = lwr_lfm_adfa, tlp.upper = upr_lfm_adfa, max.x = max.lfm.adfa)
+```
+
+### PFG
+```{r}
+o.mod<-lme(pfg~lfm + site, random=~1|individual, data=hp.df.adfa)
+os.mod<-segmented.default(o.mod, ~lfm, npsi=list(lfm=1))
+#summarizing results (note the '.coef' argument)
+summary.segmented(os.mod)
+
+rsegplot.lfm(os.mod, hp.df.adfa, y.variable = 'pfg', y.lab = "Post-Flame Glow", tlp = mean_lfm_adfa, tlp.lower = lwr_lfm_adfa, tlp.upper = upr_lfm_adfa, max.x = max.lfm.adfa)
+```
+
+### TTFG
+```{r}
+o.mod<-lme(ttfg~lfm + site, random=~1|individual, data=hp.df.adfa)
+os.mod<-segmented.default(o.mod, ~lfm, npsi=list(lfm=1))
+#summarizing results (note the '.coef' argument)
+summary.segmented(os.mod)
+
+rsegplot.lfm(os.mod, hp.df.adfa, y.variable = 'ttfg', y.lab = "Time to First Glow", tlp = mean_lfm_adfa, tlp.lower = lwr_lfm_adfa, tlp.upper = upr_lfm_adfa, max.x = max.lfm.adfa)
+```
+
+## Predictor: MPa
+### TTI
+```{r}
+o.mod<-lme(tti~mpa + site, random=~1|individual, data=hp.df.adfa)
+os.mod<-segmented.default(o.mod, ~mpa, npsi=list(mpa=1))
+#summarizing results (note the '.coef' argument)
+summary.segmented(os.mod)
+
+rsegplot.mpa(os.mod, hp.df.adfa, y.variable = 'tti', y.lab = "Time to Ignition", tlp = mean_mpa_adfa, tlp.lower = lwr_mpa_adfa, tlp.upper = upr_mpa_adfa, max.x = max.mpa.adfa)
+```
+
+### GTI
+```{r}
+o.mod<-lme(gti~mpa + site, random=~1|individual, data=hp.df.adfa)
+os.mod<-segmented.default(o.mod, ~mpa, npsi=list(mpa=1))
+#summarizing results (note the '.coef' argument)
+summary.segmented(os.mod)
+
+rsegplot.mpa(os.mod, hp.df.adfa, y.variable = 'gti', y.lab = "Glow to Ignition", tlp = mean_mpa_adfa, tlp.lower = lwr_mpa_adfa, tlp.upper = upr_mpa_adfa, max.x = max.mpa.adfa)
+```
+
+### FD
+```{r}
+o.mod<-lme(fd~mpa + site, random=~1|individual, data=hp.df.adfa)
+os.mod<-segmented.default(o.mod, ~mpa, npsi=list(mpa=1))
+#summarizing results (note the '.coef' argument)
+summary.segmented(os.mod)
+
+rsegplot.mpa(os.mod, hp.df.adfa, y.variable = 'fd', y.lab = "Flame Duration", tlp = mean_mpa_adfa, tlp.lower = lwr_mpa_adfa, tlp.upper = upr_mpa_adfa, max.x = max.mpa.adfa)
+```
+
+### FH
+```{r}
+o.mod<-lme(fh~mpa + site, random=~1|individual, data=hp.df.adfa)
+os.mod<-segmented.default(o.mod, ~mpa, npsi=list(mpa=1))
+#summarizing results (note the '.coef' argument)
+summary.segmented(os.mod)
+
+rsegplot.mpa(os.mod, hp.df.adfa, y.variable = 'fh', y.lab = "Flame Height", tlp = mean_mpa_adfa, tlp.lower = lwr_mpa_adfa, tlp.upper = upr_mpa_adfa, max.x = max.mpa.adfa)
+```
+
+### Max. Temp.
+```{r}
+o.mod<-lme(temp_max~mpa + site, random=~1|individual, data=hp.df.adfa)
+os.mod<-segmented.default(o.mod, ~mpa, npsi=list(mpa=1))
+#summarizing results (note the '.coef' argument)
+summary.segmented(os.mod)
+
+rsegplot.mpa(os.mod, hp.df.adfa, y.variable = 'temp_max', y.lab = "Max. Temp.", tlp = mean_mpa_adfa, tlp.lower = lwr_mpa_adfa, tlp.upper = upr_mpa_adfa, max.x = max.mpa.adfa)
+```
+
+### GD
+```{r}
+o.mod<-lme(gd~mpa + site, random=~1|individual, data=hp.df.adfa)
+os.mod<-segmented.default(o.mod, ~mpa, npsi=list(mpa=1))
+#summarizing results (note the '.coef' argument)
+summary.segmented(os.mod)
+
+rsegplot.mpa(os.mod, hp.df.adfa, y.variable = 'gd', y.lab = "Glow Duration", tlp = mean_mpa_adfa, tlp.lower = lwr_mpa_adfa, tlp.upper = upr_mpa_adfa, max.x = max.mpa.adfa)
+```
+
+### PFG
+```{r}
+o.mod<-lme(pfg~mpa + site, random=~1|individual, data=hp.df.adfa)
+os.mod<-segmented.default(o.mod, ~mpa, npsi=list(mpa=1))
+#summarizing results (note the '.coef' argument)
+summary.segmented(os.mod)
+
+rsegplot.mpa(os.mod, hp.df.adfa, y.variable = 'pfg', y.lab = "Post Flame Glow", tlp = mean_mpa_adfa, tlp.lower = lwr_mpa_adfa, tlp.upper = upr_mpa_adfa, max.x = max.mpa.adfa)
+```
+
+### TTFG
+```{r}
+o.mod<-lme(ttfg~mpa + site, random=~1|individual, data=hp.df.adfa)
+os.mod<-segmented.default(o.mod, ~mpa, npsi=list(mpa=1))
+#summarizing results (note the '.coef' argument)
+summary.segmented(os.mod)
+
+rsegplot.mpa(os.mod, hp.df.adfa, y.variable = 'ttfg', y.lab = "Time to First Glow", tlp = mean_mpa_adfa, tlp.lower = lwr_mpa_adfa, tlp.upper = upr_mpa_adfa, max.x = max.mpa.adfa)
+```
+
+# --Summary--
+For CEME, there definitely was not enough points to detect a threshold relationship in the data, but for ADFA, my imprression is just that either we didn't have enough points, or that there is no 'real' threshold in the data. Based on this script as well as the EPI script, I *will not* be including this in any capacity in the final analysis.
