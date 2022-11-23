@@ -144,7 +144,7 @@ ggplot(data = world) +
         legend.title = element_text(face = 'bold', size = 14),
         legend.text = element_text (size = 11))
 
-ggsave(here('figures/lit.review.locations.all.ignitions.jpg'), height = 7, width = 12.64)
+ggsave(here('figures/Fig2a.lit.review.locations.all.ignitions.jpg'), height = 7, width = 12.64)
 ```
 
 ## Ignitions for Large Fires (Classes F and G)

@@ -25,7 +25,7 @@ col3 = hcl.colors(10, "YlOrRd", rev = TRUE) #color scale to use for consistency
 
 Reading in dataframe
 ```{r}
-paired_methods_long <- read.csv(here("processed-data", "compiled-datasets", "METHODS", "bothm_bothl_manual_ignitions_in.csv"))
+paired_methods_long <- read.csv(here("processed-data", "bothm_bothl_manual_ignitions_in.csv"))
 
 paired_methods_long <- paired_methods_long %>% 
    mutate(Species = case_when(
@@ -434,7 +434,7 @@ dw.plots2 <- gridExtra::grid.arrange(arrangeGrob(dw.plots, bottom = dw.grob))
 main.dw.plot <- cowplot::plot_grid(dw.plots2, spp.legend, ncol = 2, rel_widths = c(2.4,1))
 main.dw.plot
 
-ggsave("figures/dw.species.plot.jpg", plot = main.dw.plot, height = 8, width = 7)
+ggsave(here("figures/extra-figures/dw.species.plot.jpg"), plot = main.dw.plot, height = 8, width = 7)
 ```
 
 # Arranging LFM Plots
@@ -462,7 +462,7 @@ lfm.plots2 <- gridExtra::grid.arrange(arrangeGrob(lfm.plots, bottom = lfm.grob))
 main.lfm.plot <- cowplot::plot_grid(lfm.plots2, spp.legend, ncol = 2, rel_widths = c(2.4,1))
 main.lfm.plot
 
-ggsave("figures/lfm.species.plot.jpg", plot = main.lfm.plot, height = 8, width = 7)
+ggsave(here("figures/extra-figures/lfm.species.plot.jpg"), plot = main.lfm.plot, height = 8, width = 7)
 ```
 
 # ---------------------------------
@@ -1173,7 +1173,7 @@ dw.plotsR2 <- gridExtra::grid.arrange(arrangeGrob(dw.plotsR, bottom = dw.grob))
 main.dw.plotR <- cowplot::plot_grid(dw.plotsR2, spp.legend, ncol = 2, rel_widths = c(2.4,1))
 main.dw.plotR
 
-ggsave("figures/dw.species.plot.REMEF.jpg", plot = main.dw.plotR, height = 11, width = 7)
+ggsave(here("figures/dw.species.plot.REMEF.jpg"), plot = main.dw.plotR, height = 11, width = 7)
 ```
 
 # Arranging LFM Plots
@@ -1205,7 +1205,7 @@ lfm.plotsR2 <- gridExtra::grid.arrange(arrangeGrob(lfm.plotsR, bottom = lfm.grob
 main.lfm.plotR <- cowplot::plot_grid(lfm.plotsR2, spp.legend, ncol = 2, rel_widths = c(2.4,1))
 main.lfm.plotR
 
-ggsave("figures/lfm.species.plot.REMEF.jpg", plot = main.lfm.plotR, height = 11, width = 7)
+ggsave(here("figures/lfm.species.plot.REMEF.jpg"), plot = main.lfm.plotR, height = 11, width = 7)
 ```
 
 # Arranging MPa Plots
@@ -1237,7 +1237,7 @@ mpa.plotsR2 <- gridExtra::grid.arrange(arrangeGrob(mpa.plotsR, bottom = mpa.grob
 main.mpa.plotR <- cowplot::plot_grid(mpa.plotsR2, spp.legend, ncol = 2, rel_widths = c(2.4,1))
 main.mpa.plotR
 
-ggsave("figures/mpa.species.plot.REMEF.jpg", plot = main.mpa.plotR, height = 11, width = 7)
+ggsave(here("figures/mpa.species.plot.REMEF.jpg"), plot = main.mpa.plotR, height = 11, width = 7)
 ```
 
 # -----------------------------
@@ -1559,11 +1559,11 @@ ggplot() +
         axis.title = element_blank(),
         strip.text = element_text(face = 'bold', size = 14))
 
-ggsave('figures/species.differences.boxplot.jpg', height = 7, width = 11)
+ggsave(here('figures/3spp.species.differences.boxplot.jpg'), height = 7, width = 11)
 ```
 
 
-## Raw Metrics
+## FIGURE 4
 ### Setup
 Only comparing ADFA and ARPA
 ```{r}
@@ -1646,7 +1646,7 @@ hp.box
 
 ggarrange(epi.box, hp.box, ncol = 1, common.legend = TRUE, legend = 'right', heights = c(1,1))
 
-ggsave('figures/species.differences.boxplot.rawmetrics.jpg', height = 7, width = 11)
+ggsave(here('figures/Fig4.spp.diff.boxplot.jpg'), height = 7, width = 11)
 ```
 
 ## Statistical Test - T Test
@@ -2203,7 +2203,7 @@ plotsR <- cowplot::plot_grid(epi.plotsR, hp.plotsR, ncol = 2, rel_widths = c(1.1
 main.plotR <- cowplot::plot_grid(plotsR, spp.legend, ncol = 2, rel_widths = c(2.4,1))
 main.plotR
 
-ggsave("figures/top.models.species.plot.REMEF.jpg", plot = main.plotR, height = 10, width = 7)
+ggsave(here("figures/top.models.species.plot.REMEF.jpg"), plot = main.plotR, height = 10, width = 7)
 ```
 
 # ---------------------------------

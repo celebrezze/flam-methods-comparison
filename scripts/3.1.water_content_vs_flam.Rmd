@@ -28,8 +28,8 @@ library(grid)
 
 # Loading in datasets
 ```{r, include = FALSE}
-main_df <- read_csv(here("processed-data/compiled-datasets/METHODS/bothmethods_bothlocations_long.csv"))
-wide_df <- read_csv(here("processed-data/compiled-datasets/METHODS/bothmethods_bothlocations_wide.csv"))
+main_df <- read_csv(here("processed-data/bothmethods_bothlocations_long.csv"))
+wide_df <- read_csv(here("processed-data/bothmethods_bothlocations_wide.csv"))
 ```
 
 # Taking out NA values
@@ -85,7 +85,7 @@ both_df1 <- bind_rows(epi_df1, hp_df1)
 # ---------------------------------
 # Water Potential vs Flam. Metrics
 
-## Flame Height (not scaled and centered)
+## FH (not scaled and centered)
 ```{r}
 ggplot(data = main_df, aes(x = mpa, y = fh, color = model)) +
   geom_point() +
@@ -95,7 +95,7 @@ ggplot(data = main_df, aes(x = mpa, y = fh, color = model)) +
   scale_color_manual(values = c("grey70", "black"))
 ```
 
-## Flame Height (scaled and centered)
+## FH (scaled and centered)
 ```{r}
 fh1 <- ggplot(data = both_df1, aes(x = mpa, y = fh, color = model)) +
   geom_point() +
@@ -106,7 +106,7 @@ fh1 <- ggplot(data = both_df1, aes(x = mpa, y = fh, color = model)) +
 fh1
 ```
 
-## Flame Duration
+## FD
 ```{r}
 ggplot(data = main_df, aes(x = mpa, y = fd, color = model)) +
   geom_point() +
@@ -124,7 +124,7 @@ fd1 <- ggplot(data = both_df1, aes(x = mpa, y = fd, color = model)) +
 fd1
 ```
 
-## Time to Ignition
+## TTI
 ```{r}
 ggplot(data = main_df, aes(x = mpa, y = tti, color = model)) +
   geom_point() +
@@ -142,7 +142,7 @@ tti1 <- ggplot(data = both_df1, aes(x = mpa, y = tti, color = model)) +
 tti1
 ```
 
-## Glow Duration
+## GD
 ```{r}
 ggplot(data = main_df, aes(x = mpa, y = gd, color = model)) +
   geom_point() +
@@ -160,7 +160,7 @@ gd1 <- ggplot(data = both_df1, aes(x = mpa, y = gd, color = model)) +
 gd1
 ```
 
-## Time to First Glow
+## TTFG
 ```{r}
 ggplot(data = main_df, aes(x = mpa, y = ttfg, color = model)) +
   geom_point() +
@@ -178,7 +178,7 @@ ttfg1 <- ggplot(data = both_df1, aes(x = mpa, y = ttfg, color = model)) +
 ttfg1
 ```
 
-## Post-Flame Glow
+## PFG
 ```{r}
 ggplot(data = main_df, aes(x = mpa, y = pfg, color = model)) +
   geom_point() +
@@ -223,7 +223,7 @@ ggarrange(tti1, fd1, gd1, fh1, ttfg1, temp_max1, pfg1, ncol = 3, nrow = 3, commo
 
 # LFM vs Flam. Metrics
 
-## Flame Height
+## FH
 ```{r}
 ggplot(data = main_df, aes(y = fh, x = lfm_outliers_out, color = model)) +
   geom_point() +
@@ -241,7 +241,7 @@ fh2 <- ggplot(data = both_df1, aes(y = fh, x = lfm_outliers_out, color = model))
 fh2
 ```
 
-## Flame Duration
+## FD
 ```{r}
 ggplot(data = main_df, aes(y = fd, x = lfm_outliers_out, color = model)) +
   geom_point() +
@@ -259,7 +259,7 @@ fd2 <- ggplot(data = both_df1, aes(y = fd, x = lfm_outliers_out, color = model))
 fd2
 ```
 
-## Time to Ignition
+## TTI
 ```{r}
 ggplot(data = main_df, aes(y = tti, x = lfm_outliers_out, color = model)) +
   geom_point() +
@@ -277,7 +277,7 @@ tti2 <- ggplot(data = both_df1, aes(y = tti, x = lfm_outliers_out, color = model
 tti2
 ```
 
-## Glow Duration
+## GD
 ```{r}
 ggplot(data = main_df, aes(y = gd, x = lfm_outliers_out, color = model)) +
   geom_point() +
@@ -295,7 +295,7 @@ gd2 <- ggplot(data = both_df1, aes(y = gd, x = lfm_outliers_out, color = model))
 gd2
 ```
 
-## Time to First Glow
+## TTFG
 ```{r}
 ggplot(data = main_df, aes(y = ttfg, x = lfm_outliers_out, color = model)) +
   geom_point() +
@@ -313,7 +313,7 @@ ttfg2 <- ggplot(data = both_df1, aes(y = ttfg, x = lfm_outliers_out, color = mod
 ttfg2
 ```
 
-## Post-Flame Glow
+## PFG
 ```{r}
 ggplot(data = main_df, aes(y = pfg, x = lfm_outliers_out, color = model)) +
   geom_point() +
@@ -356,7 +356,7 @@ ggarrange(tti2, fd2, gd2, fh2, ttfg2, temp_max2, pfg2, ncol = 3, nrow = 3, commo
 #ggsave("lfm.vs.metrics.jpg", height = 8, width = 10)
 ```
 
-# Time to Ignition vs. Water Status (more in-depth)
+# TTI vs. Water Status (more in-depth)
 
 ```{r}
 ggplot(both_df1, aes(x = mpa, y = tti, color = spp)) +
@@ -451,7 +451,7 @@ pre.tlp.df %>%
   gt::tab_source_note(gt::md("**Pre-TLP Data**")) # To add caption
 ```
 
-## Water Potential vs. Time to Ignition (Not Scaled, Centered)
+## MPa vs TTI (Not Scaled, Centered)
 ```{r}
 ggplot(main_df, aes(x = mpa, y = tti, color = pre.tlp)) +
   geom_point() +
@@ -462,7 +462,7 @@ ggplot(main_df, aes(x = mpa, y = tti, color = pre.tlp)) +
   scale_color_manual(values = c("grey70", "black"))
 ```
 
-## Water Potential vs. Time to Ignition (scaled, centered)
+## MPa vs TTI (scaled, centered)
 ```{r}
 both_df1$pre.tlp <- main_df$pre.tlp
 
@@ -675,7 +675,7 @@ tab_model(l.tti.m, l.fh.m, l.fd.m, l.gd.m, l.temp.m, l.pfg.m, l.ttfg.m, l.gti.m,
 ```{r}
 ggarrange(tti.lfm, fh.lfm, fd.lfm, gd.lfm, temp.lfm, pfg.lfm, ttfg.lfm, gti.lfm, ncol = 3, nrow = 3, common.legend = TRUE)
 
-ggsave("figures/lfm.vs.metrics.MEM.jpg", height = 10, width = 10)
+ggsave(here("figures/extra-figures/lfm.vs.metrics.MEM.jpg"), height = 10, width = 10)
 ```
 
 ## Water Potential
@@ -859,7 +859,7 @@ tab_model(w.tti.m, w.fh.m, w.fd.m, w.gd.m, w.temp.m, w.pfg.m, w.ttfg.m, w.gti.m,
 ```{r}
 ggarrange(tti.mpa, fh.mpa, fd.mpa, gd.mpa, temp.mpa, pfg.mpa, ttfg.mpa, gti.mpa, ncol = 3, nrow = 3, common.legend = TRUE)
 
-ggsave("figures/mpa.vs.metrics.MEM.jpg", height = 10, width = 10)
+ggsave(here("figures/extra-figures/mpa.vs.metrics.MEM.jpg"), height = 10, width = 10)
 ```
 
 ## Dry Weight
@@ -1063,7 +1063,7 @@ tab_model(dw.tti.m, dw.fh.m, dw.fd.m, dw.gd.m, dw.temp.m, dw.pfg.m, dw.ttfg.m, d
 ```{r}
 ggarrange(tti.dw, fh.dw, fd.dw, gd.dw, temp.dw, pfg.dw, ttfg.dw, gti.dw, ncol = 3, nrow = 3, common.legend = TRUE)
 
-ggsave("figures/dw.vs.metrics.MEM.jpg", height = 10, width = 10)
+ggsave(here("figures/extra-figures/dw.vs.metrics.MEM.jpg"), height = 10, width = 10)
 ```
 
 
@@ -1352,7 +1352,7 @@ lfm.grob <- textGrob("Live Fuel Moisture (%)",
 plots <- ggarrange(tti.lfmR, fh.lfmR, fd.lfmR, gd.lfmR, temp_max.lfmR, pfg.lfmR, ttfg.lfmR, gti.lfmR, ncol = 3, nrow = 3, common.legend = TRUE)
 plots.grob <-ggarrange(arrangeGrob(plots, bottom = lfm.grob))
 
-ggsave("figures/lfm.vs.metrics.MEM.REMEF.jpg", height = 10, width = 10)
+ggsave(here("figures/FigS2.lfm.vs.metrics.MEM.REMEF.jpg"), height = 10, width = 10)
 ```
 
 ## Water Potential
@@ -1613,7 +1613,7 @@ mpa.grob <- textGrob("Water Potential (MPa)",
 plots <- ggarrange(tti.mpaR, fh.mpaR, fd.mpaR, gd.mpaR, temp.mpaR, pfg.mpaR, ttfg.mpaR, gti.mpaR, ncol = 3, nrow = 3, common.legend = TRUE)
 plots.grob <-ggarrange(arrangeGrob(plots, bottom = mpa.grob))
 
-ggsave("figures/mpa.vs.metrics.MEM.REMEF.jpg", height = 10, width = 10)
+ggsave(here("figures/mpa.vs.metrics.MEM.REMEF.jpg"), height = 10, width = 10)
 ```
 
 ## Dry Weight
@@ -1881,7 +1881,7 @@ dw.grob <- textGrob("Dry Weight (scaled)",
 plots <- ggarrange(tti.dwR, fh.dwR, fd.dwR, gd.dwR, temp.dwR, pfg.dwR, ttfg.dwR, gti.dwR, ncol = 3, nrow = 3, common.legend = TRUE)
 plots.grob <-ggarrange(arrangeGrob(plots, bottom = dw.grob))
 
-ggsave("figures/dw.vs.metrics.MEM.REMEF.jpg", height = 10, width = 10)
+ggsave(here("figures/dw.vs.metrics.MEM.REMEF.jpg"), height = 10, width = 10)
 ```
 
 ## Using Top Models Identified in MEM Selection Split by Model
@@ -2140,7 +2140,7 @@ gti.topR
 plots <- ggarrange(tti.topR, fh.topR, fd.topR, gd.topR, temp.topR, pfg.topR, ttfg.topR, gti.topR, ncol = 3, nrow = 3, common.legend = TRUE)
 plots
 
-ggsave("figures/hydration.vs.metrics.MEM.split.selection.remef.jpg", height = 10, width = 10)
+ggsave(here("figures/extra-figures/hydration.vs.metrics.MEM.split.selection.remef.jpg"), height = 10, width = 10)
 ```
 
 
@@ -2616,7 +2616,7 @@ dw.plots.grob <- ggarrange(arrangeGrob(dw.plots, bottom = dw.grob))
 plots <- ggarrange(mpa.plots.grob, dw.plots.grob, nrow = 2)
 plots
 
-ggsave("figures/hydration.vs.metrics.MEM.selection.r.jpg", height = 7, width = 13)
+ggsave(here("figures/Fig3.hydration.vs.metrics.MEM.selection.r.jpg"), height = 7, width = 13)
 ```
 
 # ----------------------------

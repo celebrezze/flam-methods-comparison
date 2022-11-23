@@ -1,5 +1,5 @@
 ---
-title: "Variance Decomposition (V2)"
+title: "Variance Decomposition: Trial 2"
 author: "Joe Celebrezze"
 date: "8/3/2022"
 output: html_document
@@ -31,7 +31,7 @@ col3 = hcl.colors(10, "YlOrRd", rev = TRUE) #color scale to use for consistency
 
 # Loading in datasets
 ```{r, include = FALSE}
-paired_methods_long <- read.csv(here("processed-data", "compiled-datasets", "METHODS", "bothm_bothl_manual_ignitions_in.csv"))
+paired_methods_long <- read.csv(here("processed-data", "bothm_bothl_manual_ignitions_in.csv"))
 ```
 
 # Data Wrangling
@@ -140,7 +140,7 @@ ggplot(vd_R2_df_wide, aes(x = R2m_hp, y = R2m_epi, color = flamm.metric)) +
         axis.text = element_text(size = 12),
         legend.text = element_text(size = 14))
 
-ggsave("figures/R2.comparison.scatterplot.jpg", height = 7, width = 10)
+ggsave(here("figures/extra-figures/R2.comparison.scatterplot.jpg"), height = 7, width = 10)
 ```
 
 ## Barplot
@@ -154,7 +154,7 @@ ggplot(vd_R2_df_long, aes(x = flam.metric, y = R2m, fill = Model)) +
         axis.text = element_text(face = 'bold', size = 13.5),
         legend.text = element_text(size = 18))
 
-ggsave("figures/vardecomp.barplot.jpg", height = 6, width = 17)
+ggsave(here("figures/extra-figures/vardecomp.barplot.jpg"), height = 6, width = 17)
 ```
 
 # ------------------------------
@@ -684,7 +684,7 @@ gg.mid <- ggplot_gtable(ggplot_build(g.mid))
 
 plots <- grid.arrange(gg1, gg.mid, gg2, pred.legend, ncol=4,widths=c(4,3,4,2.5))
 
-ggsave('figures/MEM.visualization.vardecomp.jpg', plot = plots, width = 10, height = 4)
+ggsave(here('figures/extra-figures/MEM.visualization.vardecomp.jpg'), plot = plots, width = 10, height = 4)
 ```
 
 

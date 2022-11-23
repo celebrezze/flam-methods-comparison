@@ -16,13 +16,14 @@ library(lme4) # mixed effects models
 library(nlme) # mixed effects models -- more compatible with 'segmented'
 library(segmented)
 here = here::here
+alpha = scales::alpha
 select = dplyr::select
 col3 = hcl.colors(10, "YlOrRd", rev = TRUE) #color scale to use for consistency 
 ```
 
 Dataframe:
 ```{r}
-paired_methods_long <- read.csv(here("processed-data", "compiled-datasets", "METHODS", "bothm_bothl_manual_ignitions_in.csv"))
+paired_methods_long <- read.csv(here("processed-data", "bothm_bothl_manual_ignitions_in.csv"))
 
 paired_methods_long.ig <- paired_methods_long %>% 
   filter(ignition == 1)
@@ -60,7 +61,7 @@ max.mpa.ceme <- max(hp.df.ceme$mpa)
 
 # PV Curve Data
 ```{r}
-pv_summary_df_timing <- read_csv(here("processed-data", "compiled-datasets", "pv_summary_df_timing.csv"))
+pv_summary_df_timing <- read_csv(here("processed-data", "pv_summary_df_timing.csv"))
 
 # ADFA
 ## LFM

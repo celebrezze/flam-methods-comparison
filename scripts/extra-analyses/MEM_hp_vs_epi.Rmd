@@ -5,6 +5,8 @@ date: "4/8/2022"
 output: html_document
 ---
 
+This was the first mixed effects model selection for this paper. I didn't end up liking the way I did it and totally redid it. I can't really say I learned much from this selection other than what I didn't like about the selection process itself which informed the redone selection protocol.
+
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
@@ -22,7 +24,7 @@ library(MuMIn)
 
 # Loading in datasets
 ```{r, include = FALSE}
-main_df <- read_csv(here("processed-data/compiled-datasets/METHODS/bothmethods_bothlocations_long.csv"))
+main_df <- read_csv(here("processed-data/bothmethods_bothlocations_long.csv"))
 ```
 
 # Data Wrangling

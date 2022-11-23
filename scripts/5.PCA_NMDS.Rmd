@@ -29,27 +29,11 @@ col3 = hcl.colors(10, "YlOrRd", rev = TRUE) #color scale to use for consistency
 
 # Loading in dataset
 ```{r, include = FALSE}
-main_df <- read_csv(here("processed-data/compiled-datasets/METHODS/bothmethods_bothlocations_long.csv"))
-wide_df <- read_csv(here("processed-data/compiled-datasets/METHODS/bothmethods_bothlocations_wide.csv"))
+main_df <- read_csv(here("processed-data/bothmethods_bothlocations_long.csv"))
+wide_df <- read_csv(here("processed-data/bothmethods_bothlocations_wide.csv"))
 ```
 
-# Select columns of interest from main_df to run PCA on
-```{r}
-pca_df <- main_df %>% 
-  select(spp, model, mpa, fh, ttfg, gti, tti, fd, gd, pfg, dw_flam_sample, lfm_outliers_out, start_temp, location, temp_max, ignition_temp, sample_wt)
-
-df_noNA <- na.omit(pca_df)
-```
-
-# Look at distribution using pairs_panels()
-```{r}
-pca_df %>% 
-  select(-spp,-model,-location) %>% 
-  #Excluding columns that we wouldn't expect to have a normal distribution
-  pairs.panels()
-```
-
-# PCA Visualization Function
+# Visualization Function
 - Using this for quick exploratory PCA visualization, but will use more lines of code and use ggplot2 to do final versions of the visualizations
 ```{r}
 PCAvis <- function(pca_obj, group_by, colors = c("#FED976", "#E31A1C"), pc1_name = "PC1", pc2_name = "PC2", group_name = "Model"){
@@ -66,10 +50,32 @@ PCAvis <- function(pca_obj, group_by, colors = c("#FED976", "#E31A1C"), pc1_name
 }
 ```
 
-# PCA 1: most of the continuous, numberical variables
+# ------------------------------------
+# Exploratory PCA
+The following scripts are the first go-through of PCAs to try and understand how the flammability metrics related to each other and how the two methods compared in their breakdown of the flammability metrics
+
+Select columns of interest from main_df to run PCA on:
+```{r}
+pca_df <- main_df %>% 
+  select(spp, model, mpa, fh, ttfg, gti, tti, fd, gd, pfg, dw_flam_sample, lfm_outliers_out, start_temp, location, temp_max, ignition_temp, sample_wt)
+
+df_noNA <- na.omit(pca_df)
+```
+
+Look at distribution using pairs_panels():
+```{r}
+pca_df %>% 
+  select(-spp,-model,-location) %>% 
+  #Excluding columns that we wouldn't expect to have a normal distribution
+  pairs.panels()
+```
+
+## PCA 1
+Most of the continuous, numberical variables
+
 Running a PCA without any significant changes to the dataset (only centering and scaling); including all relevant continuous, numerical variables (total of 16)
 
-## PCA 1 - Getting Eigenvalues
+### Getting Eigenvalues
 ```{r}
 #First, must exclude columns that are not numerical
 str(pca_df) #spp, model, location should be excluded
@@ -83,7 +89,7 @@ print(pca_first_try)
 summary(pca_first_try) #First two principal components only describe 40.9% of variance
 ```
 
-## PCA 1 - Visualization and Table of Eigenvalues
+### Visualization and Table of Eigenvalues
 ```{r}
 plot(pca_first_try, type = "lines") #Showing relative amounts of variance explained by first ten principal components; first FIVE principal components each explain a lot of variance
 
@@ -92,7 +98,7 @@ PCAvis(pca_first_try, group_by = df_noNA$model)
 tab_pca(pca_first_try)
 ```
 
-# Focusing on the Flam. Metrics - PCA 2
+## PCA 2
 
 For this PCA, will focus on the primary flammability metrics:
   Max temp, ignition temp, flame ht, time to first glow, glow to ignition, time to igniton, flame duration, glow duration, post-flame glow
@@ -102,7 +108,7 @@ This means that the following variables will be excluded:
   Sample wt, start temp
   Flam. metrics -- proportion ignited (does not weight heavily on first two principal components, so wanted to see how things looked without it)
   
-## PCA 2 - Getting Eigenvalues
+### Getting Eigenvalues
 ```{r}
 flam_metrics_df <- df_noNA %>% 
   select(temp_max, fh, ttfg, gti, tti, fd, gd, pfg, spp, model)
@@ -116,7 +122,7 @@ print(pca_flam)
 summary(pca_flam) #First two principal components describe 52% of variance
 ```
 
-## PCA 2 - Visualization and Table of Eigenvalues
+### Visualization and Table of Eigenvalues
 ```{r}
 plot(pca_flam, type = "lines")
 
@@ -125,7 +131,9 @@ PCAvis(pca_flam, df_noNA$model)
 tab_pca(pca_flam)
 ```
 
-## PCA2 - Side-by-side Comparison of PCA for Flam. Metrics for EPI and HP
+## PCA 3
+
+Side-by-side Comparison of PCA for Flam. Metrics for EPI and HP
 
 Note: this was done in trial 1 but with normalized flam. metrics
 
@@ -163,7 +171,9 @@ hp.plot1 <- PCAvis(pca_flam_hp, flam_metrics_df_hp$spp, colors = c("#FFFF71", "#
 ggarrange(epi.plot1, hp.plot1, ncol = 2)
 ```
 
-## PCA 2 - Separating by Species
+## PCA 4
+
+Separating by Species
 ```{r}
 wide_df <- wide_df %>% 
   filter(ignition_hp == 1)
@@ -208,7 +218,6 @@ ggbiplot(pca2_spp,
 ```
 
 # ---------------------------------
-
 # MAIN PLOTS
 ## Flam. Metrics w/ Both Models
 Plot setup:
@@ -358,7 +367,7 @@ ggplot(PCAvalues, aes(x = PC1, y = PC2)) +
   scale_color_manual(values = c("#FC5130","#F7B801","#0B032D","#5F758E")) +
   coord_equal()
 
-ggsave('figures/PCAflammetrics.jpg', height = 8, width = 12)
+ggsave(here('figures/FigS3.PCAflammetrics.jpg'), height = 8, width = 12)
 ```
 
 ## Side-by-side PCAs
@@ -704,12 +713,288 @@ hpPCA
 PCA.epi.and.hp <- cowplot::plot_grid(epiPCA, hpPCA, ncol = 2, rel_widths = c(1,1))
 PCA.epi.and.hp
 
-ggsave('figures/pca.sidebysideV2.jpg', plot = PCA.epi.and.hp, height = 7.5, width = 16.5)
+ggsave(here('figures/Fig5.pca.sidebyside.jpg'), plot = PCA.epi.and.hp, height = 7.5, width = 16.5)
 ```
 
-# ----------------------------------
-## Side-by-side PCA 2
-Coercing HP points onto PCA w/ EPI loadings and vice versa
+# MAIN TABLE
+
+## Both Methods
+```{r}
+tab_pca(pcobj.both, 
+        rotation = c("varimax"), 
+        digits = 2,
+        show.var = TRUE,
+  string.pov = "Proportion of Variance",
+  string.cpov = "Cumulative Proportion")
+```
+
+### Kable
+First, making dataframe with eigenvalues for principal components, proportion of variance explained and cumulative proportion:
+```{r}
+eig1.both <- c(0.69, 0.88, 0.12, 0.72, -0.09, 0.14, -0.16, 0.87, 37.18, 37.18)
+eig2.both <- c(0.20, 0.16, 0.95, 0.12, -0.03, 0.92, 0.20, -0.02, 23.37, 60.55)
+eig3.both <- c(-0.27, -0.09, 0.00, 0.60, 0.10, 0.30, 0.90, 0.04, 13.40, 73.96)
+flam.metrics <- c("Flame Duration", "Flame Height", "Post-flame Glow", "Time to Ignition", "Max. Temp.", "Glow Duration", "Glow to Ignition", "Time to First Glow", "Proportion of Variance (%)", "Cumulative Proportion (%)")
+pca.table.df <- data.frame(flam.metrics, eig1.both, eig2.both, eig3.both)
+```
+there was probably a more elegant way to do that, but since there aren't too many numbers to enter in by hand, I thought it would be quicker to just go ahead and do so.
+
+Now, using kableExtra package to visualize how each component is weighted by each flam. metric
+```{r}
+pca.table.df %>%
+  mutate(flam.metrics = cell_spec(flam.metrics, 'html', bold = ifelse(flam.metrics == c("Proportion of Variance (%)", "Cumulative Proportion (%)"), T, F), color = 'black')) %>% 
+  mutate(eig1.both = cell_spec(eig1.both, 'html', bold = ifelse(abs(eig1.both) > 0.5, T, F), color = 'black')) %>% 
+  mutate(eig2.both = cell_spec(eig2.both, 'html', bold = ifelse(abs(eig2.both) > 0.5, T, F), color = 'black')) %>% 
+  mutate(eig3.both = cell_spec(eig3.both, 'html', bold = ifelse(abs(eig3.both) > 0.5, T, F), color = 'black')) %>% 
+  kable(format = 'html', escape = F, col.names = c(' ', 'Component 1', 'Component 2', 'Component 3')) %>% 
+  kable_styling(bootstrap_options = c('hover', 'bordered', 'condensed'), fixed_thead = T, font_size = 30) %>% 
+  row_spec(c(9:10), background = '#D3D3D3') %>% 
+  save_kable(here('figures/pca_table_BOTH.html'))
+```
+
+## Side by Side
+### EPI
+```{r}
+tab_pca(pcobj.epi, 
+        rotation = c("varimax"), 
+        digits = 2,
+        show.var = TRUE,
+  string.pov = "Proportion of Variance",
+  string.cpov = "Cumulative Proportion")
+```
+
+### HP
+```{r}
+tab_pca(pcobj.hp, 
+        rotation = c("varimax"), 
+        digits = 10,
+        show.var = TRUE,
+  string.pov = "Proportion of Variance",
+  string.cpov = "Cumulative Proportion")
+```
+
+### Kable
+First, making dataframe with eigenvalues for principal components, proportion of variance explained and cumulative proportion:
+```{r}
+eig1.epi <- c(-0.44, 0.03, -0.90, 0.00, -0.08, -0.97, -0.51, 0.01, 33.19, 33.19)
+eig2.epi <- c(-0.62, -0.68, -0.08, 0.59, -0.72, 0.06, 0.70, -0.06, 25.09, 58.28)
+eig3.epi <- c(0.14, -0.26, -0.10, 0.00, 0.15, 0.00, 0.11, -0.96, 16.04, 74.31)
+###
+eig1.hp <- c(0.02, 0.57, 0.09, -0.41, -0.64, -0.34, -0.83, 0.00, 30.72, 30.72)
+eig2.hp <- c(-0.76, -0.15, 0.07, 0.81, -0.06, -0.02, 0.21, 0.62, 21.54, 52.26)
+eig3.hp <- c(0.05, -0.31, -0.94, -0.08, -0.12, -0.89, -0.24, 0.00, 17.94, 70.19)
+pca.table.df2 <- data.frame(flam.metrics, eig1.epi, eig2.epi, eig3.epi, eig1.hp, eig2.hp, eig3.hp)
+```
+there was probably a more elegant way to do that, but since there aren't too many numbers to enter in by hand, I thought it would be quicker to just go ahead and do so.
+
+Now, using kableExtra package to visualize how each component is weighted by each flam. metric
+```{r}
+pca.table.df2 %>%
+  mutate(flam.metrics = cell_spec(flam.metrics, 'html', bold = ifelse(flam.metrics == c("Proportion of Variance (%)", "Cumulative Proportion (%)"), T, F), color = 'black')) %>% 
+  mutate(eig1.epi = cell_spec(eig1.epi, 'html', bold = ifelse(abs(eig1.epi) > 0.5, T, F), color = 'black')) %>%
+  mutate(eig2.epi = cell_spec(eig2.epi, 'html', bold = ifelse(abs(eig2.epi) > 0.5, T, F), color = 'black')) %>% 
+  mutate(eig3.epi = cell_spec(eig3.epi, 'html', bold = ifelse(abs(eig3.epi) > 0.5, T, F), color = 'black')) %>% 
+  mutate(eig1.hp = cell_spec(eig1.hp, 'html', bold = ifelse(abs(eig1.hp) > 0.5, T, F), color = 'black')) %>% 
+  mutate(eig2.hp = cell_spec(eig2.hp, 'html', bold = ifelse(abs(eig2.hp) > 0.5, T, F), color = 'black')) %>% 
+  mutate(eig3.hp = cell_spec(eig3.hp, 'html', bold = ifelse(abs(eig3.hp) > 0.5, T, F), color = 'black')) %>% 
+  kable(format = 'html', escape = F, col.names = c(' ', 'Component 1', 'Component 2', 'Component 3', 'Component 1', 'Component 2', 'Component 3')) %>% 
+  kable_styling(bootstrap_options = c('hover', 'bordered', 'condensed'), fixed_thead = T, font_size = 30) %>% 
+  row_spec(c(9:10), background = '#D3D3D3') %>%
+  add_header_above(c(" ", "Epiradiator" = 3, "Hot Plate" = 3)) %>% 
+  save_kable(here('figures/pca_table_SIDEbySIDE.html'))
+```
+
+```{r}
+mat <- data.frame(a = c("column header","column header"),b = c("a","b"),c = c("x","y"))
+kable(mat, align = "c",col.names = c("","","")) %>%
+kable_styling(bootstrap_options = "striped", full_width = F, position = "left",font_size = 12)
+```
+
+# *-*-*-*-*-*-*-*-*-*-*-*-*-*
+# Extra Analysis 1
+## Flam. Metrics w/ Both Models
+Scaled/centered prior to PCA
+```{r}
+epi_df <- flam_metrics_df %>% 
+  filter(model == "EPI")
+hp_df <- flam_metrics_df %>% 
+  filter(model == "HP")
+
+
+epi_df1 <- epi_df %>% 
+  mutate(fh = fh - mean(fh), fd = fd - mean(fd), ttfg = ttfg - mean(ttfg), gti = gti -
+          mean(gti), tti = tti - mean(tti), gd = gd - mean(gd), pfg = pfg - mean(pfg),
+          temp_max = temp_max - mean(temp_max)) %>%  #centering
+  mutate(fh = scale(fh), fd = scale(fd), ttfg = scale(ttfg), gti = scale(gti), tti =
+           scale(tti), gd = scale(gd), pfg = scale(pfg), temp_max = scale(temp_max)) #scaled
+
+hp_df1 <- hp_df %>% 
+  mutate(fh = fh - mean(fh), fd = fd - mean(fd), ttfg = ttfg - mean(ttfg), gti = gti -
+          mean(gti), tti = tti - mean(tti), gd = gd - mean(gd), pfg = pfg - mean(pfg),
+          temp_max = temp_max - mean(temp_max)) %>%  #centering
+  mutate(fh = scale(fh), fd = scale(fd), ttfg = scale(ttfg), gti = scale(gti), tti =
+           scale(tti), gd = scale(gd), pfg = scale(pfg), temp_max = scale(temp_max)) #scaled
+```
+
+Stitching epi_df1 and hp_df1 together:
+```{r}
+flam_metrics_df1 <- bind_rows(epi_df1, hp_df1)
+```
+
+Plot setup:
+```{r warning=FALSE}
+figure_pca_quant <- (flam_metrics_df1[, c("fh", "ttfg", "tti", "fd", "gd", "gti", "pfg",
+         "temp_max")]) %>%
+  transmute("                Flame Duration" = fd,
+          "\nFlame Height" = fh,
+          "\n                  Post-flame Glow" = pfg,
+          "Time to Ignition" = tti,
+          "Max. Temp" = temp_max,
+          "Glow Duration" = gd,
+          "Glow to Ignition          " = gti,
+          "Time to First Glow" = ttfg
+          )
+
+figure_pca_cat <- (flam_metrics_df[c("model", "spp")]) %>% 
+  mutate(Species = case_when(
+    spp == "ADFA" ~ "A. fasciculatum", 
+    spp == "CEME" ~ "C. megacarpus",
+    spp == "CECO" ~ "C. cordulatus",
+    spp == "ARPA" ~ "A. patula"
+  )) %>% 
+  mutate(Model = case_when(
+    model == "EPI" ~ "Epiradiator",
+    model == "HP" ~ "Hot Plate"
+  ))
+
+#Setting up plotting data: 
+
+#decisions for plotting:
+choices = 1:2 
+scale = 1
+obs.scale = 1 - scale
+var.scale = scale
+ellipse.prob = 0.68
+labels.size = 3
+circle.prob = 0.69
+choices = 1:2
+
+#Run PCA
+pcobj.both <- figure_pca_quant %>% 
+  prcomp(center = TRUE, scale = TRUE) #Running PCA
+
+# extract PCA components: 
+nobs.factor <- sqrt(nrow(pcobj.both$x) - 1)
+    d <- pcobj.both$sdev
+    u <- sweep(pcobj.both$x, 2, 1/(d * nobs.factor), FUN = "*")
+    v <- pcobj.both$rotation
+
+  choices <- pmin(choices, ncol(u))
+  df.u <- as.data.frame(sweep(u[, choices], 2, d[choices]^obs.scale, 
+                              FUN = "*"))
+  v <- sweep(v, 2, d^var.scale, FUN = "*")
+  df.v <- as.data.frame(v[, choices])
+  names(df.u) <- c("PC1", "PC2")
+  names(df.v) <- names(df.u)
+  df.u <- df.u * nobs.factor
+
+  r <- sqrt(qchisq(circle.prob, df = 2)) * prod(colMeans(df.u^2))^(1/4)
+  
+v.scale <- rowSums(v^2)
+df.v <- r * df.v/sqrt(max(v.scale)) 
+df.v <- df.v %>% mutate(PC1, PC2)
+df.v$Variables <- rownames(v) 
+PCAloadings = df.v
+#df.v = dataset with loadings 
+
+  #dataset with scores and categorical variables for plotting points: 
+PCAvalues <- cbind(df.u, figure_pca_cat)
+
+#dataset with information for plotting circle: 
+theta <- c(seq(-pi, pi, length = 50), seq(pi, -pi, length = 50))
+
+circle <- data.frame(PC1 = r * cos(theta), PC2 = r * sin(theta)) 
+
+#Group by flam. metric: 
+PCA_combustability <- df.v %>% 
+  filter(Variables %in% c("\nFlame Height", "Max. Temp","                Flame Duration"))
+         
+PCA_ignitability <- df.v %>% 
+  filter(Variables %in% c("Time to Ignition", "Glow to Ignition          "))
+
+PCA_consumability <- df.v %>% 
+  filter(Variables %in% c("Glow Duration", "\n                  Post-flame Glow", "Time to First Glow"))
+
+# Calculate the angles and the label offset
+df.v$Angle = ((180/pi) * atan(df.v$PC2/df.v$PC1))
+
+df.v$Offset <- ((-2 * sign(df.v$PC1))/2)
+
+#labels: 
+u.axis.labs <- paste("PC", choices, sep = "")
+u.axis.labs <- paste(u.axis.labs, sprintf("(%0.1f%% explained var.)", 
+                                            100 * pcobj.both$sdev[choices]^2/sum(pcobj.both$sdev^2)))
+```
+
+Plot:
+```{r}
+ggplot(PCAvalues, aes(x = PC1, y = PC2)) +
+  ylim(-4, 3) +
+  labs(shape = "Method") +
+  geom_point(size = 2, alpha = .45, aes(color = Species,
+                                           shape = Model)) +
+  stat_ellipse(aes(x = PC1, y = PC2, fill = Model), colour = '#829191', alpha = 0.6, cex = 0.8) +
+  guides(color = guide_legend(order = 1, override.aes = list(size = 2.75)), shape = guide_legend(order = 2, override.aes = list(size = 2.75))) +
+  geom_segment(data = PCA_combustability, aes(x = 0, y = 0, 
+                                              xend = PC1, yend = PC2),
+     arrow = arrow(length = unit(1/2, "picas")), 
+      size = .9, alpha = 0.9) +
+  geom_segment(data = PCA_consumability, aes(x = 0, y = 0,
+                                             xend = PC1, yend = PC2),
+     arrow = arrow(length = unit(1/2, "picas")), 
+     size = .9, alpha = 0.9) +
+  geom_segment(data = PCA_ignitability, aes(x = 0, y = 0, 
+                                             xend = PC1, yend = PC2),
+     arrow = arrow(length = unit(1/2, "picas")), 
+     size = .9, alpha = 0.9) +
+  annotate("text", 
+           x = (PCA_combustability$PC1 * 1.8), 
+          y = (PCA_combustability$PC2 * 1.1),
+          label = PCA_combustability$Variables, size = 4.6,
+          fontface = 'bold') +
+  annotate("text",
+           x = (PCA_ignitability$PC1 * 1.4), 
+           y = (PCA_ignitability$PC2 * 1.125), 
+           label = PCA_ignitability$Variables, size = 4.6,
+           fontface = 'bold') +
+  annotate("text",
+           x = (PCA_consumability$PC1 * 1.3),
+           y = (PCA_consumability$PC2 * 1.125), 
+           label = PCA_consumability$Variables, size = 4.6,
+           fontface = 'bold') + 
+  annotate("text", x = -1.2, y = 1.4, label = "Epiradiator", colour = '#829191', fontface = 'bold', size = 6.5) +
+  annotate("text", x = 1.5, y = -2.7, label = "Hot Plate", colour = '#829191', fontface = 'bold', size = 6.5) +
+  theme(panel.background = element_rect(fill='white', colour='black'), # Make background white and border black
+          panel.grid.major = element_blank(),  # Hide major gridlines
+          panel.grid.minor = element_blank(),
+          legend.key = element_rect(fill = "white"),
+          legend.position = 'right',
+          legend.title = element_text(face = 'bold', size = 20),
+          legend.text = element_text(face = 'italic', size = 18),
+          axis.title = element_text(face = 'bold', size = 20),
+          aspect.ratio = 1/1) +
+  xlab(u.axis.labs[1]) + 
+  ylab(u.axis.labs[2]) +
+  scale_color_manual(values = c("#FC5130","#F7B801","#0B032D","#5F758E")) +
+  coord_equal()
+
+ggsave(here('figures/FigS4.PCAflammetrics.scaled.centered.jpg'), height = 8, width = 12)
+```
+
+# -----------------------------
+# Extra Analysis 2
+
+## Coercing HP points onto PCA w/ EPI loadings and vice versa
 
 ### Step 1: Calculating PC1 using loadings, data
 
@@ -1148,289 +1433,14 @@ ggplot(PCAdf.IP, aes(x = PC1_epi.loadings, y = PC1_hp.loadings, color = model)) 
   geom_smooth(method = 'lm', se = F)
 ```
 
-
-# --------------------------------
-# Extra Plot
-## Flam. Metrics w/ Both Models
-Scaled/centered prior to PCA
-```{r}
-epi_df <- flam_metrics_df %>% 
-  filter(model == "EPI")
-hp_df <- flam_metrics_df %>% 
-  filter(model == "HP")
-
-
-epi_df1 <- epi_df %>% 
-  mutate(fh = fh - mean(fh), fd = fd - mean(fd), ttfg = ttfg - mean(ttfg), gti = gti -
-          mean(gti), tti = tti - mean(tti), gd = gd - mean(gd), pfg = pfg - mean(pfg),
-          temp_max = temp_max - mean(temp_max)) %>%  #centering
-  mutate(fh = scale(fh), fd = scale(fd), ttfg = scale(ttfg), gti = scale(gti), tti =
-           scale(tti), gd = scale(gd), pfg = scale(pfg), temp_max = scale(temp_max)) #scaled
-
-hp_df1 <- hp_df %>% 
-  mutate(fh = fh - mean(fh), fd = fd - mean(fd), ttfg = ttfg - mean(ttfg), gti = gti -
-          mean(gti), tti = tti - mean(tti), gd = gd - mean(gd), pfg = pfg - mean(pfg),
-          temp_max = temp_max - mean(temp_max)) %>%  #centering
-  mutate(fh = scale(fh), fd = scale(fd), ttfg = scale(ttfg), gti = scale(gti), tti =
-           scale(tti), gd = scale(gd), pfg = scale(pfg), temp_max = scale(temp_max)) #scaled
-```
-
-Stitching epi_df1 and hp_df1 together:
-```{r}
-flam_metrics_df1 <- bind_rows(epi_df1, hp_df1)
-```
-
-Plot setup:
-```{r warning=FALSE}
-figure_pca_quant <- (flam_metrics_df1[, c("fh", "ttfg", "tti", "fd", "gd", "gti", "pfg",
-         "temp_max")]) %>%
-  transmute("                Flame Duration" = fd,
-          "\nFlame Height" = fh,
-          "\n                  Post-flame Glow" = pfg,
-          "Time to Ignition" = tti,
-          "Max. Temp" = temp_max,
-          "Glow Duration" = gd,
-          "Glow to Ignition          " = gti,
-          "Time to First Glow" = ttfg
-          )
-
-figure_pca_cat <- (flam_metrics_df[c("model", "spp")]) %>% 
-  mutate(Species = case_when(
-    spp == "ADFA" ~ "A. fasciculatum", 
-    spp == "CEME" ~ "C. megacarpus",
-    spp == "CECO" ~ "C. cordulatus",
-    spp == "ARPA" ~ "A. patula"
-  )) %>% 
-  mutate(Model = case_when(
-    model == "EPI" ~ "Epiradiator",
-    model == "HP" ~ "Hot Plate"
-  ))
-
-#Setting up plotting data: 
-
-#decisions for plotting:
-choices = 1:2 
-scale = 1
-obs.scale = 1 - scale
-var.scale = scale
-ellipse.prob = 0.68
-labels.size = 3
-circle.prob = 0.69
-choices = 1:2
-
-#Run PCA
-pcobj.both <- figure_pca_quant %>% 
-  prcomp(center = TRUE, scale = TRUE) #Running PCA
-
-# extract PCA components: 
-nobs.factor <- sqrt(nrow(pcobj.both$x) - 1)
-    d <- pcobj.both$sdev
-    u <- sweep(pcobj.both$x, 2, 1/(d * nobs.factor), FUN = "*")
-    v <- pcobj.both$rotation
-
-  choices <- pmin(choices, ncol(u))
-  df.u <- as.data.frame(sweep(u[, choices], 2, d[choices]^obs.scale, 
-                              FUN = "*"))
-  v <- sweep(v, 2, d^var.scale, FUN = "*")
-  df.v <- as.data.frame(v[, choices])
-  names(df.u) <- c("PC1", "PC2")
-  names(df.v) <- names(df.u)
-  df.u <- df.u * nobs.factor
-
-  r <- sqrt(qchisq(circle.prob, df = 2)) * prod(colMeans(df.u^2))^(1/4)
-  
-v.scale <- rowSums(v^2)
-df.v <- r * df.v/sqrt(max(v.scale)) 
-df.v <- df.v %>% mutate(PC1, PC2)
-df.v$Variables <- rownames(v) 
-PCAloadings = df.v
-#df.v = dataset with loadings 
-
-  #dataset with scores and categorical variables for plotting points: 
-PCAvalues <- cbind(df.u, figure_pca_cat)
-
-#dataset with information for plotting circle: 
-theta <- c(seq(-pi, pi, length = 50), seq(pi, -pi, length = 50))
-
-circle <- data.frame(PC1 = r * cos(theta), PC2 = r * sin(theta)) 
-
-#Group by flam. metric: 
-PCA_combustability <- df.v %>% 
-  filter(Variables %in% c("\nFlame Height", "Max. Temp","                Flame Duration"))
-         
-PCA_ignitability <- df.v %>% 
-  filter(Variables %in% c("Time to Ignition", "Glow to Ignition          "))
-
-PCA_consumability <- df.v %>% 
-  filter(Variables %in% c("Glow Duration", "\n                  Post-flame Glow", "Time to First Glow"))
-
-# Calculate the angles and the label offset
-df.v$Angle = ((180/pi) * atan(df.v$PC2/df.v$PC1))
-
-df.v$Offset <- ((-2 * sign(df.v$PC1))/2)
-
-#labels: 
-u.axis.labs <- paste("PC", choices, sep = "")
-u.axis.labs <- paste(u.axis.labs, sprintf("(%0.1f%% explained var.)", 
-                                            100 * pcobj.both$sdev[choices]^2/sum(pcobj.both$sdev^2)))
-```
-
-Plot:
-```{r}
-ggplot(PCAvalues, aes(x = PC1, y = PC2)) +
-  ylim(-4, 3) +
-  labs(shape = "Method") +
-  geom_point(size = 2, alpha = .45, aes(color = Species,
-                                           shape = Model)) +
-  stat_ellipse(aes(x = PC1, y = PC2, fill = Model), colour = '#829191', alpha = 0.6, cex = 0.8) +
-  guides(color = guide_legend(order = 1, override.aes = list(size = 2.75)), shape = guide_legend(order = 2, override.aes = list(size = 2.75))) +
-  geom_segment(data = PCA_combustability, aes(x = 0, y = 0, 
-                                              xend = PC1, yend = PC2),
-     arrow = arrow(length = unit(1/2, "picas")), 
-      size = .9, alpha = 0.9) +
-  geom_segment(data = PCA_consumability, aes(x = 0, y = 0,
-                                             xend = PC1, yend = PC2),
-     arrow = arrow(length = unit(1/2, "picas")), 
-     size = .9, alpha = 0.9) +
-  geom_segment(data = PCA_ignitability, aes(x = 0, y = 0, 
-                                             xend = PC1, yend = PC2),
-     arrow = arrow(length = unit(1/2, "picas")), 
-     size = .9, alpha = 0.9) +
-  annotate("text", 
-           x = (PCA_combustability$PC1 * 1.8), 
-          y = (PCA_combustability$PC2 * 1.1),
-          label = PCA_combustability$Variables, size = 4.6,
-          fontface = 'bold') +
-  annotate("text",
-           x = (PCA_ignitability$PC1 * 1.4), 
-           y = (PCA_ignitability$PC2 * 1.125), 
-           label = PCA_ignitability$Variables, size = 4.6,
-           fontface = 'bold') +
-  annotate("text",
-           x = (PCA_consumability$PC1 * 1.3),
-           y = (PCA_consumability$PC2 * 1.125), 
-           label = PCA_consumability$Variables, size = 4.6,
-           fontface = 'bold') + 
-  annotate("text", x = -1.2, y = 1.4, label = "Epiradiator", colour = '#829191', fontface = 'bold', size = 6.5) +
-  annotate("text", x = 1.5, y = -2.7, label = "Hot Plate", colour = '#829191', fontface = 'bold', size = 6.5) +
-  theme(panel.background = element_rect(fill='white', colour='black'), # Make background white and border black
-          panel.grid.major = element_blank(),  # Hide major gridlines
-          panel.grid.minor = element_blank(),
-          legend.key = element_rect(fill = "white"),
-          legend.position = 'right',
-          legend.title = element_text(face = 'bold', size = 20),
-          legend.text = element_text(face = 'italic', size = 18),
-          axis.title = element_text(face = 'bold', size = 20),
-          aspect.ratio = 1/1) +
-  xlab(u.axis.labs[1]) + 
-  ylab(u.axis.labs[2]) +
-  scale_color_manual(values = c("#FC5130","#F7B801","#0B032D","#5F758E")) +
-  coord_equal()
-
-ggsave('figures/PCAflammetrics.scaled.centered.jpg', height = 8, width = 12)
-```
-
-
-# TABLES
-## Both Methods
-```{r}
-tab_pca(pcobj.both, 
-        rotation = c("varimax"), 
-        digits = 2,
-        show.var = TRUE,
-  string.pov = "Proportion of Variance",
-  string.cpov = "Cumulative Proportion")
-```
-
-### Kable
-First, making dataframe with eigenvalues for principal components, proportion of variance explained and cumulative proportion:
-```{r}
-eig1.both <- c(0.69, 0.88, 0.12, 0.72, -0.09, 0.14, -0.16, 0.87, 37.18, 37.18)
-eig2.both <- c(0.20, 0.16, 0.95, 0.12, -0.03, 0.92, 0.20, -0.02, 23.37, 60.55)
-eig3.both <- c(-0.27, -0.09, 0.00, 0.60, 0.10, 0.30, 0.90, 0.04, 13.40, 73.96)
-flam.metrics <- c("Flame Duration", "Flame Height", "Post-flame Glow", "Time to Ignition", "Max. Temp.", "Glow Duration", "Glow to Ignition", "Time to First Glow", "Proportion of Variance (%)", "Cumulative Proportion (%)")
-pca.table.df <- data.frame(flam.metrics, eig1.both, eig2.both, eig3.both)
-```
-there was probably a more elegant way to do that, but since there aren't too many numbers to enter in by hand, I thought it would be quicker to just go ahead and do so.
-
-Now, using kableExtra package to visualize how each component is weighted by each flam. metric
-```{r}
-pca.table.df %>%
-  mutate(flam.metrics = cell_spec(flam.metrics, 'html', bold = ifelse(flam.metrics == c("Proportion of Variance (%)", "Cumulative Proportion (%)"), T, F), color = 'black')) %>% 
-  mutate(eig1.both = cell_spec(eig1.both, 'html', bold = ifelse(abs(eig1.both) > 0.5, T, F), color = 'black')) %>% 
-  mutate(eig2.both = cell_spec(eig2.both, 'html', bold = ifelse(abs(eig2.both) > 0.5, T, F), color = 'black')) %>% 
-  mutate(eig3.both = cell_spec(eig3.both, 'html', bold = ifelse(abs(eig3.both) > 0.5, T, F), color = 'black')) %>% 
-  kable(format = 'html', escape = F, col.names = c(' ', 'Component 1', 'Component 2', 'Component 3')) %>% 
-  kable_styling(bootstrap_options = c('hover', 'bordered', 'condensed'), fixed_thead = T, font_size = 30) %>% 
-  row_spec(c(9:10), background = '#D3D3D3') %>% 
-  save_kable('figures/pca_table_BOTH.html')
-```
-
-## Side by Side
-### EPI
-```{r}
-tab_pca(pcobj.epi, 
-        rotation = c("varimax"), 
-        digits = 2,
-        show.var = TRUE,
-  string.pov = "Proportion of Variance",
-  string.cpov = "Cumulative Proportion")
-```
-
-### HP
-```{r}
-tab_pca(pcobj.hp, 
-        rotation = c("varimax"), 
-        digits = 10,
-        show.var = TRUE,
-  string.pov = "Proportion of Variance",
-  string.cpov = "Cumulative Proportion")
-```
-
-### Kable
-First, making dataframe with eigenvalues for principal components, proportion of variance explained and cumulative proportion:
-```{r}
-eig1.epi <- c(-0.44, 0.03, -0.90, 0.00, -0.08, -0.97, -0.51, 0.01, 33.19, 33.19)
-eig2.epi <- c(-0.62, -0.68, -0.08, 0.59, -0.72, 0.06, 0.70, -0.06, 25.09, 58.28)
-eig3.epi <- c(0.14, -0.26, -0.10, 0.00, 0.15, 0.00, 0.11, -0.96, 16.04, 74.31)
-###
-eig1.hp <- c(0.02, 0.57, 0.09, -0.41, -0.64, -0.34, -0.83, 0.00, 30.72, 30.72)
-eig2.hp <- c(-0.76, -0.15, 0.07, 0.81, -0.06, -0.02, 0.21, 0.62, 21.54, 52.26)
-eig3.hp <- c(0.05, -0.31, -0.94, -0.08, -0.12, -0.89, -0.24, 0.00, 17.94, 70.19)
-pca.table.df2 <- data.frame(flam.metrics, eig1.epi, eig2.epi, eig3.epi, eig1.hp, eig2.hp, eig3.hp)
-```
-there was probably a more elegant way to do that, but since there aren't too many numbers to enter in by hand, I thought it would be quicker to just go ahead and do so.
-
-Now, using kableExtra package to visualize how each component is weighted by each flam. metric
-```{r}
-pca.table.df2 %>%
-  mutate(flam.metrics = cell_spec(flam.metrics, 'html', bold = ifelse(flam.metrics == c("Proportion of Variance (%)", "Cumulative Proportion (%)"), T, F), color = 'black')) %>% 
-  mutate(eig1.epi = cell_spec(eig1.epi, 'html', bold = ifelse(abs(eig1.epi) > 0.5, T, F), color = 'black')) %>%
-  mutate(eig2.epi = cell_spec(eig2.epi, 'html', bold = ifelse(abs(eig2.epi) > 0.5, T, F), color = 'black')) %>% 
-  mutate(eig3.epi = cell_spec(eig3.epi, 'html', bold = ifelse(abs(eig3.epi) > 0.5, T, F), color = 'black')) %>% 
-  mutate(eig1.hp = cell_spec(eig1.hp, 'html', bold = ifelse(abs(eig1.hp) > 0.5, T, F), color = 'black')) %>% 
-  mutate(eig2.hp = cell_spec(eig2.hp, 'html', bold = ifelse(abs(eig2.hp) > 0.5, T, F), color = 'black')) %>% 
-  mutate(eig3.hp = cell_spec(eig3.hp, 'html', bold = ifelse(abs(eig3.hp) > 0.5, T, F), color = 'black')) %>% 
-  kable(format = 'html', escape = F, col.names = c(' ', 'Component 1', 'Component 2', 'Component 3', 'Component 1', 'Component 2', 'Component 3')) %>% 
-  kable_styling(bootstrap_options = c('hover', 'bordered', 'condensed'), fixed_thead = T, font_size = 30) %>% 
-  row_spec(c(9:10), background = '#D3D3D3') %>%
-  add_header_above(c(" ", "Epiradiator" = 3, "Hot Plate" = 3)) %>% 
-  save_kable('figures/pca_table_SIDEbySIDE.html')
-```
-
-```{r}
-mat <- data.frame(a = c("column header","column header"),b = c("a","b"),c = c("x","y"))
-kable(mat, align = "c",col.names = c("","","")) %>%
-kable_styling(bootstrap_options = "striped", full_width = F, position = "left",font_size = 12)
-```
-
-
 # --------------------------------
 
-# NMDS Analysis
+# NMDS 
+
+This code has some issues, but we ended up using the NMDS mostly for confirming our conclusions from the PCAs. Initially, we set out to do an NMDS to see if we could get a visualization that looked a bit better than the PCAs, but we ended up liking the PCA visualizations better -- the visualization of the relationships between flam. metrics of the PCA surpasses that of the NMDS. Note that the NMDS shows a clear difference between methods when not scaled/centered, but this difference disappears when scaled/centered by method. We attributed this to inherent differences in the scale and distribution of flam. metrics due to differences in sample size (i.e., larger samples have higher flame height, longer flame duration almost always). 
 
 ## Epiradiator
-### Before Visualization
+Before Visualization:
 ```{r}
 # First, extracting flam. metric columns
 epi_nmds_df <- flam_metrics_df_epi %>% 
@@ -1451,13 +1461,12 @@ set.seed(16)
 epiNMDS <- metaMDS(epi_nmds_matrix, distance = "bray")
 ```
 
-### Data Visualization
+Data Visualization:
 ```{r}
 ordiplot(epiNMDS)
 
 colvec<-c("#E41A1C", "#377EB8", "#4DAF4A", "#984EA3")
 
-jpeg(file = "NMDS.EPI.jpeg")
 # Highlight all of the below lines to run
 epiNMDSplot <- plot(epiNMDS)
 with(epi_nmds_df_full,
@@ -1468,11 +1477,10 @@ orditorp(epiNMDS, display = "species", col="black", cex = 1)
 legend("bottomright", c("Adenostomata fasciculatum", "Arctostaphylos patula", "Ceanothus cordulatus", "Ceanothus megacarpus"), title = "Species", 
        col= colvec, pch=15, cex=1)
 epiNMDSplot
-dev.off()
 ```
 
 ## Hot Plate
-### Before Visualization
+Before Visualization:
 ```{r}
 # First, extracting flam. metric columns
 hp_nmds_df <- flam_metrics_df_hp %>% 
@@ -1493,12 +1501,11 @@ set.seed(16)
 hpNMDS <- metaMDS(hp_nmds_matrix, distance = "bray")
 ```
 
-### Data Visualization
+Data Visualization:
 ```{r}
 ordiplot(hpNMDS)
 colvec2<-c("#E41A1C", "#377EB8", "#984EA3")
 
-jpeg(file = "NMDS.HP.jpeg")
 # Highlight all of the below lines to run
 hpNMDSplot <- plot(hpNMDS)
 with(hp_nmds_df_full,
@@ -1510,15 +1517,14 @@ legend("bottomright", c("Adenostomata fasciculatum", "Arctostaphylos patula", "C
        col= colvec2, pch=15, cex=1)
 
 hpNMDSplot
-dev.off()
 ```
-
 
 
 ## All Species, Both Models
 
-### Before Visualization
-#### Scaling and Centering
+Before Visualization:
+
+Scaling and Centering:
 
 Below, I scaled and centered the flam. metrics according to each model. Without separating by model, it scales/centers by the results (i.e. by standard deviations, means) of both models together in one pool which does not make sense when comparing the two models separately.
 
@@ -1545,7 +1551,7 @@ Stitching epi_df1 and hp_df1 together:
 both_df1 <- bind_rows(epi_df1, hp_df1)
 ```
 
-#### Data prep., NMDS
+Data prep., NMDS
 ```{r}
 # First, extracting flam. metric columns
 both_nmds_df <- both_df1 %>% 
@@ -1566,14 +1572,13 @@ set.seed(16)
 bothNMDS <- metaMDS(both_nmds_matrix, distance = "bray")
 ```
 
-### Data Visualization
+Data Visualization
 ```{r}
 ordiplot(bothNMDS)
 
 pchvec <- c(15:18)
 colvec2<-c("#E41A1C", "#377EB8")
 
-jpeg(file = "NMDS.both.jpeg")
 # Highlight all of the below lines to run
 bothNMDSplot <- plot(bothNMDS, yaxt = 'n', xaxt = 'n', ylab = '', xlab = '')
 title(xlab = expression(bold("NMDS1")), ylab = expression(bold("NMDS2")), line = 0.5, cex.lab = 1.5)
@@ -1587,12 +1592,11 @@ legend("bottomright", c("Epiradiator", "Hot Plate"), title = "Chamber Model",
 legend("bottomleft", c("Adenostomata fasciculatum", "Arctostaphylos patula", "Ceanothus cordulatus", "Ceanothus megacarpus"), title = "Species", 
        pch= pchvec, col="black", cex=1.2)
 bothNMDSplot
-dev.off()
 ```
 
 
 ## Two Species, Both Models
-### Scaling and Centering
+Scaling and Centering:
 ```{r}
 epi_df2 <- flam_metrics_df_epi %>% 
   filter(spp == "ARPA" | spp == "ADFA") %>% 
@@ -1618,7 +1622,7 @@ Stitching epi_df2 and hp_df2 together:
 limit_df1 <- bind_rows(epi_df2, hp_df2)
 ```
 
-### Before Visualization
+Before Visualization:
 ```{r}
 # First, extracting flam. metric columns
 both_nmds_df <- limit_df1 %>% 
@@ -1641,14 +1645,13 @@ set.seed(16)
 bothNMDS <- metaMDS(both_nmds_matrix, distance = "bray")
 ```
 
-### Data Visualization
+Data Visualization:
 ```{r}
 ordiplot(bothNMDS)
 
 pchvec <- c(15:16)
 colvec2<-c("#E41A1C", "#377EB8")
 
-jpeg(file = "NMDS.both.v2.jpeg")
 # Highlight all of the below lines to run
 bothNMDSplot <- plot(bothNMDS, yaxt = 'n', xaxt = 'n', ylab = '', xlab = '')
 title(xlab = expression(bold("NMDS1")), ylab = expression(bold("NMDS2")), line = 0.5, cex.lab = 1.5)
@@ -1661,5 +1664,4 @@ legend("bottomright", c("Epiradiator", "Hot Plate"), title = "Chamber Model",
 legend("bottomleft", c("Adenostomata fasciculatum", "Arctostaphylos patula"), title = "Species", 
        pch= pchvec, col="black", cex=1.2)
 bothNMDSplot
-dev.off()
 ```
