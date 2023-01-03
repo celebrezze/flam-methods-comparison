@@ -2193,12 +2193,13 @@ tti.top2R <- ggplot(data = both_df1.remef, aes(y = r_tti.top2, x = mpa, color = 
   labs(y ="Time to Ignition", x = "Water Potential (MPa)", color = "Method", shape = "Species") +
   theme_bw()+
   scale_color_manual(values = c("grey70", "black")) +
-  annotate('text', x = -9.5, y = 1.73, label = 'a', size = 11) +
+  annotate('text', x = -9.5, y = 1.73, label = 'a', size = 11, fontface = 'bold') +
   guides(color = guide_legend(override.aes = list(size = 1.2))) +
   guides(shape = guide_legend(override.aes = list(size = 2))) +
-  theme(axis.title = element_text(face = 'bold', size = 14),
-        legend.title = element_text(face = 'bold', size = 16),
-        legend.text = element_text(face = 'italic', size = 14),
+  theme(axis.title = element_text(face = 'bold', size = 16),
+        axis.text = element_text(size = 14),
+        legend.title = element_text(face = 'bold', size = 18),
+        legend.text = element_text(face = 'italic', size = 16),
         axis.title.x = element_blank())
 tti.top2R
 ```
@@ -2251,10 +2252,11 @@ fh.top2R <- ggplot(data = both_df1.remef, aes(y = r_fh.top2, x = dw_scaled, colo
   labs(y ="Flame Height", x = "Dry Weight (scaled)", color = "Method", shape = "Species") +
   theme_bw()+
   scale_color_manual(values = c("grey70", "black")) +
-  annotate('text', x = -2.7, y = 2.89, label = 'e', size = 11) +
-  theme(axis.title = element_text(face = 'bold', size = 14),
-        legend.title = element_text(face = 'bold', size = 14),
-        legend.text = element_text(face = 'italic', size = 12),
+  annotate('text', x = -2.7, y = 2.89, label = 'e', size = 11, fontface = 'bold') +
+  theme(axis.title = element_text(face = 'bold', size = 16),
+        axis.text = element_text(size = 14),
+        legend.title = element_text(face = 'bold', size = 18),
+        legend.text = element_text(face = 'italic', size = 16),
         legend.position = 'none',
         axis.title.x = element_blank())
 fh.top2R
@@ -2308,10 +2310,11 @@ fd.top2R <- ggplot(data = both_df1.remef, aes(y = r_fd.top2, x = dw_scaled, colo
   labs(y ="Flame Duration", x = "Dry Weight (scaled)", color = "Method", shape = "Species") +
   theme_bw()+
   scale_color_manual(values = c("grey70", "black")) +
-  annotate('text', x = -2.7, y = 3.29, label = 'f', size = 11) +
-  theme(axis.title = element_text(face = 'bold', size = 14),
-        legend.title = element_text(face = 'bold', size = 14),
-        legend.text = element_text(face = 'italic', size = 12),
+  annotate('text', x = -2.7, y = 3.29, label = 'f', size = 11, fontface = 'bold') +
+  theme(axis.title = element_text(face = 'bold', size = 16),
+        axis.text = element_text(size = 14),
+        legend.title = element_text(face = 'bold', size = 18),
+        legend.text = element_text(face = 'italic', size = 16),
         legend.position = 'none',
         axis.title.x = element_blank())
 fd.top2R
@@ -2365,10 +2368,11 @@ gd.top2R <- ggplot(data = both_df1.remef, aes(y = r_gd.top2, x = dw_scaled, colo
   labs(y ="Glow Duration", x = "Dry Weight (scaled)", color = "Method", shape = "Species") +
   theme_bw()+
   scale_color_manual(values = c("grey70", "black")) +
-  annotate('text', x = -2.7, y = 3.3, label = 'g', size = 11) +
-  theme(axis.title = element_text(face = 'bold', size = 14),
-        legend.title = element_text(face = 'bold', size = 14), 
-        legend.text = element_text(face = 'italic', size = 12),
+  annotate('text', x = -2.7, y = 3.3, label = 'g', size = 11, fontface = 'bold') +
+  theme(axis.title = element_text(face = 'bold', size = 16),
+        axis.text = element_text(size = 14),
+        legend.title = element_text(face = 'bold', size = 18),
+        legend.text = element_text(face = 'italic', size = 16),
         legend.position = 'none',
         axis.title.x = element_blank())
 gd.top2R
@@ -2422,12 +2426,13 @@ temp.top2R <- ggplot(data = both_df1.remef, aes(y = r_temp.top2, x = mpa, color 
   labs(y ="Maximum Temperature", x = "Water Potential (MPa)", color = "Method", shape = "Species") +
   theme_bw()+
   scale_color_manual(values = c("grey70", "black")) +
-  annotate('text', x = -9.5, y = 3.65, label = 'b', size = 11) +
+  annotate('text', x = -9.5, y = 3.65, label = 'b', size = 11, fontface = 'bold') +
   guides(color = guide_legend(override.aes = list(size = 1.2))) +
   guides(shape = guide_legend(override.aes = list(size = 2))) +
-  theme(axis.title = element_text(face = 'bold', size = 14),
-        legend.title = element_text(face = 'bold', size = 16), 
-        legend.text = element_text(face = 'italic', size = 14),
+ theme(axis.title = element_text(face = 'bold', size = 16),
+        axis.text = element_text(size = 14),
+        legend.title = element_text(face = 'bold', size = 18),
+        legend.text = element_text(face = 'italic', size = 16),
         axis.title.x = element_blank())
 temp.top2R
 ```
@@ -2480,10 +2485,11 @@ pfg.top2R <- ggplot(data = both_df1.remef, aes(y = r_pfg.top2, x = dw_scaled, co
   labs(y ="Post-Flame Glow", x = "Dry Weight (scaled)", color = "Method", shape = "Species") +
   theme_bw()+
   scale_color_manual(values = c("grey70", "black")) +
-  annotate('text', x = -2.7, y = 3.865, label = 'h', size = 11) +
-  theme(axis.title = element_text(face = 'bold', size = 14),
-        legend.title = element_text(face = 'bold', size = 14),
-        legend.text = element_text(face = 'italic', size = 12),
+  annotate('text', x = -2.7, y = 3.865, label = 'h', size = 11, fontface = 'bold') +
+  theme(axis.title = element_text(face = 'bold', size = 16),
+        axis.text = element_text(size = 14),
+        legend.title = element_text(face = 'bold', size = 18),
+        legend.text = element_text(face = 'italic', size = 16),
         legend.position = 'none',
         axis.title.x = element_blank())
 pfg.top2R
@@ -2537,12 +2543,13 @@ ttfg.top2R <- ggplot(data = both_df1.remef, aes(y = r_ttfg.top2, x = mpa, color 
   labs(y ="Time to First Glow", x = "Water Potential (MPa)", color = "Method", shape = "Species") +
   theme_bw()+
   scale_color_manual(values = c("grey70", "black")) +
-  annotate('text', x = -9.5, y = 2.37, label = 'c', size = 11) +
+  annotate('text', x = -9.5, y = 2.37, label = 'c', size = 11, fontface = 'bold') +
   guides(color = guide_legend(override.aes = list(size = 1.2))) +
   guides(shape = guide_legend(override.aes = list(size = 2))) +
-  theme(axis.title = element_text(face = 'bold', size = 14),
-        legend.title = element_text(face = 'bold', size = 16),
-        legend.text = element_text(face = 'italic', size = 14),
+ theme(axis.title = element_text(face = 'bold', size = 16),
+        axis.text = element_text(size = 14),
+        legend.title = element_text(face = 'bold', size = 18),
+        legend.text = element_text(face = 'italic', size = 16),
         axis.title.x = element_blank())
 ttfg.top2R
 ```
@@ -2597,10 +2604,11 @@ gti.top2R <- ggplot(data = both_df1.remef, aes(y = r_gti.top2, x = mpa, color = 
   scale_color_manual(values = c("grey70", "black")) +
   guides(color = guide_legend(override.aes = list(size = 1.2))) +
   guides(shape = guide_legend(override.aes = list(size = 2))) +
-  annotate('text', x = -9.5, y = 2.705, label = 'd', size = 11) +
-  theme(axis.title = element_text(face = 'bold', size = 14),
-        legend.title = element_text(face = 'bold', size = 16),
-        legend.text = element_text(face = 'italic', size = 14),
+  annotate('text', x = -9.5, y = 2.705, label = 'd', size = 11, fontface = 'bold') +
+ theme(axis.title = element_text(face = 'bold', size = 16),
+        axis.text = element_text(size = 14),
+        legend.title = element_text(face = 'bold', size = 18),
+        legend.text = element_text(face = 'italic', size = 16),
         axis.title.x = element_blank())
 gti.top2R
 ```

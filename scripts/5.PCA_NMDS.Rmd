@@ -14,6 +14,7 @@ library(tidyverse)
 library(here)
 here = here::here
 library(ggbiplot) #for nicer PCA plots
+library(factoextra) #to gather PCA values
 ggbiplot = ggbiplot::ggbiplot
 library(psych) #for pairs.panels()
 library(sjPlot) #for nice tables of eigenvalues
@@ -156,8 +157,8 @@ pca_flam_hp <- flam_metrics_df_hp %>%
 
 ### Tables of Eigenvalues
 ```{r}
-tab_pca(pca_flam_epi)
-tab_pca(pca_flam_hp)
+tab_pca(pca_flam_epi, fctr.load.tlrn = 0.01)
+tab_pca(pca_flam_hp, fctr.load.tlrn = 0.01)
 ```
 
 ### Visualization
@@ -490,11 +491,11 @@ epiPCA <- ggplot(PCAvalues.epi, aes(x = PC1, y = PC2)) +
   geom_segment(data = PCA_ttfg, aes(x = 0, y = 0, 
                                              xend = PC1, yend = PC2),
      arrow = arrow(length = unit(1/2, "picas")), 
-     size = .93, alpha = 0.9, color = '#FC5130') +
+     size = .93, alpha = 0.9, color = 'grey70') +
   geom_segment(data = PCA_maxtemp, aes(x = 0, y = 0, 
                                              xend = PC1, yend = PC2),
      arrow = arrow(length = unit(1/2, "picas")), 
-     size = .93, alpha = 0.9, color = '#FC5130') +
+     size = .93, alpha = 0.9, color = 'grey70') +
   annotate("text", 
            x = (PCA_combustability$PC1 * 1.85), 
           y = (PCA_combustability$PC2 * 1.12),
@@ -660,11 +661,11 @@ hpPCA <- ggplot(PCAvalues.hp, aes(x = PC1, y = PC2)) +
   geom_segment(data = PCA_maxtemp, aes(x = 0, y = 0,
                                              xend = PC1, yend = PC2),
      arrow = arrow(length = unit(1/2, "picas")), 
-     size = .93, alpha = 0.9, color = '#FC5130') +
+     size = .93, alpha = 0.9, color = 'grey70') +
   geom_segment(data = PCA_ttfg, aes(x = 0, y = 0, 
                                              xend = PC1, yend = PC2),
      arrow = arrow(length = unit(1/2, "picas")), 
-     size = .93, alpha = 0.9, color = '#FC5130') +
+     size = .93, alpha = 0.9, color = 'grey70') +
   annotate("text", 
            x = (PCA_combustability$PC1 * 1.55), 
           y = (PCA_combustability$PC2 * 1.15),
@@ -776,13 +777,13 @@ tab_pca(pcobj.hp,
 ### Kable
 First, making dataframe with eigenvalues for principal components, proportion of variance explained and cumulative proportion:
 ```{r}
-eig1.epi <- c(-0.44, 0.03, -0.90, 0.00, -0.08, -0.97, -0.51, 0.01, 33.19, 33.19)
+eig1.epi <- c(-0.44, 0.03, -0.90, -0.44, -0.08, -0.97, -0.51, 0.01, 33.19, 33.19)
 eig2.epi <- c(-0.62, -0.68, -0.08, 0.59, -0.72, 0.06, 0.70, -0.06, 25.09, 58.28)
-eig3.epi <- c(0.14, -0.26, -0.10, 0.00, 0.15, 0.00, 0.11, -0.96, 16.04, 74.31)
+eig3.epi <- c(0.14, -0.26, -0.10, 0.52 , 0.15, 0.00, 0.11, -0.96, 16.04, 74.31)
 ###
-eig1.hp <- c(0.02, 0.57, 0.09, -0.41, -0.64, -0.34, -0.83, 0.00, 30.72, 30.72)
+eig1.hp <- c(0.02, 0.57, 0.09, -0.41, -0.64, -0.34, -0.83, -0.54, 30.72, 30.72)
 eig2.hp <- c(-0.76, -0.15, 0.07, 0.81, -0.06, -0.02, 0.21, 0.62, 21.54, 52.26)
-eig3.hp <- c(0.05, -0.31, -0.94, -0.08, -0.12, -0.89, -0.24, 0.00, 17.94, 70.19)
+eig3.hp <- c(0.05, -0.31, -0.94, -0.08, -0.12, -0.89, -0.24, 0.19, 17.94, 70.19)
 pca.table.df2 <- data.frame(flam.metrics, eig1.epi, eig2.epi, eig3.epi, eig1.hp, eig2.hp, eig3.hp)
 ```
 there was probably a more elegant way to do that, but since there aren't too many numbers to enter in by hand, I thought it would be quicker to just go ahead and do so.
@@ -802,12 +803,6 @@ pca.table.df2 %>%
   row_spec(c(9:10), background = '#D3D3D3') %>%
   add_header_above(c(" ", "Epiradiator" = 3, "Hot Plate" = 3)) %>% 
   save_kable(here('figures/pca_table_SIDEbySIDE.html'))
-```
-
-```{r}
-mat <- data.frame(a = c("column header","column header"),b = c("a","b"),c = c("x","y"))
-kable(mat, align = "c",col.names = c("","","")) %>%
-kable_styling(bootstrap_options = "striped", full_width = F, position = "left",font_size = 12)
 ```
 
 # *-*-*-*-*-*-*-*-*-*-*-*-*-*

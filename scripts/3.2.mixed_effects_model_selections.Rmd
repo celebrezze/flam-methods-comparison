@@ -1203,7 +1203,7 @@ tab_model(mpa.mod, lfm.mod, dw.mod, ww.mod, mod1, mod2, mod3, mod4, int1, int2, 
 # MEM Selection Table
 ```{r}
 col1 <- c('Time to Ignition', ' ', ' ', 'Flame Duration', ' ', ' ', 'Flame Height', ' ', 'Glow Duration', ' ', ' ', 'Maximum Temperature', ' ', 'Post-Flame Glow', ' ', ' ', 'Glow to Ignition', ' ', 'Time to First Glow')
-col2 <- c('MPa*** + DW* x species', ' ', ' ', 'DW x species', 'WW x species', ' ', 'MPa + DW x species', 'DW x species', 'MPa + LFM + DW x species', 'DW x species','LFM + DW x species', 'MPa*** + LFM* + DW* x species', 'MPa** + DW x species', 'MPa** + [DW x species]*', 'MPa*** + LFM + [DW x species]**', 'LFM + [DW x species]*', 'MPa + DW x species', ' ', '[WW*** x spp]**')
+col2 <- c('MPa*** + DW* x species', ' ', ' ', 'DW x species', 'WW x species', ' ', 'MPa + DW x species', 'DW x species', 'MPa + LFM + DW x species', 'DW x species','LFM + DW x species', 'MPa*** + LFM* + DW* x species', 'MPa** + DW x species', 'MPa** + [DW x species]*', 'MPa*** + LFM + [DW x species]**', 'LFM + [DW x species]*', 'MPa + DW x species', ' ', '[WW*** x species]**')
 col3 <- c('MPa + [DW*** x species]*', 'LFM + MPa + DW** x species', 'LFM + [DW** x species]*', 'DW x species', 'WW x species', 'MPa + DW x species', 'DW* x species', 'LFM + DW** x species', 'MPa + LFM* + [DW** x species]**', 'LFM + [DW** x species]**', 'DW x species','MPa*** + DW** x species', 'MPa*** + LFM + DW** x species', 'MPa + [DW* x species]**', 'LFM + [DW x species]**', ' ', 'MPa + LFM + DW** x species', 'LFM + DW** x species', 'MPa** + DW x species')
 col4 <- c('651.189', ' ', ' ', '513.814', '515.805', ' ', '522.753', '523.215', '860.247', '860.494', '862.221', '884.899', '886.737', '828.631', '831.333', '832.698', '653.906', ' ', '576.627')
 col5 <- c('723.571', '726.364', '727.353', '572.756', '573.225', '573.969', '477.555', '482.359', '842.114', '845.501', '846.865', '737.287', '739.601', '809.005', '813.056', ' ', '737.883', '739.439', '752.668')
@@ -1229,13 +1229,13 @@ kable.df[18,5] <- cell_spec(kable.df[18,5], 'html', bold = T)
 kable.df[19,4:5] <- cell_spec(kable.df[19,4:5], 'html', bold = T)
 
 kable.df %>% 
-  kable(format = 'html', escape = F, col.names = c('Flam. Metric', 'Epiradiator', 'Hot Plate', 'Epiradiator','Hot Plate', 'Epiradiator', 'Hot Plate')) %>% 
+  kable(format = 'html', escape = F, col.names = c('Flammability Metric', 'Epiradiator', 'Hot Plate', 'Epiradiator','Hot Plate', 'Epiradiator', 'Hot Plate')) %>% 
   kable_styling(bootstrap_options = c('hover', 'bordered', 'condensed'), fixed_thead = T) %>% 
   row_spec(c(0:19), color = 'black') %>% 
   column_spec(1, bold = T, border_left = T, border_right = T) %>% 
   column_spec(c(3,5,7), border_right = T) %>% 
   row_spec(c(1:3, 7:8, 12:13, 17:18), background = '#F9F6EE') %>% 
-  add_header_above(c(" ", "Top Model(s)" = 2, "AIC" = 2, "Marginal R2 / Conditional R2" = 2), color = 'black', border_left = T, border_right = T) %>% 
+  add_header_above(c(" ", "Top Model(s)" = 2, "AIC" = 2, "Marginal R \U00B2 / Conditional R \U00B2" = 2), color = 'black', border_left = T, border_right = T) %>% 
   save_kable(here('mem-model-selection/MEM_kable.html'))
 ```
 
