@@ -536,13 +536,6 @@ data.seki.imputed <- data.seki.imputed %>%
 #write.csv(data.seki.imputed, here("processed-data", "seki.data.halfwayprocessed.csv"))
 
 rwc.data <- data.seki.imputed %>% select(individual, year.month, dry.wt, spp, model, lfm.NAs.imputed, RWC, max.mpa.sample, mpa, gww.gdw, gww.gdw.saturated, fresh.wt, dry.wt, site, sample)
-
-write_csv(rwc.data, here("processed-data", "compiled-datasets", "SEKI", "seki_flam_curve_physiological_data.csv"))
-
-# rwc.lfm.plot <- rwc.data %>%
-#   ggplot(aes(x = lfm.NAs.imputed, y = RWC, color = spp)) +
-#   geom_point()
-# rwc.lfm.plot
 ```
 
 ------------------------------------------------------------------------
@@ -2943,10 +2936,6 @@ dist.epi <- ignite.only.seki.PIJE.epi %>%
   select(fd, fh, gd, gti, pfg, prop.ignite, temp.max, ttfg, tti, temp.change)
 ```
 
-```{r}
-#multi.hist(dist.epi[,sapply(dist.epi, is.numeric)])
-```
-
 # Repeat with hotplate trials:
 
 ```{r}
@@ -3011,10 +3000,6 @@ outlierKD2(ignite.only.seki.PIJE.hp, ignition.temp)
 ```
 
 #### prop.ignite
-
-```{r}
-#outlierKD2(ignite.only.seki.PIJE.hp, prop.ignite)
-```
 
 ```{r}
 vis_miss(ignite.only.seki.PIJE.hp)
@@ -3107,14 +3092,6 @@ ggplot(ignite.only.seki.PIJE.hp,
 
 none missing
 
-```{r}
-# ggplot(ignite.only.seki.PIJE.hp,
-#        aes(x = lfm.outliers.out,
-#            y = prop.ignite)) +
-#   geom_miss_point() +
-#   facet_wrap(~year.month)
-```
-
 #### HP NAs: time to first glow
 
 none missing
@@ -3137,7 +3114,7 @@ all.equal(aq_shadow, aq_nab)
 
 Not many missing, which is good!
 
-### ***}}****Deal with NAs for hotplate:
+### Deal with NAs for hotplate:
 
 -   impute medians at each missing flam metric
 
@@ -3156,10 +3133,6 @@ colSums(is.na(ignite.only.seki.PIJE.hp)) #should not be any NAs except in LFM.ou
 
 dist.hp <- ignite.only.seki.PIJE.hp %>%
   select(fd, fh, gd, gti, pfg, prop.ignite, temp.max, ttfg, tti, temp.change)
-```
-
-```{r}
-#multi.hist(dist.epi[,sapply(dist.epi, is.numeric)])
 ```
 
 # Look at flam characteristics to see if they make sense:
@@ -3293,7 +3266,6 @@ ignite.only.seki.PIJE.epi <- ignite.only.seki.PIJE.epi %>%  #Dealing with only E
   mutate_if(is.integer, as.numeric) 
 
 ignite.only.seki.PIJE.epi$gti <- as.numeric(as.character(ignite.only.seki.PIJE.epi$gti)) #not sure why this became a character...
-#str(ignite.only.seki.PIJE.epi)
 
 distributions.dw <- ignite.only.seki.PIJE.epi %>%
   ggplot() +
@@ -3332,7 +3304,6 @@ range(ignite.only.seki.PIJE.epi$dry.norm.ttfg)
 range(ignite.only.seki.PIJE.epi$dw.flam.sample)
 
 colSums(is.na(ignite.only.seki.PIJE.epi))
-#str(ignite.only.seki.PIJE.epi)
 ```
 
 ```{r}
@@ -3351,12 +3322,8 @@ distributions +
 ```{r, include=FALSE}
 epi.ignite.only.seki.PIJE.pca <- ignite.only.seki.PIJE.epi %>%
   mutate(mpa = mpa * -1) 
-  # select (individual, hydration, spp, sample, model, year.month, mpa, lfm.outliers.out, lfm.NAs.imputed, dw.flam.sample, ww.flam.sample, sample.wt, ttfg, gd, gti, tti, fh, pfg, fd, temp.max, prop.ignite, dry.norm.fh, dry.norm.gd, dry.norm.fd, dry.norm.pfg, dry.norm.gti, dry.norm.ttfg, dry.norm.tti, site,temp.change, flam.index, bins5lfm)  %>%
-  # arrange(individual, hydration, spp, sample, model, year.month, mpa, lfm.outliers.out, lfm.NAs.imputed, sample.wt, dw.flam.sample, ww.flam.sample, ttfg, gd, gti, tti, fh, pfg, fd, temp.max, prop.ignite, dry.norm.fh, dry.norm.gd, dry.norm.fd, dry.norm.pfg, dry.norm.gti, dry.norm.ttfg, dry.norm.tti, site, temp.change, flam.index, bins5lfm) %>%
-  # relocate("hydration")
-colSums(is.na(epi.ignite.only.seki.PIJE.pca))
 
-#write.csv(x = epi.ignite.only.seki.PIJE.pca, (here("processed-data", "epi.ignite.only.seki.PIJE.csv")))
+colSums(is.na(epi.ignite.only.seki.PIJE.pca))
 ```
 
 ### HP only:
@@ -3415,15 +3382,10 @@ distributions +
 str(ignite.only.seki.PIJE.hp)
 hp.ignite.only.seki.PIJE.pca <- ignite.only.seki.PIJE.hp %>%
   mutate(mpa = mpa * -1) %>%
-  # mutate(gti = replace(dry.norm.gti, dry.norm.gti == "0", "0.5")) %>% 
-  # select (hydration, spp, sample, model, year.month, mpa, lfm.outliers.out, lfm.NAs.imputed, dw.flam.sample, ww.flam.sample, sample.wt, ttfg, gd, gti, tti, fh, pfg, fd, temp.max, prop.ignite, dry.norm.fh, dry.norm.gd, dry.norm.fd, dry.norm.pfg, dry.norm.gti, dry.norm.ttfg, dry.norm.tti, ros, site, temp.change, flam.index, bins5lfm)  %>%
-  # arrange(hydration, spp, sample, model, year.month, mpa, lfm.outliers.out, lfm.NAs.imputed, sample.wt, dw.flam.sample, ww.flam.sample, ttfg, gd, gti, tti, fh, pfg, fd, temp.max, prop.ignite, dry.norm.fh, dry.norm.gd, dry.norm.fd, dry.norm.pfg, dry.norm.gti, dry.norm.ttfg, dry.norm.tti, ros, site, temp.change, flam.index, bins5lfm) %>%
   relocate("hydration")
 colSums(is.na(hp.ignite.only.seki.PIJE.pca))
 
 str(hp.ignite.only.seki.PIJE.pca) 
-
-#write.csv(x = hp.ignite.only.seki.PIJE.pca, (here("processed-data", "hp.ignite.only.seki.PIJE.csv")))
 ```
 
 ------------------------------------------------------------------------
@@ -3583,10 +3545,6 @@ dist.epi <- ignite.only.seki.QUKE.epi %>%
   select(fd, fh, gd, gti, pfg, prop.ignite, temp.max, ttfg, tti, temp.change)
 ```
 
-```{r}
-#multi.hist(dist.epi[,sapply(dist.epi, is.numeric)])
-```
-
 # Repeat with hotplate trials:
 
 ```{r}
@@ -3651,10 +3609,6 @@ outlierKD2(ignite.only.seki.QUKE.hp, ignition.temp)
 ```
 
 #### prop.ignite
-
-```{r}
-#outlierKD2(ignite.only.seki.QUKE.hp, prop.ignite)
-```
 
 ```{r}
 vis_miss(ignite.only.seki.QUKE.hp)
@@ -3746,14 +3700,6 @@ ggplot(ignite.only.seki.QUKE.hp,
 #### HP NAs: proportion ignited
 
 none missing
-
-```{r}
-# ggplot(ignite.only.seki.QUKE.hp,
-#        aes(x = lfm.outliers.out,
-#            y = prop.ignite)) +
-#   geom_miss_point() +
-#   facet_wrap(~year.month)
-```
 
 #### HP NAs: time to first glow
 
@@ -3932,7 +3878,6 @@ ignite.only.seki.QUKE.epi <- ignite.only.seki.QUKE.epi %>%  #Dealing with only E
   mutate_if(is.integer, as.numeric) 
 
 ignite.only.seki.QUKE.epi$gti <- as.numeric(as.character(ignite.only.seki.QUKE.epi$gti)) #not sure why this became a character...
-#str(ignite.only.seki.QUKE.epi)
 
 distributions.dw <- ignite.only.seki.QUKE.epi %>%
   ggplot() +
@@ -3971,7 +3916,6 @@ range(ignite.only.seki.QUKE.epi$dry.norm.ttfg)
 range(ignite.only.seki.QUKE.epi$dw.flam.sample)
 
 colSums(is.na(ignite.only.seki.QUKE.epi))
-#str(ignite.only.seki.QUKE.epi)
 ```
 
 ```{r}
@@ -3990,12 +3934,7 @@ distributions +
 ```{r, include=FALSE}
 epi.ignite.only.seki.QUKE.pca <- ignite.only.seki.QUKE.epi %>%
   mutate(mpa = mpa * -1) 
-  # select (individual, hydration, spp, sample, model, year.month, mpa, lfm.outliers.out, lfm.NAs.imputed, dw.flam.sample, ww.flam.sample, sample.wt, ttfg, gd, gti, tti, fh, pfg, fd, temp.max, prop.ignite, dry.norm.fh, dry.norm.gd, dry.norm.fd, dry.norm.pfg, dry.norm.gti, dry.norm.ttfg, dry.norm.tti, site,temp.change, flam.index, bins5lfm)  %>%
-  # arrange(individual, hydration, spp, sample, model, year.month, mpa, lfm.outliers.out, lfm.NAs.imputed, sample.wt, dw.flam.sample, ww.flam.sample, ttfg, gd, gti, tti, fh, pfg, fd, temp.max, prop.ignite, dry.norm.fh, dry.norm.gd, dry.norm.fd, dry.norm.pfg, dry.norm.gti, dry.norm.ttfg, dry.norm.tti, site, temp.change, flam.index, bins5lfm) %>%
-  # relocate("hydration")
 colSums(is.na(epi.ignite.only.seki.QUKE.pca))
-
-#write.csv(x = epi.ignite.only.seki.QUKE.pca, (here("processed-data", "epi.ignite.only.seki.QUKE.csv")))
 ```
 
 ### HP only:
@@ -4007,17 +3946,12 @@ measurements. (Assumptions here: that the ratio of water to dry weight
 in burned and lfm samples was the same)
 
 ```{r}
-#colSums(is.na(ignite.only.seki.QUKE.hp))
-#str(ignite.only.seki.QUKE.hp)
 ignite.only.seki.QUKE.hp <- ignite.only.seki.QUKE.hp %>%  #Dealing with only EPI trials that ignited (can change later)
   dplyr::mutate(mean.wt = mean(sample.wt, na.rm = TRUE)) %>% #take the mean of all sample weights for each model
   ungroup() %>% 
   mutate_if(is.integer, as.numeric) 
 
 ignite.only.seki.QUKE.hp$gti <- as.numeric(as.character(ignite.only.seki.QUKE.hp$gti)) #not sure why this became a character...
-#str(ignite.only.seki.QUKE.hp)
-
-#range(ignite.only.seki.QUKE.hp$dw.flam.sample) #range gets low for some samples (with very low lfm, maybe?)
 ```
 
 ```{r, include=FALSE}
@@ -4034,7 +3968,6 @@ ignite.only.seki.QUKE.hp <- ignite.only.seki.QUKE.hp %>%
   mutate("temp.change" = temp.max - start.temp) 
 
 colSums(is.na(ignite.only.seki.QUKE.hp))
-#str(ignite.only.seki.QUKE.hp)
 ```
 
 ```{r}
@@ -4051,18 +3984,10 @@ distributions +
 ### HP (USE THIS FOR PCA): Mirroring Max's PCA dataset (Mac_PCA_DATE.Rmd)
 
 ```{r, include=FALSE}
-str(ignite.only.seki.QUKE.hp)
 hp.ignite.only.seki.QUKE.pca <- ignite.only.seki.QUKE.hp %>%
   mutate(mpa = mpa * -1) %>%
-  # mutate(gti = replace(dry.norm.gti, dry.norm.gti == "0", "0.5")) %>% 
-  # select (hydration, spp, sample, model, year.month, mpa, lfm.outliers.out, lfm.NAs.imputed, dw.flam.sample, ww.flam.sample, sample.wt, ttfg, gd, gti, tti, fh, pfg, fd, temp.max, prop.ignite, dry.norm.fh, dry.norm.gd, dry.norm.fd, dry.norm.pfg, dry.norm.gti, dry.norm.ttfg, dry.norm.tti, ros, site, temp.change, flam.index, bins5lfm)  %>%
-  # arrange(hydration, spp, sample, model, year.month, mpa, lfm.outliers.out, lfm.NAs.imputed, sample.wt, dw.flam.sample, ww.flam.sample, ttfg, gd, gti, tti, fh, pfg, fd, temp.max, prop.ignite, dry.norm.fh, dry.norm.gd, dry.norm.fd, dry.norm.pfg, dry.norm.gti, dry.norm.ttfg, dry.norm.tti, ros, site, temp.change, flam.index, bins5lfm) %>%
   relocate("hydration")
 colSums(is.na(hp.ignite.only.seki.QUKE.pca))
-
-str(hp.ignite.only.seki.QUKE.pca) 
-
-#write.csv(x = hp.ignite.only.seki.QUKE.pca, (here("processed-data", "hp.ignite.only.seki.QUKE.csv")))
 ```
 
 ------------------------------------------------------------------------
@@ -4122,13 +4047,7 @@ data.seki.epi <- rbind(
 
 
 ```{r}
-#write.csv(data.seki.hp, here("processed-data", "compiled-datasets", "hp_ignite_only_seki.csv"))
-
-#write.csv(data.seki.epi, here("processed-data","compiled-datasets", "epi_ignite_only_seki.csv"))
-
-#compiled dataset - all dates, all species: 
-
 seki.data.all <- bind_rows(data.seki.epi, data.seki.hp)
 
-write_csv(seki.data.all, here("processed-data", "analysis 2.0", "seki_flam_data_all.csv"))
+write_csv(seki.data.all, here("processed-data", "seki_flam_data_all.csv"))
 ```

@@ -44,7 +44,7 @@ fire.map <- rbind(fire.map2016, fire.map2015)
 # Bar Graph
 Setting up dataframe
 ```{r}
-group <- c('Epiradiator', 'Wind Tunnel',	'Muffle Furnace',	'MLC',	'Xylene Lattice',	'Fire Bench',	'Grill',	'Oxygen Bomb',	'Steel Ring',	'Tray',	'Flat-Flame Burner',	'FPA Calorimeter',	'Cone Calorimeter',	'Direct Flame',	'Other',	'Intermediate\n Scale Calorimeter')
+group <- c('Epiradiator', 'Wind Tunnel',	'Muffle Furnace',	'Mass Loss\n Calorimeter',	'Xylene Lattice',	'Fire Bench',	'Grill',	'Oxygen Bomb',	'Steel Ring',	'Tray',	'Flat-Flame Burner',	'FPA Calorimeter',	'Cone Calorimeter',	'Direct Flame',	'Other',	'Intermediate\n Scale Calorimeter')
 value <- c(rep(NaN, 16))
 data.summary <- data.frame(group, value)
 
@@ -53,7 +53,7 @@ for(i in c(1:16)) {
   data.summary$count[i] <- sum(data[,i+7])
 }
 
-data.summary$group <- factor(data.summary$group, levels = c('Epiradiator', 'Grill', 'Muffle Furnace', 'Cone Calorimeter', 'MLC', 'Oxygen Bomb','Steel Ring', 'Wind Tunnel', 'Fire Bench', 'Xylene Lattice', 'Direct Flame', 'Tray', 'FPA Calorimeter', 'Flat-Flame Burner',	'Intermediate\n Scale Calorimeter', 'Other'))
+data.summary$group <- factor(data.summary$group, levels = c('Epiradiator', 'Grill', 'Muffle Furnace', 'Cone Calorimeter', 'Mass Loss\n Calorimeter', 'Oxygen Bomb','Steel Ring', 'Wind Tunnel', 'Fire Bench', 'Xylene Lattice', 'Direct Flame', 'Tray', 'FPA Calorimeter', 'Flat-Flame Burner',	'Intermediate\n Scale Calorimeter', 'Other'))
 ```
 
 Visualization
