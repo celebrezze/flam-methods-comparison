@@ -61,7 +61,7 @@ max.mpa.ceme <- max(hp.df.ceme$mpa)
 
 # PV Curve Data
 ```{r}
-pv_summary_df_timing <- read_csv(here("processed-data", "pv_summary_df_timing.csv"))
+pv_summary_df_timing <- read_csv(here("raw-data", "pv_summary_df_timing.csv"))
 
 # ADFA
 ## LFM
