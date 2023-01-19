@@ -18,6 +18,7 @@ library(gcookbook) #for continuous color palette
 
 data <- read_csv(here('raw-data', 'lit.review.csv'))[1:158,]
 location.data <- read_csv(here('raw-data', 'lit.review.locations.csv'))[1:184,]
+drydown.data <- read_csv(here('raw-data', 'lit.review.drydown.csv'))[1:157,] # remove last row since NA for drydown.method
 ```
 
 Global ignitions datasets
@@ -182,4 +183,22 @@ ggplot(data = world) +
 
 ggsave(here('figures/extra-figures/lit.review.locations.G.ignitions.jpg'), height = 7, width = 12.64)
 ```
+
+# Drydown Types
+```{r}
+drydown.data.clean <- drydown.data %>% 
+  group_by(drydown.method) %>% 
+  summarise(counts = n())
+
+drydown.data.clean$drydown.method <- factor(drydown.data.clean$drydown.method, levels = c('no', 'oven', 'air', 'fresh.oven', 'lab.drydown', 'dead.live', 'field.drought', 'fresh.air.oven', 'air.oven', 'fresh.air', 'potted.plants', 'other'))
+
+ggplot(data = drydown.data.clean, aes(x = drydown.method, y = counts)) +
+  geom_bar(stat = 'identity', fill = 'firebrick') +
+  labs(x = 'Drydown Method', y = 'Count') +
+  geom_text(aes(label = counts), vjust = -0.3, color = 'firebrick', fontface = 'bold') + 
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, size = 14),
+        axis.title = element_text(size = 16, face = 'bold'))
+```
+
 

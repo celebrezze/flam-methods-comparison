@@ -638,11 +638,14 @@ correct representation of water potential)</p>
 <p><em>lfm.notes</em>: see above lfm_notes</p>
 <p><strong>Flammability Metrics</strong>: <em>fh</em>, <em>ttfg</em>,
 <em>gti</em>, <em>tti</em>, <em>fd</em>, <em>gd</em>, <em>pfg</em>,
-<em>ignition</em>, <em>start.temp</em> (see <em>start_temp</em>),
-<em>temp.max</em> (see <em>temp_max</em>), <em>ignition.temp</em> (see
-<em>ignition_temp</em>), <em>prop.new</em> (see <em>prop_new</em>),
-<em>sample.wt</em> (see <em>sample_wt</em>), and <em>glow</em> are all
-identical to what was reported above for local_flam_data_all.csv</p>
+<em>start.temp</em> (see <em>start_temp</em>), <em>temp.max</em> (see
+<em>temp_max</em>), <em>ignition.temp</em> (see <em>ignition_temp</em>),
+<em>prop.new</em> (see <em>prop_new</em>), <em>sample.wt</em> (see
+<em>sample_wt</em>), and <em>glow</em> are all identical to what was
+reported above for local_flam_data_all.csv</p>
+<p><em>ignition</em>: mostly identical to what was reported above, but
+in some cases, when the sample ignited more than once, a ‘2’ is
+reported, making it no longer a binary identifier</p>
 <p><em>year</em> and <em>month</em>: see above</p>
 <p><em>dry.wt</em>, <em>fresh.wt</em>, and <em>water.wt</em>: see
 <em>dry_wt</em>, <em>fresh_wt</em> and <em>water_wt</em> above and note
@@ -776,9 +779,108 @@ using..</p>
 ## #   water.wt &lt;dbl&gt;, site &lt;dbl&gt;, bottle.wt &lt;dbl&gt;, ttms &lt;dbl&gt;,
 ## #   lfm.outliers.out &lt;dbl&gt;, lfm.NAs.imputed &lt;dbl&gt;, gr &lt;chr&gt;,
 ## #   precip.2month &lt;chr&gt;, precip.2mo &lt;dbl&gt;, season &lt;chr&gt;, …</code></pre>
+<pre class="r"><code>seki_flam_data_all$max.mpa.sample</code></pre>
+<pre><code>##   [1] -0.072 -0.072 -0.072 -0.072 -0.109 -0.109 -0.109 -0.113 -0.134 -0.084
+##  [11] -0.084 -0.130 -0.130 -0.130 -0.130 -0.046 -0.046 -0.110 -0.312 -0.314
+##  [21] -0.337 -0.337 -0.342 -0.486 -0.486 -0.486 -0.486 -0.152 -0.152 -0.580
+##  [31] -0.580 -0.580 -0.580 -0.384 -0.384 -0.384 -0.183 -0.183 -0.183 -0.183
+##  [41] -0.138 -0.138 -0.138 -0.138 -0.138 -0.311 -0.311 -0.311 -0.311 -0.199
+##  [51] -0.199 -0.199 -0.199 -0.199 -0.107 -0.107 -0.107 -0.107 -0.169 -0.169
+##  [61] -0.169 -0.138 -0.106 -0.101 -0.101 -0.309 -0.309 -0.224 -0.235 -0.179
+##  [71] -0.072 -0.072 -0.072 -0.072 -0.109 -0.109 -0.109 -0.109 -0.109 -0.113
+##  [81] -0.113 -0.113 -0.113 -0.134 -0.134 -0.134 -0.134 -0.134 -0.134 -0.134
+##  [91] -0.134 -0.084 -0.084 -0.084 -0.084 -0.084 -0.084 -0.186 -0.186 -0.186
+## [101] -0.186 -0.186 -0.186 -0.130 -0.130 -0.130 -0.130 -0.130 -0.098 -0.098
+## [111] -0.098 -0.124 -0.124 -0.124 -0.124 -0.124 -0.124 -0.046 -0.046 -0.046
+## [121] -0.046 -0.046 -0.046 -0.046 -0.110 -0.110 -0.110 -0.110 -0.110 -0.110
+## [131] -0.208 -0.208 -0.208 -0.208 -0.208 -0.208 -0.261 -0.261 -0.261 -0.261
+## [141] -0.261 -0.261 -0.261 -0.261 -0.112 -0.112 -0.112 -0.112 -0.112 -0.112
+## [151] -0.112 -0.112 -0.312 -0.312 -0.312 -0.312 -0.312 -0.312 -0.312 -0.312
+## [161] -0.179 -0.179 -0.179 -0.179 -0.179 -0.179 -0.179 -0.179 -0.106 -0.106
+## [171] -0.106 -0.106 -0.106 -0.106 -0.106 -0.106 -0.155 -0.155 -0.155 -0.155
+## [181] -0.155 -0.155 -0.155 -0.164 -0.164 -0.164 -0.164 -0.164 -0.164 -0.164
+## [191] -0.164 -0.192 -0.192 -0.192 -0.192 -0.192 -0.192 -0.192 -0.192 -0.192
+## [201] -0.192 -0.192 -0.192 -0.192 -0.192 -0.192 -0.152 -0.152 -0.152 -0.152
+## [211] -0.152 -0.152 -0.152 -0.152 -0.336 -0.336 -0.336 -0.336 -0.336 -0.336
+## [221] -0.336 -0.336 -0.336 -0.336 -0.318 -0.318 -0.318 -0.318 -0.318 -0.318
+## [231] -0.318 -0.318 -0.318 -0.318 -0.682 -0.682 -0.682 -0.682 -0.682 -0.682
+## [241] -0.682 -0.682 -0.682 -0.218 -0.218 -0.218 -0.218 -0.218 -0.218 -0.218
+## [251] -0.258 -0.258 -0.258 -0.258 -0.258 -0.258 -0.258 -0.258 -0.200 -0.200
+## [261] -0.200 -0.200 -0.200 -0.200 -0.200 -0.200 -0.200 -0.200 -0.180 -0.180
+## [271] -0.180 -0.180 -0.180 -0.180 -0.180 -0.180 -0.180 -0.774 -0.774 -0.774
+## [281] -0.774 -0.774 -0.774 -0.774 -0.774 -0.774 -0.301 -0.301 -0.301 -0.301
+## [291] -0.301 -0.301 -0.301 -0.301 -0.301 -0.154 -0.154 -0.154 -0.154 -0.154
+## [301] -0.154 -0.154 -0.154 -0.154 -0.308 -0.308 -0.308 -0.308 -0.308 -0.308
+## [311] -0.308 -0.308 -0.308 -0.059 -0.059 -0.059 -0.059 -0.059 -0.059 -0.059
+## [321] -0.512 -0.512 -0.512 -0.512 -0.512 -0.512 -0.512 -0.512 -0.314 -0.314
+## [331] -0.314 -0.314 -0.314 -0.298 -0.298 -0.298 -0.298 -0.298 -0.197 -0.197
+## [341] -0.197 -0.197 -0.197 -0.197 -0.197 -0.197 -0.197 -0.337 -0.337 -0.337
+## [351] -0.337 -0.337 -0.337 -0.337 -0.356 -0.356 -0.356 -0.356 -0.356 -0.356
+## [361] -0.342 -0.342 -0.342 -0.342 -0.342 -0.342 -0.342 -0.342 -0.401 -0.401
+## [371] -0.401 -0.401 -0.401 -0.401 -0.401 -0.401 -0.486 -0.486 -0.486 -0.486
+## [381] -0.486 -0.486 -0.152 -0.152 -0.152 -0.152 -0.152 -0.152 -0.152 -0.580
+## [391] -0.580 -0.580 -0.580 -0.580 -0.580 -0.580 -0.384 -0.384 -0.384 -0.384
+## [401] -0.384 -0.384 -0.183 -0.183 -0.183 -0.183 -0.183 -0.183 -0.183 -0.138
+## [411] -0.138 -0.138 -0.138 -0.138 -0.138 -0.311 -0.311 -0.311 -0.311 -0.311
+## [421] -0.199 -0.199 -0.199 -0.199 -0.107 -0.107 -0.107 -0.107 -0.107 -0.169
+## [431] -0.169 -0.169 -0.169 -0.138 -0.138 -0.138 -0.138 -0.138 -0.138 -0.210
+## [441] -0.210 -0.210 -0.106 -0.106 -0.106 -0.302 -0.302 -0.302 -0.302 -0.101
+## [451] -0.101 -0.101 -0.101 -0.309 -0.309 -0.309 -0.224 -0.224 -0.224 -0.224
+## [461] -0.235 -0.235 -0.235 -0.235 -0.235 -0.235 -0.235 -0.443 -0.443 -0.179
+## [471] -0.179</code></pre>
+<p><em>model.spp.gr.sample</em>: an identifier that includes
+<em>year_month</em>, <em>model</em>, <em>spp</em>, <em>gr</em>, and
+<em>sample</em> in that order, with underscores between each
+variable</p>
+<p><em>ignition_no_double</em>: after removing non-ignitions, all
+instances where <em>ignition</em> = 2 (multiple ignitions), are coded as
+NA. Otherwise, <em>ignition_no_double</em> = 1</p>
+<p><em>ros</em>: a metric derived from this equation: 10 / <em>fd</em>
+to represent rate of spread (cm/second); not used in any analyses</p>
+<p><em>gdw.gfw</em>: grams of dry weight per grams of fresh weight
+(using measurements taken for LFM subsample); not used in analyses, but
+used to calculate <em>dw.flam.sample</em></p>
+<p><em>max.mpa.sample</em>: the highest (wettest) water potential that
+the individual reached throughout the laboratory benchtop drydown</p>
+<p><em>flam.index</em>: derived from Essaghi et. al. 2017, using maximum
+<em>tti</em> and maximum <em>fh</em>, an index of flammability as a
+scale of least (1) to most (20) flammable. The following equation was
+used: <span class="math display">\[\begin{equation}
+flam.index = 9.1 \times \frac{25 \times tti}{(12.5 + tti)^\frac{fh}{fh +
+5.5}}
+\end{equation}\]</span></p>
+<p><em>mean.wt</em>:</p>
+<p><em>dw.flam.sample</em>: an estimate of the dry weight in the sample
+loaded into the flammability chamber derived from the <em>sample.wt</em>
+and the metrics that were used to calculate live fuel moisture (of a
+subsample collected at the same time as the flammability sample)
+(<em>dry.wt</em> and <em>fresh.wt</em>); this was used extensively in
+analyses and was calculated using this equation <span class="math display">\[\begin{equation}
+sample.wt \times \frac{dry.wt}{fresh.wt}
+\end{equation}\]</span> or <span class="math display">\[\begin{equation}
+sample.wt \times gdw.gfw
+\end{equation}\]</span></p>
+<p><em>ww.flam.sample</em>: an estimated of the water weight in the
+sample loaded into the flammability chamber; this was used often in
+analyses and was calculated using this equation <span class="math display">\[\begin{equation}
+sample.wt \minus dw.flam.sample
+\end{equation}\]</span></p>
+<p><em>dry.norm…</em>: the seven columns – <em>dry.norm.fh</em>,
+<em>dry.norm.gd</em>, <em>dry.norm.fd</em>, <em>dry.norm.pfg</em>,
+<em>dry.norm.ttfg</em>, <em>dry.norm.tti</em>, <em>dry.norm.gti</em> –
+are the flammability metrics normalized by the dry weight of the
+flammability sample, as reported in <em>dw.flam.sample</em>; these were
+used in some exploratory analyses, but not very extensively</p>
 </div>
-<div id="all_ignite_only_bothmethods_bothlocations.csv" class="section level2">
-<h2>all_ignite_only_bothmethods_bothlocations.csv</h2>
+<div id="combined-datasets" class="section level2">
+<h2>Combined Datasets</h2>
+<p>The following seven datasets were in 1.data_wrangling_methods.Rmd as
+a combination of local_flam_data_all.csv and seki_flam_data_all.csv and
+vary in the amount of data they include. In most cases, they have the
+same columns as defined previously in local_flam_data_all.csv and
+seki_flam_data_all.csv. All extra columns are defined as necessary.</p>
+<div id="all_ignite_only_bothmethods_bothlocations.csv" class="section level3">
+<h3>all_ignite_only_bothmethods_bothlocations.csv</h3>
 <pre class="r"><code>all_ignite_only_bothmethods_bothlocations &lt;- read_csv(here(&quot;processed-data&quot;, &quot;all_ignite_only_bothmethods_bothlocations.csv&quot;))</code></pre>
 <pre><code>## Rows: 1025 Columns: 49
 ## ── Column specification ────────────────────────────────────────────────────────
@@ -805,9 +907,180 @@ using..</p>
 ## #   lfm_outliers_out &lt;dbl&gt;, lfm_n_as_imputed &lt;dbl&gt;, gr &lt;chr&gt;,
 ## #   precip_2month &lt;chr&gt;, precip_2mo &lt;dbl&gt;, season &lt;chr&gt;,
 ## #   ignition_no_double &lt;dbl&gt;, prop_ignite &lt;dbl&gt;, ros &lt;dbl&gt;, hydration &lt;chr&gt;, …</code></pre>
-<p>This dataset was one of the seven created in
-1.data_wrangling_methods.Rmd as a combination of local_flam_data_all.csv
-and seki_flam_data_all.csv</p>
+</div>
+<div id="bothm_bothl_manual_ignitions_in.csv" class="section level3">
+<h3>bothm_bothl_manual_ignitions_in.csv</h3>
+<pre class="r"><code>bothm_bothl_manual_ignitions_in &lt;- read_csv(here(&quot;processed-data&quot;, &quot;bothm_bothl_manual_ignitions_in.csv&quot;))</code></pre>
+<pre><code>## Rows: 224 Columns: 50
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: &quot;,&quot;
+## chr (16): individual_round, individual, spp, model, lfm_notes, year_month, m...
+## dbl (34): sample, round, mpa, fh, ttfg, gti, tti, fd, gd, pfg, ignition, sta...
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
+<pre class="r"><code>head(bothm_bothl_manual_ignitions_in)</code></pre>
+<pre><code>## # A tibble: 6 × 50
+##   individual…¹ indiv…² sample round spp   model    mpa lfm_n…³    fh  ttfg   gti
+##   &lt;chr&gt;        &lt;chr&gt;    &lt;dbl&gt; &lt;dbl&gt; &lt;chr&gt; &lt;chr&gt;  &lt;dbl&gt; &lt;chr&gt;   &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;
+## 1 2020_Octobe… 2020_O…    1.1     1 ARPA  EPI   -0.072 0           9    19    14
+## 2 2020_Octobe… 2020_O…    1.2     1 ARPA  EPI   -0.109 0          17    13    17
+## 3 2020_Octobe… 2020_O…    1.2     2 ARPA  EPI   -1.86  0           5     3    17
+## 4 2020_Octobe… 2020_O…    1.3     5 ARPA  EPI   -5.56  0           5    12    14
+## 5 2020_Octobe… 2020_O…    1.4     3 ARPA  EPI   -3.38  0          10    10    34
+## 6 2020_Octobe… 2020_O…    1.4     3 ARPA  EPI   -3.38  0          10    10    34
+## # … with 39 more variables: tti &lt;dbl&gt;, fd &lt;dbl&gt;, gd &lt;dbl&gt;, pfg &lt;dbl&gt;,
+## #   ignition &lt;dbl&gt;, start_temp &lt;dbl&gt;, temp_max &lt;dbl&gt;, ignition_temp &lt;dbl&gt;,
+## #   prop_new &lt;dbl&gt;, sample_wt &lt;dbl&gt;, glow &lt;dbl&gt;, year_month &lt;chr&gt;, year &lt;dbl&gt;,
+## #   month &lt;chr&gt;, dry_wt &lt;dbl&gt;, fresh_wt &lt;dbl&gt;, water_wt &lt;dbl&gt;, site &lt;chr&gt;,
+## #   lfm_outliers_out &lt;dbl&gt;, lfm_n_as_imputed &lt;dbl&gt;, gr &lt;chr&gt;,
+## #   precip_2month &lt;chr&gt;, precip_2mo &lt;dbl&gt;, season &lt;chr&gt;,
+## #   ignition_no_double &lt;dbl&gt;, hydration &lt;chr&gt;, bins5lfm &lt;chr&gt;, …</code></pre>
+</div>
+<div id="bothmethods_and_locations_long_noignitionsincluded.csv" class="section level3">
+<h3>bothmethods_and_locations_long_noignitionsincluded.csv</h3>
+<pre class="r"><code>bothmethods_and_locations_long_noignitionsincluded &lt;- read_csv(here(&quot;processed-data&quot;, &quot;bothmethods_and_locations_long_noignitionsincluded.csv&quot;))</code></pre>
+<pre><code>## Rows: 666 Columns: 32
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: &quot;,&quot;
+## chr  (9): individual_round, individual, spp, model, lfm_notes, year_month, m...
+## dbl (23): sample, round, mpa, lfm, fh, ttfg, gti, tti, fd, gd, pfg, ignition...
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
+<pre class="r"><code>head(bothmethods_and_locations_long_noignitionsincluded)</code></pre>
+<pre><code>## # A tibble: 6 × 32
+##   individual…¹ indiv…² sample round spp   model    mpa   lfm lfm_n…³    fh  ttfg
+##   &lt;chr&gt;        &lt;chr&gt;    &lt;dbl&gt; &lt;dbl&gt; &lt;chr&gt; &lt;chr&gt;  &lt;dbl&gt; &lt;dbl&gt; &lt;chr&gt;   &lt;dbl&gt; &lt;dbl&gt;
+## 1 2020_Octobe… 2020_O…    1.1     1 ABCO  EPI   -0.208  187. 0           0    30
+## 2 2020_Octobe… 2020_O…    1.1     2 ABCO  EPI   -0.698  183. 0           0    27
+## 3 2020_Octobe… 2020_O…    1.1     3 ABCO  EPI   -0.987  167. 0           0    36
+## 4 2020_Octobe… 2020_O…    1.1     4 ABCO  EPI   -2.19   144. 0           0    27
+## 5 2020_Octobe… 2020_O…    1.2     1 ABCO  EPI   -0.261  200. 0           0    20
+## 6 2020_Octobe… 2020_O…    1.2     2 ABCO  EPI   -1.22   165. 0           0    20
+## # … with 21 more variables: gti &lt;dbl&gt;, tti &lt;dbl&gt;, fd &lt;dbl&gt;, gd &lt;dbl&gt;,
+## #   pfg &lt;dbl&gt;, ignition &lt;dbl&gt;, start_temp &lt;dbl&gt;, temp_max &lt;dbl&gt;,
+## #   ignition_temp &lt;dbl&gt;, prop_new &lt;dbl&gt;, sample_wt &lt;dbl&gt;, glow &lt;dbl&gt;,
+## #   year_month &lt;chr&gt;, year &lt;dbl&gt;, month &lt;chr&gt;, dry_wt &lt;dbl&gt;, fresh_wt &lt;dbl&gt;,
+## #   water_wt &lt;dbl&gt;, site &lt;chr&gt;, location &lt;chr&gt;, dw_flam_sample &lt;dbl&gt;, and
+## #   abbreviated variable names ¹​individual_round, ²​individual, ³​lfm_notes</code></pre>
+</div>
+<div id="bothmethods_and_locations_wide_noignitionsincluded.csv" class="section level3">
+<h3>bothmethods_and_locations_wide_noignitionsincluded.csv</h3>
+<pre class="r"><code>bothmethods_and_locations_wide_noignitionsincluded &lt;- read_csv(here(&quot;processed-data&quot;, &quot;bothmethods_and_locations_wide_noignitionsincluded.csv&quot;))</code></pre>
+<pre><code>## Rows: 333 Columns: 61
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: &quot;,&quot;
+## chr (17): individual_round, individual_epi, spp_epi, model_epi, lfm_notes_ep...
+## dbl (44): sample_epi, round_epi, mpa_epi, lfm_epi, fh_epi, ttfg_epi, gti_epi...
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
+<pre class="r"><code>head(bothmethods_and_locations_wide_noignitionsincluded)</code></pre>
+<pre><code>## # A tibble: 6 × 61
+##   indiv…¹ indiv…² sampl…³ round…⁴ spp_epi model…⁵ mpa_epi lfm_epi lfm_n…⁶ fh_epi
+##   &lt;chr&gt;   &lt;chr&gt;     &lt;dbl&gt;   &lt;dbl&gt; &lt;chr&gt;   &lt;chr&gt;     &lt;dbl&gt;   &lt;dbl&gt; &lt;chr&gt;    &lt;dbl&gt;
+## 1 2020_O… 2020_O…     1.1       1 ABCO    EPI      -0.208    187. 0            0
+## 2 2020_O… 2020_O…     1.1       2 ABCO    EPI      -0.698    183. 0            0
+## 3 2020_O… 2020_O…     1.1       3 ABCO    EPI      -0.987    167. 0            0
+## 4 2020_O… 2020_O…     1.1       4 ABCO    EPI      -2.19     144. 0            0
+## 5 2020_O… 2020_O…     1.2       1 ABCO    EPI      -0.261    200. 0            0
+## 6 2020_O… 2020_O…     1.2       2 ABCO    EPI      -1.22     165. 0            0
+## # … with 51 more variables: ttfg_epi &lt;dbl&gt;, gti_epi &lt;dbl&gt;, tti_epi &lt;dbl&gt;,
+## #   fd_epi &lt;dbl&gt;, gd_epi &lt;dbl&gt;, pfg_epi &lt;dbl&gt;, ignition_epi &lt;dbl&gt;,
+## #   start_temp_epi &lt;dbl&gt;, temp_max_epi &lt;dbl&gt;, ignition_temp_epi &lt;dbl&gt;,
+## #   prop_new_epi &lt;dbl&gt;, sample_wt_epi &lt;dbl&gt;, glow_epi &lt;dbl&gt;,
+## #   year_month_epi &lt;chr&gt;, year_epi &lt;dbl&gt;, month_epi &lt;chr&gt;, dry_wt_epi &lt;dbl&gt;,
+## #   fresh_wt_epi &lt;dbl&gt;, water_wt_epi &lt;dbl&gt;, site_epi &lt;chr&gt;, location_epi &lt;chr&gt;,
+## #   individual_hp &lt;chr&gt;, sample_hp &lt;dbl&gt;, round_hp &lt;dbl&gt;, spp_hp &lt;chr&gt;, …</code></pre>
+</div>
+<div id="bothmethods_bothlocations_wide.csv" class="section level3">
+<h3>bothmethods_bothlocations_wide.csv</h3>
+<pre class="r"><code>bothmethods_bothlocations_wide &lt;- read_csv(here(&quot;processed-data&quot;, &quot;bothmethods_bothlocations_wide.csv&quot;))</code></pre>
+<pre><code>## Rows: 112 Columns: 99
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: &quot;,&quot;
+## chr (31): individual_round, individual_epi, spp_epi, model_epi, lfm_notes_ep...
+## dbl (68): sample_epi, round_epi, mpa_epi, fh_epi, ttfg_epi, gti_epi, tti_epi...
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
+<pre class="r"><code>head(bothmethods_bothlocations_wide)</code></pre>
+<pre><code>## # A tibble: 6 × 99
+##   indiv…¹ indiv…² sampl…³ round…⁴ spp_epi model…⁵ mpa_epi lfm_n…⁶ fh_epi ttfg_…⁷
+##   &lt;chr&gt;   &lt;chr&gt;     &lt;dbl&gt;   &lt;dbl&gt; &lt;chr&gt;   &lt;chr&gt;     &lt;dbl&gt; &lt;chr&gt;    &lt;dbl&gt;   &lt;dbl&gt;
+## 1 2020_O… 2020_O…     1.1       1 ARPA    EPI      -0.072 0            9      19
+## 2 2020_O… 2020_O…     1.2       1 ARPA    EPI      -0.109 0           17      13
+## 3 2020_O… 2020_O…     1.2       2 ARPA    EPI      -1.86  0            5       3
+## 4 2020_O… 2020_O…     1.3       5 ARPA    EPI      -5.56  0            5      12
+## 5 2020_O… 2020_O…     1.4       3 ARPA    EPI      -3.38  0           10      10
+## 6 2020_O… 2020_O…     1.4       3 ARPA    EPI      -3.38  0           10      10
+## # … with 89 more variables: gti_epi &lt;dbl&gt;, tti_epi &lt;dbl&gt;, fd_epi &lt;dbl&gt;,
+## #   gd_epi &lt;dbl&gt;, pfg_epi &lt;dbl&gt;, ignition_epi &lt;dbl&gt;, start_temp_epi &lt;dbl&gt;,
+## #   temp_max_epi &lt;dbl&gt;, ignition_temp_epi &lt;dbl&gt;, prop_new_epi &lt;dbl&gt;,
+## #   sample_wt_epi &lt;dbl&gt;, glow_epi &lt;dbl&gt;, year_month_epi &lt;chr&gt;, year_epi &lt;dbl&gt;,
+## #   month_epi &lt;chr&gt;, dry_wt_epi &lt;dbl&gt;, fresh_wt_epi &lt;dbl&gt;, water_wt_epi &lt;dbl&gt;,
+## #   site_epi &lt;chr&gt;, lfm_outliers_out_epi &lt;dbl&gt;, lfm_n_as_imputed_epi &lt;dbl&gt;,
+## #   gr_epi &lt;chr&gt;, precip_2month_epi &lt;chr&gt;, precip_2mo_epi &lt;dbl&gt;, …</code></pre>
+</div>
+<div id="bothmethods_bothlocations_long.csv" class="section level3">
+<h3>bothmethods_bothlocations_long.csv</h3>
+<pre class="r"><code>bothmethods_bothlocations_long &lt;- read_csv(here(&quot;processed-data&quot;, &quot;bothmethods_bothlocations_long.csv&quot;))</code></pre>
+<pre><code>## Rows: 195 Columns: 50
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: &quot;,&quot;
+## chr (16): individual_round, individual, spp, model, lfm_notes, year_month, m...
+## dbl (34): sample, round, mpa, fh, ttfg, gti, tti, fd, gd, pfg, ignition, sta...
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
+<pre class="r"><code>head(bothmethods_bothlocations_long)</code></pre>
+<pre><code>## # A tibble: 6 × 50
+##   individual…¹ indiv…² sample round spp   model    mpa lfm_n…³    fh  ttfg   gti
+##   &lt;chr&gt;        &lt;chr&gt;    &lt;dbl&gt; &lt;dbl&gt; &lt;chr&gt; &lt;chr&gt;  &lt;dbl&gt; &lt;chr&gt;   &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;
+## 1 2020_Octobe… 2020_O…    1.1     1 ARPA  EPI   -0.072 0           9    19    14
+## 2 2020_Octobe… 2020_O…    1.2     1 ARPA  EPI   -0.109 0          17    13    17
+## 3 2020_Octobe… 2020_O…    1.2     2 ARPA  EPI   -1.86  0           5     3    17
+## 4 2020_Octobe… 2020_O…    1.3     5 ARPA  EPI   -5.56  0           5    12    14
+## 5 2020_Octobe… 2020_O…    1.4     3 ARPA  EPI   -3.38  0          10    10    34
+## 6 2020_Octobe… 2020_O…    1.4     3 ARPA  EPI   -3.38  0          10    10    34
+## # … with 39 more variables: tti &lt;dbl&gt;, fd &lt;dbl&gt;, gd &lt;dbl&gt;, pfg &lt;dbl&gt;,
+## #   ignition &lt;dbl&gt;, start_temp &lt;dbl&gt;, temp_max &lt;dbl&gt;, ignition_temp &lt;dbl&gt;,
+## #   prop_new &lt;dbl&gt;, sample_wt &lt;dbl&gt;, glow &lt;dbl&gt;, year_month &lt;chr&gt;, year &lt;dbl&gt;,
+## #   month &lt;chr&gt;, dry_wt &lt;dbl&gt;, fresh_wt &lt;dbl&gt;, water_wt &lt;dbl&gt;, site &lt;chr&gt;,
+## #   lfm_outliers_out &lt;dbl&gt;, lfm_n_as_imputed &lt;dbl&gt;, gr &lt;chr&gt;,
+## #   precip_2month &lt;chr&gt;, precip_2mo &lt;dbl&gt;, season &lt;chr&gt;,
+## #   ignition_no_double &lt;dbl&gt;, hydration &lt;chr&gt;, bins5lfm &lt;chr&gt;, …</code></pre>
+</div>
+<div id="bothmethods_bothlocations.csv" class="section level3">
+<h3>bothmethods_bothlocations.csv</h3>
+<pre class="r"><code>bothmethods_bothlocations &lt;- read_csv(here(&quot;processed-data&quot;, &quot;bothmethods_bothlocations.csv&quot;))</code></pre>
+<pre><code>## Rows: 210 Columns: 50
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: &quot;,&quot;
+## chr (17): individual_round, individual, model_spp_gr, spp, model, lfm_notes,...
+## dbl (33): sample, round, mpa, fh, ttfg, gti, tti, fd, gd, pfg, ignition, sta...
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
+<pre class="r"><code>head(bothmethods_bothlocations)</code></pre>
+<pre><code>## # A tibble: 6 × 50
+##   individua…¹ indiv…² sample round model…³ spp   model   mpa lfm_n…⁴    fh  ttfg
+##   &lt;chr&gt;       &lt;chr&gt;    &lt;dbl&gt; &lt;dbl&gt; &lt;chr&gt;   &lt;chr&gt; &lt;chr&gt; &lt;dbl&gt; &lt;chr&gt;   &lt;dbl&gt; &lt;dbl&gt;
+## 1 2020_Octob… 2020_O…    1.4     1 2020_O… ABCO  EPI   0.312 0         5.5    12
+## 2 2020_Octob… 2020_O…    1.1     1 2020_O… ARPA  EPI   0.072 0         9      19
+## 3 2020_Octob… 2020_O…    1.2     1 2020_O… ARPA  EPI   0.109 0        17      13
+## 4 2020_Octob… 2020_O…    1.2     2 2020_O… ARPA  EPI   1.86  0         5       3
+## 5 2020_Octob… 2020_O…    1.3     5 2020_O… ARPA  EPI   5.56  0         5      12
+## 6 2020_Octob… 2020_O…    1.4     3 2020_O… ARPA  EPI   3.38  0        10      10
+## # … with 39 more variables: gti &lt;dbl&gt;, tti &lt;dbl&gt;, fd &lt;dbl&gt;, gd &lt;dbl&gt;,
+## #   pfg &lt;dbl&gt;, ignition &lt;dbl&gt;, start_temp &lt;dbl&gt;, temp_max &lt;dbl&gt;,
+## #   ignition_temp &lt;dbl&gt;, prop_new &lt;dbl&gt;, sample_wt &lt;dbl&gt;, glow &lt;dbl&gt;,
+## #   year_month &lt;chr&gt;, year &lt;dbl&gt;, month &lt;chr&gt;, dry_wt &lt;dbl&gt;, fresh_wt &lt;dbl&gt;,
+## #   water_wt &lt;dbl&gt;, site &lt;chr&gt;, lfm_outliers_out &lt;dbl&gt;, lfm_n_as_imputed &lt;dbl&gt;,
+## #   gr &lt;chr&gt;, precip_2month &lt;chr&gt;, precip_2mo &lt;dbl&gt;, season &lt;chr&gt;,
+## #   ignition_no_double &lt;dbl&gt;, prop_ignite &lt;dbl&gt;, ros &lt;dbl&gt;, hydration &lt;chr&gt;, …</code></pre>
+</div>
 </div>
 </div>
 

@@ -15,6 +15,8 @@ library(tidyverse)
 
 This .Rmd file covers the necessary metadata for the datasets that we used in the analyses for this manuscript.
 
+# --------------------------
+
 # Raw Data
 
 ## lit.review.csv
@@ -79,7 +81,10 @@ head(local_flam_data_all)
 
 *mpa*: water potential (-MPa), reported here as a positive number but changed to negative values in the data wrangling step
 
-*lfm*: live fuel moisture (LFM, %), as measured using Eq. 1 reported in the paper
+*lfm*: live fuel moisture (LFM, %), as measured using the following equation, taken on a subsample directly before testing flammability
+\start{equation}
+LFM = 100 \times \frac{fresh weight - dry weight}{dry weight}
+\end{equation}
 
 *lfm_notes*: any notes taken on the live fuel moisture sample
 
@@ -131,29 +136,32 @@ head(local_flam_data_all)
 
 *gr*: represents the 10% bin of LFM that the sample fell into (e.g., (90,100] = the sample's LFM was greater than 90% and less than or equal to 100%)
 
-*precip_2month*: duplicate column of year_month - REMOVE
+*precip_2month*: month used when accessing precipitation data (essentially a duplicate column of year_month)
 
-*precip_2mo*: the precipitation (cm??) recorded by local weather stations (where??) for the 2 months prior to flammability testing
+*precip_2mo*: the precipitation recorded by a weather station at Santa Barbara Botanical Gardens for the 2 months prior to flammability testing
 
 *season*: an identifier of whether or not sampling efforts occurred after (season = Wet) the beginning of seasonal rains (typically in the late fall to spring) or before (season = Dry) seasonal rains (typically late spring or early summer to late fall)
 
-*hydration*: an identifier denoting the hydration status of the sample based on LFM and water potential measurements, split into "dry", "moderate", and "hydrated"
+*hydration*: an identifier denoting the hydration status of the sample based on LFM, split into "dry" (0-60% LFM), "moderate" (60-90% LFM), and "hydrated" (>90% LFM)
 
 *bins5lfm*: represents the 5% bin of LFM that the sample fell into
 
-*bins10lfm*: duplicate column of gr - REMOVE or remove *gr*
+*bins10lfm*: duplicate column of *gr*
 
 *bins20lfm*: represents the 20% bin of LFM that the sample fell into
 
 *temp_change*: the difference in temperature (degrees C) from the starting temperature to the maximum temperature (i.e., *temp_max* - *start_temp*)
 
-*gdw_gfw*: REMOVE?
+*gdw_gfw*: grams of dry weight per grams of fresh weight (from LFM subsample); used in calculation of *dw.flam.sample* (see below)
 
-*gww_gdw*: REMOVE? 
+*gww_gdw*: grams of wet weight per grams of dry weight (from LFM subsample); not used in analyses
 
-*flam_index*: REMOVE?
+*flam_index*: derived from Essaghi et. al. 2017, using maximum *tti* and maximum *fh*, an index of flammability as a scale of least (1) to most (20) flammable. The following equation was used: 
+\begin{equation}
+flam.index = 9.1 \times \frac{25 \times tti}{(12.5 + tti)^\frac{fh}{fh + 5.5}} 
+\end{equation}
 
-*max_mpa_sample*: REMOVE?
+*max_mpa_sample*: the maximum (wettest) water potential measured using this method
 
 ## SEKI_flammability.csv
 ```{r}
@@ -177,7 +185,9 @@ Many of the following columns are identical to the columns described above, so I
 
 *lfm.notes*: see above lfm_notes
 
-**Flammability Metrics**: *fh*, *ttfg*, *gti*, *tti*, *fd*, *gd*, *pfg*, *ignition*, *start.temp* (see *start_temp*), *temp.max* (see *temp_max*), *ignition.temp* (see *ignition_temp*), *prop.new* (see *prop_new*), *sample.wt* (see *sample_wt*), and *glow* are all identical to what was reported above for local_flam_data_all.csv
+**Flammability Metrics**: *fh*, *ttfg*, *gti*, *tti*, *fd*, *gd*, *pfg*, *start.temp* (see *start_temp*), *temp.max* (see *temp_max*), *ignition.temp* (see *ignition_temp*), *prop.new* (see *prop_new*), *sample.wt* (see *sample_wt*), and *glow* are all identical to what was reported above for local_flam_data_all.csv
+
+*ignition*: mostly identical to what was reported above, but in some cases, when the sample ignited more than once, a '2' is reported, making it no longer a binary identifier
 
 *year* and *month*: see above
 
@@ -197,11 +207,17 @@ head(pv_summary_df_timing)
 
 Although we did not end up using pressure-volume curve data in any of the analyses reported in the paper or the supplementary index, we did use it in some exploratory/extra analyses looking at whether or not we could detect thresholds in flammability metrics at or around the identified turgor loss point for species; therefore, it is in the GitHub repository.
 
-Pressure-volume curves (PV curves) were conducted using the protocols outlined in Tyree & Hammel 1972 as described below (from Boving et. al., *in review*): MAYBE CHANGE UP WORDING OF THESE PROTOCOLS?
+Pressure-volume curves (PV curves) were conducted using the protocols outlined in Tyree & Hammel 1972 as described below (adapted from Boving et. al., *in review*):
 
-Healthy 20-40 cm branches were collected from the 6 individuals from Site 1 (for either chaparral or SEKI species) shortly after dawn, sealed in moistened plastic bags, and transported to the laboratory in a cooler. Samples were either immediately processed within 1 hour of sample collection or stored in a refrigerator at 4C between processing (maximally 12 hours after collection). For processing, we cut branches incrementally underwater into smaller branchlets and rehydrated them in cool darkness for 2-4 hours, after which we excised healthy non-necrotic leaves or small leafy shoots from the branch using a razor blade. To avoid the effects of oversaturation, leaves and stems that had been underwater during rehydration were avoided during PV curve analysis. For *Pinus jeffreyi* fascicles were rehydrated by placing the entire excised fascicle in water.
+20-40 cm samples were collected from the 6 individuals from Site 1 (for either chaparral or SEKI species) shortly after dawn by cutting from terminal shoots. Then they were sealed in moistened plastic bags and transported to the laboratory in a cooler. Samples were either immediately processed within 1 hour of sample collection (which was more plausible for the chaparral species) or stored in a refrigerator at 4C between processing (maximally 12 hours after collection).
 
-Water potential (-MPa) and leaf weight (to 0.0001 g) were determined on 3-6 rehydrated leaves or branchlets (1 per individual). While measuring water potential, care was taken to slowly increase pressure (0.1 -Mpa/sec) for accurate water potential estimates, and to slowly remove pressure from the tank following measurements to avoid rapid cooling of the sample. Consecutive water potential and weight measurements were taken on each leaf and plotted as -1/MPa and sample weight. This plot informed when we had reached the TLP, and we ceased measurements after three to five points of the linear section of the curve were reached. We determined saturated water content by extrapolating the plot of water potential and water weight to water potential = 0, which was used to determine relative water content (RWC) and LFM using Eq. 1. The LFM, RWC, and water potential at TLP corresponded with the point at which the exponential section of the curve met the linear section, determined by maximizing the linear fit (R2) of the tail of the curve. The osmotic potential at full turgor was calculated as the y-intercept of the linear section of the curve. PV parameters were determined using the protocols available on prometheus wiki.
+Prior to running the PV curves, we cut branches incrementally underwater into smaller branchlets and rehydrated them in cool darkness for 2-4 hours, after which we removed healthy leaves or small leafy shoots from the branch using a razor blade. To avoid the effects of oversaturation, leaves and stems that had been underwater during rehydration were typically avoided during PV curve analysis. For *Pinus jeffreyi*, however, fascicles were rehydrated by placing the entire excised fascicle in water making the avoidance of using leaves that were underwater during rehydration impossible.
+
+To run the PV curves, we measured leaf weight (to 0.0001 g) and then rapidly measured water potential (MPa) for 3-6 rehydrated leaves or branchlets (1 per individual). While measuring water potential, care was taken to slowly increase pressure (0.1 Mpa/sec) for accurate water potential estimates, as well as slowly remove pressure from the tank following measurements avoiding rapid cooling of the sample. Throughout the PV curves, a plot was made using -1/MPa and sample weight; this informed when we had reached the TLP (at the intersection of the linear portion of the curve and the exponential portion), and we ceased measurements after three to five datapoints in the linear section of the curve. 
+
+Afterwards, we determined saturated water content (SWC) by extrapolating a plot of water potential vs. water weight to water potential = 0, which was used to determine relative water content (RWC) and LFM using Eq. 1. The LFM, RWC, and water potential at TLP corresponded with the point at which the exponential section of the curve met the linear section, determined by maximizing the linear fit (R2) of the tail of the curve. The osmotic potential at full turgor was calculated as the y-intercept of the linear section of the curve. PV parameters were determined using the protocols available on Prometheus wiki (Sack et. al.; url: https://prometheusprotocols.net/function/water-relations/pressure-volume-curves/leaf-pressure-volume-curve-parameters/).
+
+These are the columns included in this dataset:
 
 *spp*: a species identifier following these abbreviations: ARPA = *Arctostaphylos patula*, ABCO = *Abies concolor*, CADE = *Calocedrus decurrens*, CECO = *Ceanothus cordulatus*, PIJE = *Pinus jeffreyii*, QUKE = *Quercus kelloggii*, CEME = *Ceanothus megacarpus*, and ADFA = *Adenostoma fasciculatum*
 
@@ -219,6 +235,8 @@ Water potential (-MPa) and leaf weight (to 0.0001 g) were determined on 3-6 rehy
 
 *upr_lfm*: the upper bounds of the TLP (LFM, %) as identified using..
 
+# --------------------------
+
 # Processed Data
 
 ## seki_flam_data_all.csv
@@ -227,59 +245,77 @@ seki_flam_data_all <- read_csv(here("processed-data", "seki_flam_data_all.csv"))
 head(seki_flam_data_all)
 ```
 
+*model.spp.gr.sample*: an identifier that includes *year_month*, *model*, *spp*, *gr*, and *sample* in that order, with underscores between each variable
 
-## all_ignite_only_bothmethods_bothlocations.csv
-```{r}
-all_ignite_only_bothmethods_bothlocations <- read_csv(here("processed-data", "all_ignite_only_bothmethods_bothlocations.csv"))
-head(all_ignite_only_bothmethods_bothlocations)
-```
+*ignition_no_double*: after removing non-ignitions, all instances where *ignition* = 2 (multiple ignitions), are coded as NA. Otherwise, *ignition_no_double* = 1
 
-This dataset was one of the seven created in 1.data_wrangling_methods.Rmd as a combination of local_flam_data_all.csv and seki_flam_data_all.csv
+*ros*: a metric derived from this equation: 10 / *fd* to represent rate of spread (cm/second); not used in any analyses
 
-## bothm_bothl_manual_ignitions_in.csv
-```{r}
-bothm_bothl_manual_ignitions_in <- read_csv(here("processed-data", "bothm_bothl_manual_ignitions_in.csv"))
-head(bothm_bothl_manual_ignitions_in)
-```
+*gdw.gfw*: grams of dry weight per grams of fresh weight (using measurements taken for LFM subsample); not used in analyses, but used to calculate *dw.flam.sample*
 
-This dataset was one of the seven created in 1.data_wrangling_methods.Rmd as a combination of local_flam_data_all.csv and seki_flam_data_all.csv
+*max.mpa.sample*: the highest (wettest) water potential that the individual reached throughout the laboratory benchtop drydown
 
-## bothmethods_and_locations_long_noignitionsincluded.csv
-```{r}
-bothmethods_and_locations_long_noignitionsincluded <- read_csv(here("processed-data", "bothmethods_and_locations_long_noignitionsincluded.csv"))
-head(bothmethods_and_locations_long_noignitionsincluded)
-```
+*flam.index*: see flam_index in local_flam_all.csv
 
-This dataset was one of the seven created in 1.data_wrangling_methods.Rmd as a combination of local_flam_data_all.csv and seki_flam_data_all.csv
+*mean.wt*: the mean sample weight (*sample.wt*) calculated for each species for either *model* (e.g., *mean.wt* for *Abies concolor* for the epiradiator method)
 
-## bothmethods_and_locations_wide_noignitionsincluded.csv
-```{r}
-bothmethods_and_locations_wide_noignitionsincluded <- read_csv(here("processed-data", "bothmethods_and_locations_wide_noignitionsincluded.csv"))
-head(bothmethods_and_locations_wide_noignitionsincluded)
-```
+*dw.flam.sample*: an estimate of the dry weight in the sample loaded into the flammability chamber derived from the *sample.wt* and the metrics that were used to calculate live fuel moisture (of a subsample collected at the same time as the flammability sample) (*dry.wt* and *fresh.wt*); this was used extensively in analyses and was calculated using this equation
+\begin{equation}
+sample.wt \times \frac{dry.wt}{fresh.wt}
+\end{equation}
+or
+\begin{equation}
+sample.wt \times gdw.gfw
+\end{equation}
 
-This dataset was one of the seven created in 1.data_wrangling_methods.Rmd as a combination of local_flam_data_all.csv and seki_flam_data_all.csv
+*ww.flam.sample*: an estimated of the water weight in the sample loaded into the flammability chamber; this was used often in analyses and was calculated using this equation 
+\begin{equation}
+sample.wt - dw.flam.sample
+\end{equation}
 
-## bothmethods_bothlocations_wide.csv
+*dry.norm...*: the seven columns -- *dry.norm.fh*, *dry.norm.gd*, *dry.norm.fd*, *dry.norm.pfg*, *dry.norm.ttfg*, *dry.norm.tti*, *dry.norm.gti* -- are the flammability metrics normalized by the dry weight of the flammability sample, as reported in *dw.flam.sample*; these were used in some exploratory analyses, but not very extensively
+
+## Combined Datasets
+The following datasets were in 1.data_wrangling_methods.Rmd as a combination of local_flam_data_all.csv and seki_flam_data_all.csv and vary in the amount of data they include. In most cases, they have the same columns as defined previously in local_flam_data_all.csv and seki_flam_data_all.csv. All extra columns are defined as necessary. One recurring column was:
+
+*location*: either local (chapparal sites) or seki (Sierra Nevadas sites, seki = Sequoia-Kings Canyon)
+
+The first two we used most often (by far), while the last three were used primarily for extra analyses or exploratory analyses
+
+### bothmethods_bothlocations_wide.csv
 ```{r}
 bothmethods_bothlocations_wide <- read_csv(here("processed-data", "bothmethods_bothlocations_wide.csv"))
 head(bothmethods_bothlocations_wide)
 ```
 
-This dataset was one of the seven created in 1.data_wrangling_methods.Rmd as a combination of local_flam_data_all.csv both seki_flam_data_all.csv
+This combines the data gathered from the SEKI and chapparal sites, from both epiradiator and hot plate methods. In this .csv, the data is in a 'wide' format with columns for the data from the epiradiator (_epi) and the hot plate (_hp). This was a possibility due to us simultaneously burning plant samples using both methods, so for each individual and round, there was data for both epiradiator and hot plate methods
 
-## bothmethods_bothlocations_long.csv
+### bothmethods_bothlocations_long.csv
 ```{r}
 bothmethods_bothlocations_long <- read_csv(here("processed-data", "bothmethods_bothlocations_long.csv"))
 head(bothmethods_bothlocations_long)
 ```
 
-This dataset was one of the seven created in 1.data_wrangling_methods.Rmd as a combination of local_flam_data_all.csv and seki_flam_data_all.csv
+This combines the data gathered from the SEKI and chapparal sites, from both epiradiator and hot plate methods by stitching the rows together. Unlike the 'wide' format, there are individual rows for each burn that have a *model* column describing if it is from the epiradiator or hot plate method.
 
-## bothmethods_bothlocations.csv
+### bothm_bothl_manual_ignitions_in.csv
 ```{r}
-bothmethods_bothlocations <- read_csv(here("processed-data", "bothmethods_bothlocations.csv"))
-head(bothmethods_bothlocations)
+bothm_bothl_manual_ignitions_in <- read_csv(here("processed-data", "bothm_bothl_manual_ignitions_in.csv"))
+head(bothm_bothl_manual_ignitions_in)
 ```
 
-This dataset was one of the seven created in 1.data_wrangling_methods.Rmd as a combination of local_flam_data_all.csv and seki_flam_data_all.csv
+This includes data-of-interest (excluding certain species as noted in 1.data_wrangling_methods.Rmd) for both methods and both locations and includes manual ignitions
+
+### bothmethods_and_locations_long_noignitionsincluded.csv
+```{r}
+bothmethods_and_locations_long_noignitionsincluded <- read_csv(here("processed-data", "bothmethods_and_locations_long_noignitionsincluded.csv"))
+head(bothmethods_and_locations_long_noignitionsincluded)
+```
+This includes non-ignitions; the columns have all been defined above.
+
+### bothmethods_and_locations_wide_noignitionsincluded.csv
+```{r}
+bothmethods_and_locations_wide_noignitionsincluded <- read_csv(here("processed-data", "bothmethods_and_locations_wide_noignitionsincluded.csv"))
+head(bothmethods_and_locations_wide_noignitionsincluded)
+```
+This includes non-ignitions but in a wide format with variables followed by _epi or _hp depending on which *model* was used

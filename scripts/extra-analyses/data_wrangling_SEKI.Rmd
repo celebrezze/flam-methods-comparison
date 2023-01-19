@@ -506,8 +506,8 @@ We also make a dataset to use in PV curve from flam curve analysis.
 #calculate metrics for weight values (read . as "per", i.e. gdw.gfw is "gram dry weight per gram fresh weight"):
 data.seki.imputed <- data.seki.imputed %>%
   dplyr::mutate(gdw.gfw = dry.wt/fresh.wt) %>%
-  dplyr:::mutate(gww.gdw = lfm.NAs.imputed/100) %>%
-  dplyr::mutate(gdw.gww = dry.wt/water.wt) %>%
+  #dplyr:::mutate(gww.gdw = lfm.NAs.imputed/100) %>%
+  #dplyr::mutate(gdw.gww = dry.wt/water.wt) %>%
   dplyr::mutate(dw.flam.sample = sample.wt * gdw.gfw) %>%
   dplyr::mutate(ww.flam.sample = sample.wt - dw.flam.sample) %>%
   replace_with_na_at(.vars = c("ww.flam.sample"), condition = ~.x < 0) # oe was below 0 (due to missing lfm), so remove that one 
@@ -526,16 +526,16 @@ data.seki.imputed <- data.seki.imputed %>%
   impute_median_at("ww.flam.sample") %>%
   dplyr::group_by(model.spp.gr) %>%
   dplyr::group_by(individual) %>% 
-  dplyr::mutate(gww.gdw.saturated = max((gww.gdw), na.rm = TRUE)) %>%
-  dplyr::mutate(gdw.gww.saturated = min((gdw.gww), na.rm = TRUE)) %>%
-  mutate(RWC = (gww.gdw/gww.gdw.saturated)*100) %>%
-  mutate(RWD = 100 - RWC) %>%
+  #dplyr::mutate(gww.gdw.saturated = max((gww.gdw), na.rm = TRUE)) %>%
+  #dplyr::mutate(gdw.gww.saturated = min((gdw.gww), na.rm = TRUE)) %>%
+  #mutate(RWC = (gww.gdw/gww.gdw.saturated)*100) %>%
+  #mutate(RWD = 100 - RWC) %>%
   mutate(max.mpa.sample = max((mpa), na.rm = TRUE)) 
   #select(order(colnames())) #make columns in alphabetical order
 
 #write.csv(data.seki.imputed, here("processed-data", "seki.data.halfwayprocessed.csv"))
 
-rwc.data <- data.seki.imputed %>% select(individual, year.month, dry.wt, spp, model, lfm.NAs.imputed, RWC, max.mpa.sample, mpa, gww.gdw, gww.gdw.saturated, fresh.wt, dry.wt, site, sample)
+rwc.data <- data.seki.imputed %>% select(individual, year.month, dry.wt, spp, model, lfm.NAs.imputed, max.mpa.sample, mpa, fresh.wt, dry.wt, site, sample)
 ```
 
 ------------------------------------------------------------------------
