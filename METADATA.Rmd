@@ -104,11 +104,11 @@ LFM = 100 \times \frac{fresh weight - dry weight}{dry weight}
 
 *ignition*: binary identifier describing whether or not the sample ignited (1 = ignited, 0 = not ignited)
 
-*start_temp*: starting temperature (degrees Celsius)...
+*start_temp*: starting temperature (degrees Celsius) as measured by the thermocouple located 1 cm above the sample 
 
-*temp_max*: maximum temperature (degrees Celsius)...
+*temp_max*: maximum temperature (degrees Celsius) as measured by the thermocouple located 1 cm above the sample
 
-*ignition_temp*: temperature (degrees Celsius) at the point of ignition
+*ignition_temp*: temperature (degrees Celsius) at the point of ignition as measured by the thermocouple located 1cm above the sample 
 
 *prop_new*: estimated proportion of new growth in the sample as observed directly prior to loaading the sample in the flammability chamber
 
@@ -128,7 +128,7 @@ LFM = 100 \times \frac{fresh weight - dry weight}{dry weight}
 
 *water_wt*: the difference between the *fresh_wt* and the *dry_wt* representing the weight of water (g) in the LFM subsample
 
-*site*: a character identifier describing the site that we gathered the samples from (either St. Marys = chapparal Site 1 = 34.4613N, -119.6934W or Painted Caves = chapparal Site 2 = 34.4931N, -119.7910W)
+*site*: a character identifier describing the site that we gathered the samples from (either St. Marys = chapparal Site 1 = 34.4613, -119.6934 or Painted Caves = chapparal Site 2 = 34.4931, -119.7910)
 
 *lfm_outliers_out*: a column reporting LFM values, with outliers replaced with NAs
 
@@ -138,7 +138,7 @@ LFM = 100 \times \frac{fresh weight - dry weight}{dry weight}
 
 *precip_2month*: month used when accessing precipitation data (essentially a duplicate column of year_month)
 
-*precip_2mo*: the precipitation recorded by a weather station at Santa Barbara Botanical Gardens for the 2 months prior to flammability testing
+*precip_2mo*: the precipitation (inches) recorded by a weather station at Santa Barbara Botanical Gardens for Santa Barbara county for the 2 months prior to flammability testing (see: https://www.countyofsb.org/2256/Historical-Rainfall-Reservoir-Informatio)
 
 *season*: an identifier of whether or not sampling efforts occurred after (season = Wet) the beginning of seasonal rains (typically in the late fall to spring) or before (season = Dry) seasonal rains (typically late spring or early summer to late fall)
 
@@ -155,11 +155,6 @@ LFM = 100 \times \frac{fresh weight - dry weight}{dry weight}
 *gdw_gfw*: grams of dry weight per grams of fresh weight (from LFM subsample); used in calculation of *dw.flam.sample* (see below)
 
 *gww_gdw*: grams of wet weight per grams of dry weight (from LFM subsample); not used in analyses
-
-*flam_index*: derived from Essaghi et. al. 2017, using maximum *tti* and maximum *fh*, an index of flammability as a scale of least (1) to most (20) flammable. The following equation was used: 
-\begin{equation}
-flam.index = 9.1 \times \frac{25 \times tti}{(12.5 + tti)^\frac{fh}{fh + 5.5}} 
-\end{equation}
 
 *max_mpa_sample*: the maximum (wettest) water potential measured using this method
 
@@ -193,12 +188,12 @@ Many of the following columns are identical to the columns described above, so I
 
 *dry.wt*, *fresh.wt*, and *water.wt*: see *dry_wt*, *fresh_wt* and *water_wt* above and note *bottle.wt* below
 
-*site*: numerical identifier of sampling site (input coordinates here!)
+*site*: numerical identifier of sampling site. Site 1: 36.7209, -118.9708; Site 2: 36.7153, -118.9682
 
 *bottle.wt*: the weight of the tin (g) in which we weighed all measurements for LFM measurements. Note that the *dry.wt* and *fresh.wt* columns include the weight of the tin as well as the weight of the sample in every case which differs from local_flam_data_all where the *dry_wt* and *fresh_wt* have the bottle subtracted from the weight
 
 *ttms*: time elapsed from beginning of ignition to the point where the entire sample is engulfed in flames (seconds); note that we did not end up using this, as -- especially for the epiradiator burns -- we deemed it to be too subjective and inconsistent of a metric to reliably use in analyses
-
+ 
 ## pv_summary_df_timing.csv
 ```{r}
 pv_summary_df_timing <- read_csv(here("raw-data", "pv_summary_df_timing.csv"))
@@ -225,15 +220,15 @@ These are the columns included in this dataset:
 
 *mean_tlp*: the average of the turgor loss point (TLP) across individuals tested (MPa)
 
-*lwr*: the lower bounds of the TLP (MPa) as identified using...
+*lwr*: the lower bounds of the TLP (MPa) as identified by subtracting one standard deviation from the TLP
 
-*upr*: the upper bounds of the TLP (MPa) as identified using..
+*upr*: the upper bounds of the TLP (MPa) as identified by adding one standard deviation from the TLP
 
 *mean_lfm*: the average of the TLP across individuals tested expressed as live fuel moisture (%); note that we did not do this for spring PV curves
 
-*lwr_lfm*: the lower bounds of the TLP (LFM, %) as identified using...
-
-*upr_lfm*: the upper bounds of the TLP (LFM, %) as identified using..
+*lwr_lfm*: the lower bounds of the TLP (LFM, %) as identified using by subtracting one standard deviation from the TLP (expressed as LFM)
+ 
+*upr_lfm*: the upper bounds of the TLP (LFM, %) as identified using by adding one standard deviation from the TLP (expressed as LFM)
 
 # --------------------------
 
@@ -255,8 +250,6 @@ head(seki_flam_data_all)
 
 *max.mpa.sample*: the highest (wettest) water potential that the individual reached throughout the laboratory benchtop drydown
 
-*flam.index*: see flam_index in local_flam_all.csv
-
 *mean.wt*: the mean sample weight (*sample.wt*) calculated for each species for either *model* (e.g., *mean.wt* for *Abies concolor* for the epiradiator method)
 
 *dw.flam.sample*: an estimate of the dry weight in the sample loaded into the flammability chamber derived from the *sample.wt* and the metrics that were used to calculate live fuel moisture (of a subsample collected at the same time as the flammability sample) (*dry.wt* and *fresh.wt*); this was used extensively in analyses and was calculated using this equation
@@ -275,12 +268,20 @@ sample.wt - dw.flam.sample
 
 *dry.norm...*: the seven columns -- *dry.norm.fh*, *dry.norm.gd*, *dry.norm.fd*, *dry.norm.pfg*, *dry.norm.ttfg*, *dry.norm.tti*, *dry.norm.gti* -- are the flammability metrics normalized by the dry weight of the flammability sample, as reported in *dw.flam.sample*; these were used in some exploratory analyses, but not very extensively
 
+*precip.2mo*: precipitation as recorded by a weather station at Santa Barbara Botanical Gardens for Santa Barbara county for the 2 months prior to flammability testing (see: https://www.countyofsb.org/2256/Historical-Rainfall-Reservoir-Informatio); note: this was not used for analyses looking at SEKI data since the precipitation was not representative of the location; however, for purposes of merging the dataset with the local_flam_data, we added it in
+
 ## Combined Datasets
-The following datasets were in 1.data_wrangling_methods.Rmd as a combination of local_flam_data_all.csv and seki_flam_data_all.csv and vary in the amount of data they include. In most cases, they have the same columns as defined previously in local_flam_data_all.csv and seki_flam_data_all.csv. All extra columns are defined as necessary. One recurring column was:
+The following datasets were in 1.data_wrangling_methods.Rmd as a combination of local_flam_data_all.csv and seki_flam_data_all.csv and vary in the amount of data they include. In most cases, they have the same columns as defined previously in local_flam_data_all.csv and seki_flam_data_all.csv. All extra columns are defined as necessary. Two recurring columns were:
 
 *location*: either local (chapparal sites) or seki (Sierra Nevadas sites, seki = Sequoia-Kings Canyon)
 
-The first two we used most often (by far), while the last three were used primarily for extra analyses or exploratory analyses
+*flam_index*: derived from Essaghi et. al. 2017, using maximum *tti* and maximum *fh*, an index of flammability as a scale of least (1) to most (20) flammable. The following equation was used: 
+\begin{equation}
+flam_index = x \times (\frac{max(tti) - tti}{min(tti) + tti})^{\frac{fh}{fh + max(fh)}^2}
+\end{equation}
+where max(tti) and max(fh) were determined for each method prior to calculating and where x is some arbitrary coefficient so that the maximum value off the flammability index (i.e., tti = 0, fh = max(fh)) is equal to 20
+
+The first two dataframes we used most often (by far), while the last three were used primarily for extra analyses or exploratory analyses
 
 ### bothmethods_bothlocations_wide.csv
 ```{r}

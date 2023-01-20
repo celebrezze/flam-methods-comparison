@@ -921,11 +921,6 @@ range(ignite.only.seki.arpa.epi$ww.flam.sample)
 
 range(ignite.only.seki.arpa.epi$tti)
 range(ignite.only.seki.arpa.epi$fh)
-
-ignite.only.seki.arpa.epi <- ignite.only.seki.arpa.epi %>%
-  mutate(flam.index = 7.6*((45+tti)/(20+tti))*exp(fh/(fh+22.5))) #using max tti and max fh, becomes a scale of least (1) to most (20) flammable 
-
-range(ignite.only.seki.arpa.epi$flam.index)
 ```
 
 ```{r}
@@ -946,15 +941,6 @@ ggplot(aes(y = fh, x = lfm.NAs.imputed, color = spp)) +
   ylab("Flame Height") + 
   xlab("LFM (%)")
 fhplot
-
-fiplot <- ignite.only.seki.arpa.epi %>% 
-ggplot(aes(y = flam.index, x = lfm.NAs.imputed, color = spp)) +
-  geom_point(size = 1) + 
-  theme_bw() +
-  geom_smooth(method = lm) +
-  ylab("Flamability Index") + 
-  xlab("LFM (%)")
-fiplot
 ```
 
 #### For HP only:
@@ -968,11 +954,6 @@ range(ignite.only.seki.arpa.hp$pfg)
 range(ignite.only.seki.arpa.hp$ttfg)
 range(ignite.only.seki.arpa.hp$ros)
 range(ignite.only.seki.arpa.hp$dw.flam.sample)
-
-ignite.only.seki.arpa.hp <- ignite.only.seki.arpa.hp %>%
-  mutate(flam.index = 3.45*((214+tti)/(12.5+tti))*exp(fh_nas_imputed/(fh_nas_imputed+38))) #using max tti and max fh, becomes a scale of least (1) to most (20) flammable
-
-range(ignite.only.seki.arpa.hp$flam.index)
 ```
 
 ```{r}
@@ -993,15 +974,6 @@ ggplot(aes(y = fh, x = lfm.NAs.imputed, color = spp)) +
   ylab("Flame Height") + 
   xlab("LFM (%)")
 fhplot
-
-fiplot <- ignite.only.seki.arpa.hp %>% 
-ggplot(aes(y = flam.index, x = lfm.NAs.imputed, color = spp)) +
-  geom_point(size = 1) + 
-  theme_bw() +
-  geom_smooth(method = lm) +
-  ylab("Flamability Index") + 
-  xlab("LFM (%)")
-fiplot
 ```
 
 Combine both EPI and HP back into master dataset called
@@ -1089,8 +1061,8 @@ distributions +
 ```{r, include=FALSE}
 epi.ignite.only.seki.arpa.pca <- ignite.only.seki.arpa.epi %>%
   mutate(mpa = mpa * -1) 
-  # select (individual, hydration, spp, sample, model, year.month, mpa, lfm.outliers.out, lfm.NAs.imputed, dw.flam.sample, ww.flam.sample, sample.wt, ttfg, gd, gti, tti, fh, pfg, fd, temp.max, prop.ignite, dry.norm.fh, dry.norm.gd, dry.norm.fd, dry.norm.pfg, dry.norm.gti, dry.norm.ttfg, dry.norm.tti, site,temp.change, flam.index, bins5lfm)  %>%
-  # arrange(individual, hydration, spp, sample, model, year.month, mpa, lfm.outliers.out, lfm.NAs.imputed, sample.wt, dw.flam.sample, ww.flam.sample, ttfg, gd, gti, tti, fh, pfg, fd, temp.max, prop.ignite, dry.norm.fh, dry.norm.gd, dry.norm.fd, dry.norm.pfg, dry.norm.gti, dry.norm.ttfg, dry.norm.tti, site, temp.change, flam.index, bins5lfm) %>%
+  # select (individual, hydration, spp, sample, model, year.month, mpa, lfm.outliers.out, lfm.NAs.imputed, dw.flam.sample, ww.flam.sample, sample.wt, ttfg, gd, gti, tti, fh, pfg, fd, temp.max, prop.ignite, dry.norm.fh, dry.norm.gd, dry.norm.fd, dry.norm.pfg, dry.norm.gti, dry.norm.ttfg, dry.norm.tti, site,temp.change, bins5lfm)  %>%
+  # arrange(individual, hydration, spp, sample, model, year.month, mpa, lfm.outliers.out, lfm.NAs.imputed, sample.wt, dw.flam.sample, ww.flam.sample, ttfg, gd, gti, tti, fh, pfg, fd, temp.max, prop.ignite, dry.norm.fh, dry.norm.gd, dry.norm.fd, dry.norm.pfg, dry.norm.gti, dry.norm.ttfg, dry.norm.tti, site, temp.change, bins5lfm) %>%
   # relocate("hydration")
 colSums(is.na(epi.ignite.only.seki.arpa.pca))
 
@@ -1154,8 +1126,8 @@ str(ignite.only.seki.arpa.hp)
 hp.ignite.only.seki.arpa.pca <- ignite.only.seki.arpa.hp %>%
   mutate(mpa = mpa * -1) %>%
   # mutate(gti = replace(dry.norm.gti, dry.norm.gti == "0", "0.5")) %>% 
-  # select (hydration, spp, sample, model, year.month, mpa, lfm.outliers.out, lfm.NAs.imputed, dw.flam.sample, ww.flam.sample, sample.wt, ttfg, gd, gti, tti, fh, pfg, fd, temp.max, prop.ignite, dry.norm.fh, dry.norm.gd, dry.norm.fd, dry.norm.pfg, dry.norm.gti, dry.norm.ttfg, dry.norm.tti, ros, site, temp.change, flam.index, bins5lfm)  %>%
-  # arrange(hydration, spp, sample, model, year.month, mpa, lfm.outliers.out, lfm.NAs.imputed, sample.wt, dw.flam.sample, ww.flam.sample, ttfg, gd, gti, tti, fh, pfg, fd, temp.max, prop.ignite, dry.norm.fh, dry.norm.gd, dry.norm.fd, dry.norm.pfg, dry.norm.gti, dry.norm.ttfg, dry.norm.tti, ros, site, temp.change, flam.index, bins5lfm) %>%
+  # select (hydration, spp, sample, model, year.month, mpa, lfm.outliers.out, lfm.NAs.imputed, dw.flam.sample, ww.flam.sample, sample.wt, ttfg, gd, gti, tti, fh, pfg, fd, temp.max, prop.ignite, dry.norm.fh, dry.norm.gd, dry.norm.fd, dry.norm.pfg, dry.norm.gti, dry.norm.ttfg, dry.norm.tti, ros, site, temp.change, bins5lfm)  %>%
+  # arrange(hydration, spp, sample, model, year.month, mpa, lfm.outliers.out, lfm.NAs.imputed, sample.wt, dw.flam.sample, ww.flam.sample, ttfg, gd, gti, tti, fh, pfg, fd, temp.max, prop.ignite, dry.norm.fh, dry.norm.gd, dry.norm.fd, dry.norm.pfg, dry.norm.gti, dry.norm.ttfg, dry.norm.tti, ros, site, temp.change, bins5lfm) %>%
   relocate("hydration")
 colSums(is.na(hp.ignite.only.seki.arpa.pca))
 
@@ -1556,11 +1528,6 @@ range(ignite.only.seki.ABCO.epi$ww.flam.sample)
 
 range(ignite.only.seki.ABCO.epi$tti)
 range(ignite.only.seki.ABCO.epi$fh)
-
-ignite.only.seki.ABCO.epi <- ignite.only.seki.ABCO.epi %>%
-  mutate(flam.index = 9.1*((25+tti)/(12.5+tti))*exp(fh/(fh+5.5))) #using max tti and max fh, becomes a scale of least (1) to most (20) flammable 
-
-range(ignite.only.seki.ABCO.epi$flam.index)
 ```
 
 ```{r}
@@ -1581,15 +1548,6 @@ ggplot(aes(y = fh, x = lfm.NAs.imputed, color = spp)) +
   ylab("Flame Height") + 
   xlab("LFM (%)")
 fhplot
-
-fiplot <- ignite.only.seki.ABCO.epi %>% 
-ggplot(aes(y = flam.index, x = lfm.NAs.imputed, color = spp)) +
-  geom_point(size = 1) + 
-  theme_bw() +
-  geom_smooth(method = lm) +
-  ylab("Flamability Index") + 
-  xlab("LFM (%)")
-fiplot
 ```
 
 #### For HP only:
@@ -1604,11 +1562,6 @@ range(ignite.only.seki.ABCO.hp$dw.flam.sample)
 
 range(ignite.only.seki.ABCO.hp$tti)
 range(ignite.only.seki.ABCO.hp$fh)
-
-ignite.only.seki.ABCO.hp <- ignite.only.seki.ABCO.hp %>%
-  mutate(flam.index = 4.30*((144+tti)/(12.5+tti))*exp(fh_nas_imputed/(fh_nas_imputed+53))) #using max tti and max fh, becomes a scale of least (1) to most (20) flammable
-
-range(ignite.only.seki.ABCO.hp$flam.index)
 ```
 
 ```{r}
@@ -1629,15 +1582,6 @@ ggplot(aes(y = fh, x = lfm.NAs.imputed, color = spp)) +
   ylab("Flame Height") + 
   xlab("LFM (%)")
 fhplot
-
-fiplot <- ignite.only.seki.ABCO.hp %>% 
-ggplot(aes(y = flam.index, x = lfm.NAs.imputed, color = spp)) +
-  geom_point(size = 1) + 
-  theme_bw() +
-  geom_smooth(method = lm) +
-  ylab("Flamability Index") + 
-  xlab("LFM (%)")
-fiplot
 ```
 
 Combine both EPI and HP back into master dataset called
@@ -1730,8 +1674,8 @@ distributions +
 ```{r, include=FALSE}
 epi.ignite.only.seki.ABCO.pca <- ignite.only.seki.ABCO.epi %>%
   mutate(mpa = mpa * -1) 
-  # select (individual, hydration, spp, sample, model, year.month, mpa, lfm.outliers.out, lfm.NAs.imputed, dw.flam.sample, ww.flam.sample, sample.wt, ttfg, gd, gti, tti, fh, pfg, fd, temp.max, prop.ignite, dry.norm.fh, dry.norm.gd, dry.norm.fd, dry.norm.pfg, dry.norm.gti, dry.norm.ttfg, dry.norm.tti, site,temp.change, flam.index, bins5lfm)  %>%
-  # arrange(individual, hydration, spp, sample, model, year.month, mpa, lfm.outliers.out, lfm.NAs.imputed, sample.wt, dw.flam.sample, ww.flam.sample, ttfg, gd, gti, tti, fh, pfg, fd, temp.max, prop.ignite, dry.norm.fh, dry.norm.gd, dry.norm.fd, dry.norm.pfg, dry.norm.gti, dry.norm.ttfg, dry.norm.tti, site, temp.change, flam.index, bins5lfm) %>%
+  # select (individual, hydration, spp, sample, model, year.month, mpa, lfm.outliers.out, lfm.NAs.imputed, dw.flam.sample, ww.flam.sample, sample.wt, ttfg, gd, gti, tti, fh, pfg, fd, temp.max, prop.ignite, dry.norm.fh, dry.norm.gd, dry.norm.fd, dry.norm.pfg, dry.norm.gti, dry.norm.ttfg, dry.norm.tti, site,temp.change, bins5lfm)  %>%
+  # arrange(individual, hydration, spp, sample, model, year.month, mpa, lfm.outliers.out, lfm.NAs.imputed, sample.wt, dw.flam.sample, ww.flam.sample, ttfg, gd, gti, tti, fh, pfg, fd, temp.max, prop.ignite, dry.norm.fh, dry.norm.gd, dry.norm.fd, dry.norm.pfg, dry.norm.gti, dry.norm.ttfg, dry.norm.tti, site, temp.change, bins5lfm) %>%
   # relocate("hydration")
 colSums(is.na(epi.ignite.only.seki.ABCO.pca))
 
@@ -1795,8 +1739,8 @@ str(ignite.only.seki.ABCO.hp)
 hp.ignite.only.seki.ABCO.pca <- ignite.only.seki.ABCO.hp %>%
   mutate(mpa = mpa * -1) %>%
   # mutate(gti = replace(dry.norm.gti, dry.norm.gti == "0", "0.5")) %>% 
-  # select (hydration, spp, sample, model, year.month, mpa, lfm.outliers.out, lfm.NAs.imputed, dw.flam.sample, ww.flam.sample, sample.wt, ttfg, gd, gti, tti, fh, pfg, fd, temp.max, prop.ignite, dry.norm.fh, dry.norm.gd, dry.norm.fd, dry.norm.pfg, dry.norm.gti, dry.norm.ttfg, dry.norm.tti, ros, site, temp.change, flam.index, bins5lfm)  %>%
-  # arrange(hydration, spp, sample, model, year.month, mpa, lfm.outliers.out, lfm.NAs.imputed, sample.wt, dw.flam.sample, ww.flam.sample, ttfg, gd, gti, tti, fh, pfg, fd, temp.max, prop.ignite, dry.norm.fh, dry.norm.gd, dry.norm.fd, dry.norm.pfg, dry.norm.gti, dry.norm.ttfg, dry.norm.tti, ros, site, temp.change, flam.index, bins5lfm) %>%
+  # select (hydration, spp, sample, model, year.month, mpa, lfm.outliers.out, lfm.NAs.imputed, dw.flam.sample, ww.flam.sample, sample.wt, ttfg, gd, gti, tti, fh, pfg, fd, temp.max, prop.ignite, dry.norm.fh, dry.norm.gd, dry.norm.fd, dry.norm.pfg, dry.norm.gti, dry.norm.ttfg, dry.norm.tti, ros, site, temp.change, bins5lfm)  %>%
+  # arrange(hydration, spp, sample, model, year.month, mpa, lfm.outliers.out, lfm.NAs.imputed, sample.wt, dw.flam.sample, ww.flam.sample, ttfg, gd, gti, tti, fh, pfg, fd, temp.max, prop.ignite, dry.norm.fh, dry.norm.gd, dry.norm.fd, dry.norm.pfg, dry.norm.gti, dry.norm.ttfg, dry.norm.tti, ros, site, temp.change, bins5lfm) %>%
   relocate("hydration")
 
 colSums(is.na(hp.ignite.only.seki.ABCO.pca))
@@ -2042,10 +1986,6 @@ range(ignite.only.seki.CADE.hp$dw.flam.sample)
 
 range(ignite.only.seki.CADE.hp$tti)
 range(ignite.only.seki.CADE.hp$fh)
-
-ignite.only.seki.CADE.hp <- ignite.only.seki.CADE.hp %>%
-  mutate(flam.index = 3.67*((137+tti)/(12.5+tti))*exp(fh_nas_imputed/(fh_nas_imputed+53))) #using max tti and max fh, becomes a scale of least (1) to most (20) flammable
-range(ignite.only.seki.CADE.hp$flam.index)
 ```
 
 ```{r}
@@ -2066,15 +2006,6 @@ ggplot(aes(y = fh, x = lfm.NAs.imputed, color = spp)) +
   ylab("Flame Height") + 
   xlab("LFM (%)")
 fhplot
-
-fiplot <- ignite.only.seki.CADE.hp %>% 
-ggplot(aes(y = flam.index, x = lfm.NAs.imputed, color = spp)) +
-  geom_point(size = 1) + 
-  theme_bw() +
-  geom_smooth(method = lm) +
-  ylab("Flamability Index") + 
-  xlab("LFM (%)")
-fiplot
 ```
 
 Combine both EPI and HP back into master dataset called
@@ -2143,8 +2074,8 @@ str(ignite.only.seki.CADE.hp)
 hp.ignite.only.seki.CADE.pca <- ignite.only.seki.CADE.hp %>%
   mutate(mpa = mpa * -1) %>%
   # mutate(gti = replace(dry.norm.gti, dry.norm.gti == "0", "0.5")) %>% 
-  # select (hydration, spp, sample, model, year.month, mpa, lfm.outliers.out, lfm.NAs.imputed, dw.flam.sample, ww.flam.sample, sample.wt, ttfg, gd, gti, tti, fh, pfg, fd, temp.max, prop.ignite, dry.norm.fh, dry.norm.gd, dry.norm.fd, dry.norm.pfg, dry.norm.gti, dry.norm.ttfg, dry.norm.tti, ros, site, temp.change, flam.index, bins5lfm)  %>%
-  # arrange(hydration, spp, sample, model, year.month, mpa, lfm.outliers.out, lfm.NAs.imputed, sample.wt, dw.flam.sample, ww.flam.sample, ttfg, gd, gti, tti, fh, pfg, fd, temp.max, prop.ignite, dry.norm.fh, dry.norm.gd, dry.norm.fd, dry.norm.pfg, dry.norm.gti, dry.norm.ttfg, dry.norm.tti, ros, site, temp.change, flam.index, bins5lfm) %>%
+  # select (hydration, spp, sample, model, year.month, mpa, lfm.outliers.out, lfm.NAs.imputed, dw.flam.sample, ww.flam.sample, sample.wt, ttfg, gd, gti, tti, fh, pfg, fd, temp.max, prop.ignite, dry.norm.fh, dry.norm.gd, dry.norm.fd, dry.norm.pfg, dry.norm.gti, dry.norm.ttfg, dry.norm.tti, ros, site, temp.change, bins5lfm)  %>%
+  # arrange(hydration, spp, sample, model, year.month, mpa, lfm.outliers.out, lfm.NAs.imputed, sample.wt, dw.flam.sample, ww.flam.sample, ttfg, gd, gti, tti, fh, pfg, fd, temp.max, prop.ignite, dry.norm.fh, dry.norm.gd, dry.norm.fd, dry.norm.pfg, dry.norm.gti, dry.norm.ttfg, dry.norm.tti, ros, site, temp.change, bins5lfm) %>%
   relocate("hydration")
 colSums(is.na(hp.ignite.only.seki.CADE.pca))
 
@@ -2530,10 +2461,6 @@ range(ignite.only.seki.CECO.epi$ww.flam.sample)
 
 range(ignite.only.seki.CECO.epi$tti)
 range(ignite.only.seki.CECO.epi$fh)
-
-ignite.only.seki.CECO.epi <- ignite.only.seki.CECO.epi %>%
-  mutate(flam.index = 5.15*((60+tti)/(12.5+tti))*exp(fh/(fh+20))) #using max tti and max fh, becomes a scale of least (1) to most (20) flammable 
-range(ignite.only.seki.CECO.epi$flam.index)
 ```
 
 ```{r}
@@ -2554,15 +2481,6 @@ ggplot(aes(y = fh, x = lfm.NAs.imputed, color = spp)) +
   ylab("Flame Height") + 
   xlab("LFM (%)")
 fhplot
-
-fiplot <- ignite.only.seki.CECO.epi %>% 
-ggplot(aes(y = flam.index, x = lfm.NAs.imputed, color = spp)) +
-  geom_point(size = 1) + 
-  theme_bw() +
-  geom_smooth(method = lm) +
-  ylab("Flamability Index") + 
-  xlab("LFM (%)")
-fiplot
 ```
 
 #### For HP only:
@@ -2578,11 +2496,6 @@ range(ignite.only.seki.CECO.hp$dw.flam.sample)
 
 range(ignite.only.seki.CECO.hp$tti)
 range(ignite.only.seki.CECO.hp$fh)
-
-ignite.only.seki.CECO.hp <- ignite.only.seki.CECO.hp %>%
-  mutate(flam.index = 5.5*((496+tti)/(12.5+tti))*exp(fh_nas_imputed/(fh_nas_imputed+34))) #using max tti and max fh, becomes a scale of least (1) to most (20) flammable
-
-range(ignite.only.seki.CECO.hp$flam.index)
 ```
 
 ```{r}
@@ -2603,15 +2516,6 @@ ggplot(aes(y = fh, x = lfm.NAs.imputed, color = spp)) +
   ylab("Flame Height") + 
   xlab("LFM (%)")
 fhplot
-
-fiplot <- ignite.only.seki.CECO.hp %>% 
-ggplot(aes(y = flam.index, x = lfm.NAs.imputed, color = spp)) +
-  geom_point(size = 1) + 
-  theme_bw() +
-  geom_smooth(method = lm) +
-  ylab("Flamability Index") + 
-  xlab("LFM (%)")
-fiplot
 ```
 
 Combine both EPI and HP back into master dataset called
@@ -2704,8 +2608,8 @@ distributions +
 ```{r, include=FALSE}
 epi.ignite.only.seki.CECO.pca <- ignite.only.seki.CECO.epi %>%
   mutate(mpa = mpa * -1) 
-  # select (individual, hydration, spp, sample, model, year.month, mpa, lfm.outliers.out, lfm.NAs.imputed, dw.flam.sample, ww.flam.sample, sample.wt, ttfg, gd, gti, tti, fh, pfg, fd, temp.max, prop.ignite, dry.norm.fh, dry.norm.gd, dry.norm.fd, dry.norm.pfg, dry.norm.gti, dry.norm.ttfg, dry.norm.tti, site,temp.change, flam.index, bins5lfm)  %>%
-  # arrange(individual, hydration, spp, sample, model, year.month, mpa, lfm.outliers.out, lfm.NAs.imputed, sample.wt, dw.flam.sample, ww.flam.sample, ttfg, gd, gti, tti, fh, pfg, fd, temp.max, prop.ignite, dry.norm.fh, dry.norm.gd, dry.norm.fd, dry.norm.pfg, dry.norm.gti, dry.norm.ttfg, dry.norm.tti, site, temp.change, flam.index, bins5lfm) %>%
+  # select (individual, hydration, spp, sample, model, year.month, mpa, lfm.outliers.out, lfm.NAs.imputed, dw.flam.sample, ww.flam.sample, sample.wt, ttfg, gd, gti, tti, fh, pfg, fd, temp.max, prop.ignite, dry.norm.fh, dry.norm.gd, dry.norm.fd, dry.norm.pfg, dry.norm.gti, dry.norm.ttfg, dry.norm.tti, site,temp.change, bins5lfm)  %>%
+  # arrange(individual, hydration, spp, sample, model, year.month, mpa, lfm.outliers.out, lfm.NAs.imputed, sample.wt, dw.flam.sample, ww.flam.sample, ttfg, gd, gti, tti, fh, pfg, fd, temp.max, prop.ignite, dry.norm.fh, dry.norm.gd, dry.norm.fd, dry.norm.pfg, dry.norm.gti, dry.norm.ttfg, dry.norm.tti, site, temp.change, bins5lfm) %>%
   # relocate("hydration")
 colSums(is.na(epi.ignite.only.seki.CECO.pca))
 
@@ -2769,8 +2673,8 @@ str(ignite.only.seki.CECO.hp)
 hp.ignite.only.seki.CECO.pca <- ignite.only.seki.CECO.hp %>%
   mutate(mpa = mpa * -1) %>%
   # mutate(gti = replace(dry.norm.gti, dry.norm.gti == "0", "0.5")) %>% 
-  # select (hydration, spp, sample, model, year.month, mpa, lfm.outliers.out, lfm.NAs.imputed, dw.flam.sample, ww.flam.sample, sample.wt, ttfg, gd, gti, tti, fh, pfg, fd, temp.max, prop.ignite, dry.norm.fh, dry.norm.gd, dry.norm.fd, dry.norm.pfg, dry.norm.gti, dry.norm.ttfg, dry.norm.tti, ros, site, temp.change, flam.index, bins5lfm)  %>%
-  # arrange(hydration, spp, sample, model, year.month, mpa, lfm.outliers.out, lfm.NAs.imputed, sample.wt, dw.flam.sample, ww.flam.sample, ttfg, gd, gti, tti, fh, pfg, fd, temp.max, prop.ignite, dry.norm.fh, dry.norm.gd, dry.norm.fd, dry.norm.pfg, dry.norm.gti, dry.norm.ttfg, dry.norm.tti, ros, site, temp.change, flam.index, bins5lfm) %>%
+  # select (hydration, spp, sample, model, year.month, mpa, lfm.outliers.out, lfm.NAs.imputed, dw.flam.sample, ww.flam.sample, sample.wt, ttfg, gd, gti, tti, fh, pfg, fd, temp.max, prop.ignite, dry.norm.fh, dry.norm.gd, dry.norm.fd, dry.norm.pfg, dry.norm.gti, dry.norm.ttfg, dry.norm.tti, ros, site, temp.change, bins5lfm)  %>%
+  # arrange(hydration, spp, sample, model, year.month, mpa, lfm.outliers.out, lfm.NAs.imputed, sample.wt, dw.flam.sample, ww.flam.sample, ttfg, gd, gti, tti, fh, pfg, fd, temp.max, prop.ignite, dry.norm.fh, dry.norm.gd, dry.norm.fd, dry.norm.pfg, dry.norm.gti, dry.norm.ttfg, dry.norm.tti, ros, site, temp.change, bins5lfm) %>%
   relocate("hydration")
 colSums(is.na(hp.ignite.only.seki.CECO.pca))
 
@@ -3150,11 +3054,6 @@ range(ignite.only.seki.PIJE.epi$ww.flam.sample)
 
 range(ignite.only.seki.PIJE.epi$tti)
 range(ignite.only.seki.PIJE.epi$fh)
-
-ignite.only.seki.PIJE.epi <- ignite.only.seki.PIJE.epi %>%
-  mutate(flam.index = 8.5*((43+tti)/(12.5+tti))*exp(fh/(fh+27))) #using max tti and max fh, becomes a scale of least (1) to most (20) flammable 
-
-range(ignite.only.seki.PIJE.epi$flam.index)
 ```
 
 ```{r}
@@ -3175,15 +3074,6 @@ ggplot(aes(y = fh, x = lfm.NAs.imputed, color = spp)) +
   ylab("Flame Height") + 
   xlab("LFM (%)")
 fhplot
-
-fiplot <- ignite.only.seki.PIJE.epi %>% 
-ggplot(aes(y = flam.index, x = lfm.NAs.imputed, color = spp)) +
-  geom_point(size = 1) + 
-  theme_bw() +
-  geom_smooth(method = lm) +
-  ylab("Flamability Index") + 
-  xlab("LFM (%)")
-fiplot
 ```
 
 #### For HP only:
@@ -3198,11 +3088,6 @@ range(ignite.only.seki.PIJE.hp$dw.flam.sample)
 
 range(ignite.only.seki.PIJE.hp$tti)
 range(ignite.only.seki.PIJE.hp$fh)
-
-ignite.only.seki.PIJE.hp <- ignite.only.seki.PIJE.hp %>%
-  mutate(flam.index = 4.3*((130+tti)/(12.5+tti))*exp(fh_nas_imputed/(fh_nas_imputed+54))) #using max tti and max fh, becomes a scale of least (1) to most (20) flammable
-
-range(ignite.only.seki.PIJE.hp$flam.index)
 ```
 
 ```{r}
@@ -3223,15 +3108,6 @@ ggplot(aes(y = fh, x = lfm.NAs.imputed, color = spp)) +
   ylab("Flame Height") + 
   xlab("LFM (%)")
 fhplot
-
-fiplot <- ignite.only.seki.PIJE.hp %>% 
-ggplot(aes(y = flam.index, x = lfm.NAs.imputed, color = spp)) +
-  geom_point(size = 1) + 
-  theme_bw() +
-  geom_smooth(method = lm) +
-  ylab("Flamability Index") + 
-  xlab("LFM (%)")
-fiplot
 ```
 
 Combine both EPI and HP back into master dataset called
@@ -3763,10 +3639,6 @@ range(ignite.only.seki.QUKE.epi$ww.flam.sample)
 
 range(ignite.only.seki.QUKE.epi$tti)
 range(ignite.only.seki.QUKE.epi$fh)
-
-ignite.only.seki.QUKE.epi <- ignite.only.seki.QUKE.epi %>%
-  mutate(flam.index = 5.55*((39+tti)/(12.5+tti))*exp(fh/(fh+20.5))) #using max tti and max fh, becomes a scale of least (1) to most (20) flammable 
-range(ignite.only.seki.QUKE.epi$flam.index)
 ```
 
 ```{r}
@@ -3787,15 +3659,6 @@ ggplot(aes(y = fh, x = lfm.NAs.imputed, color = spp)) +
   ylab("Flame Height") + 
   xlab("LFM (%)")
 fhplot
-
-fiplot <- ignite.only.seki.QUKE.epi %>% 
-ggplot(aes(y = flam.index, x = lfm.NAs.imputed, color = spp)) +
-  geom_point(size = 1) + 
-  theme_bw() +
-  geom_smooth(method = lm) +
-  ylab("Flamability Index") + 
-  xlab("LFM (%)")
-fiplot
 ```
 
 #### For HP only:
@@ -3810,11 +3673,6 @@ range(ignite.only.seki.QUKE.hp$dw.flam.sample)
 
 range(ignite.only.seki.QUKE.hp$tti)
 range(ignite.only.seki.QUKE.hp$fh)
-
-ignite.only.seki.QUKE.hp <- ignite.only.seki.QUKE.hp %>%
-  mutate(flam.index = 7.5*((29+tti)/(12.5+tti))*exp(fh_nas_imputed/(fh_nas_imputed+40))) #using max tti and max fh, becomes a scale of least (1) to most (20) flammable
-
-range(ignite.only.seki.QUKE.hp$flam.index)
 ```
 
 ```{r}
@@ -3835,15 +3693,6 @@ ggplot(aes(y = fh, x = lfm.NAs.imputed, color = spp)) +
   ylab("Flame Height") + 
   xlab("LFM (%)")
 fhplot
-
-fiplot <- ignite.only.seki.QUKE.hp %>% 
-ggplot(aes(y = flam.index, x = lfm.NAs.imputed, color = spp)) +
-  geom_point(size = 1) + 
-  theme_bw() +
-  geom_smooth(method = lm) +
-  ylab("Flamability Index") + 
-  xlab("LFM (%)")
-fiplot
 ```
 
 Combine both EPI and HP back into master dataset called

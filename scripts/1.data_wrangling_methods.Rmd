@@ -22,7 +22,7 @@ col3 = hcl.colors(10, "YlOrRd", rev = TRUE) #color scale to use for consistency
 seki_all_methods <- read_csv(here("processed-data", "seki_flam_data_all.csv"), show_col_types = FALSE) %>% 
   clean_names() %>% 
   mutate(lfm = lfm_n_as_imputed) %>% 
-  select(2:49, flam_index, max_mpa_sample, -ttms, -bottle_wt, lfm) %>%  #drop columns we don't want
+  select(2:49, max_mpa_sample, -ttms, -bottle_wt, lfm) %>%  #drop columns we don't want
   select(-model_spp_gr, -prop_ignite, -ros) %>% 
   mutate(location = "seki") %>% 
   mutate(gdw_gfw = dry_wt/fresh_wt) %>%
@@ -30,9 +30,7 @@ seki_all_methods <- read_csv(here("processed-data", "seki_flam_data_all.csv"), s
   mutate(dw_flam_sample = (sample_wt*(1/(1+lfm/100))))
 
 #This is a good way to look at the dataset: 
-#dlookr::diagnose(seki_all_methods)
-
-#seki_all_methods[is.na(seki_all_methods$ttms), ]  
+#dlookr::diagnose(seki_all_methods) 
 ```
 
 # LOCAL DATA: 
@@ -46,7 +44,7 @@ local_all_methods <- read_csv(here("raw-data", "local_flam_data_all.csv"), show_
   #dplyr::mutate(gdw_gww = dry_wt/water_wt) %>%
   dplyr::mutate(dw_flam_sample = (sample_wt*(1/(1+lfm/100)))) %>% 
   dplyr::mutate(ww_flam_sample = sample_wt - dw_flam_sample) %>% 
-  select(-gww_gdw)
+  select(-gww_gdw, -flam_index) # Removing unnecessary column, gww_gdw, as well as the flam_index (since it is not correctly calculated)
 
 #This is a good way to look at the dataset: 
 #dlookr::diagnose(local_all_methods)
@@ -64,7 +62,27 @@ all_methods_epi <- all_methods_long %>%
 
 all_methods_hp <- all_methods_long %>% 
   filter(model == "HP")
+```
 
+- Flam index (from Essaghi et. al. 2017): although we do not believe this is going to be used heavily in the analyses as it slightly extends the scope of this paper beyond what we deem to be the acceptable limits for the scope, we include it for exploratory/extra analyses 
+
+This is the equation used for the flam. index:
+\start{equation}
+flam_index = x \times (\frac{max(tti) - tti}{min(tti) + tti})^{\frac{fh}{fh + max(fh)}^2}
+\end{equation}
+where max(tti) and max(fh) were determined for each method prior to calculating and where x is some arbitrary coefficient so that the maximum value off the flammability index (i.e., tti = 0, fh = max(fh)) is equal to 20
+
+```{r}
+# Epiradiator
+all_methods_epi <- all_methods_epi %>% 
+  mutate(flam_index = 10.936*((86-tti)/(7+tti))^((fh)/(fh + 27))^2)
+
+# Hot plate
+all_methods_hp <- all_methods_hp %>% 
+  mutate(flam_index = 9.306*((192-tti)/(9+tti))^((fh)/(fh + 54))^2)
+```
+
+```{r}
 #Make a dataset that only has the rounds where we have paired EPI and HP samples
 paired_methods_wide <- merge(all_methods_epi, all_methods_hp, by.x = "individual_round", by.y = "individual_round", suffixes = c("_epi", "_hp"))
 ```
@@ -104,7 +122,7 @@ paired_methods_epi <- paired_methods_wide %>%
   rename_with(~str_remove(., '_epi'))
 
 paired_methods_hp <- paired_methods_wide %>% 
-  select(1, 49:95bothm_bothl_manual_ignitions_in.csv) %>% 
+  select(1, 49:95) %>% 
   rename_with(~str_remove(., '_hp'))
 
 paired_methods_long <- bind_rows(paired_methods_epi, paired_methods_hp)
