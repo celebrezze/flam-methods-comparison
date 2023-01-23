@@ -1,5 +1,10 @@
 # flam-methods-comparison
-## A GitHub Repository for: A comparison of a novel hot-plate-based flammability chamber design and an epiradiator-based design
+
+## A GitHub Repository for: 
+
+## A comparison of a novel hot-plate-based flammability chamber design and an epiradiator-based design
+
+## Joe Celebrezze, Indra Boving, and Max Moritz
 
 --------------------------------
 
