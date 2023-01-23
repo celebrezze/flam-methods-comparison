@@ -64,14 +64,14 @@ all_methods_hp <- all_methods_long %>%
   filter(model == "HP")
 ```
 
-- Flam index (from Essaghi et. al. 2017): although we do not believe this is going to be used heavily in the analyses as it slightly extends the scope of this paper beyond what we deem to be the acceptable limits for the scope, we include it for exploratory/extra analyses 
+## Flam. index (Essaghi et. al. 2017)
+- although we do not believe this is going to be used heavily in the analyses as it slightly extends the scope of this paper beyond what we deem to be the acceptable limits for the scope, we include it for exploratory/extra analyses 
 
 This is the equation used for the flam. index:
 \start{equation}
 flam_index = x \times (\frac{max(tti) - tti}{min(tti) + tti})^{\frac{fh}{fh + max(fh)}^2}
 \end{equation}
 where max(tti) and max(fh) were determined for each method prior to calculating and where x is some arbitrary coefficient so that the maximum value off the flammability index (i.e., tti = 0, fh = max(fh)) is equal to 20
-
 ```{r}
 # Epiradiator
 all_methods_epi <- all_methods_epi %>% 

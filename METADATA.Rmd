@@ -2,7 +2,11 @@
 title: "Metadata"
 author: "Joe Celebrezze"
 date: "2023-01-13"
-output: html_document
+output:
+   html_document:
+    toc: true
+    toc_depth: 4
+    theme: united
 ---
 
 ```{r setup, include=FALSE}
@@ -13,14 +17,21 @@ here = here::here
 library(tidyverse)
 ```
 
+# Introduction
+
 This .Rmd file covers the necessary metadata for the datasets that we used in the analyses for this manuscript.
 
-# --------------------------
+It does so by describing each column of each dataset included in this GitHub. For more information on the organization of the GitHub or which scripts are responsible for which analyses, see the README file included on the GitHub. Many variables/columns are repeated on multiple datasets, and in these cases we do not describe them again, as this would be redundant; however, we try to make it clear where repeated columns exist and why.
+
+This metadata was last updated on:
+**January 23, 2023** by **Joe Celebrezze**
+
+--------------------------
 
 # Raw Data
 
 ## lit.review.csv
-```{r}
+```{r, include = F}
 lit.review <- read_csv(here("raw-data", "lit.review.csv"))
 head(lit.review)
 ```
@@ -48,7 +59,7 @@ head(lit.review)
 *notes*: any extra notes taken on the methods used in the study -- often for somewhat unique changes to methods or for 'other' methods
 
 ## lit.review.locations.csv
-```{r}
+```{r, include = F}
 lit.review.locations <- read_csv(here("raw-data", "lit.review.locations.csv"))
 head(lit.review.locations)
 ```
@@ -64,7 +75,7 @@ head(lit.review.locations)
 *location notes*: notes taken on the study location(s). This can give a sense of whether or not the latitude and longitude reported are specific or if they are relatively broad.
 
 ## local_flam_data_all.csv
-```{r}
+```{r, include = F}
 local_flam_data_all <- read_csv(here("raw-data", "local_flam_data_all.csv"))
 head(local_flam_data_all)
 ```
@@ -159,7 +170,7 @@ LFM = 100 \times \frac{fresh weight - dry weight}{dry weight}
 *max_mpa_sample*: the maximum (wettest) water potential measured using this method
 
 ## SEKI_flammability.csv
-```{r}
+```{r, include = F}
 SEKI_flammability <- read_csv(here("raw-data", "SEKI_flammability.csv"))
 head(SEKI_flammability)
 ```
@@ -195,7 +206,7 @@ Many of the following columns are identical to the columns described above, so I
 *ttms*: time elapsed from beginning of ignition to the point where the entire sample is engulfed in flames (seconds); note that we did not end up using this, as -- especially for the epiradiator burns -- we deemed it to be too subjective and inconsistent of a metric to reliably use in analyses
  
 ## pv_summary_df_timing.csv
-```{r}
+```{r, include = F}
 pv_summary_df_timing <- read_csv(here("raw-data", "pv_summary_df_timing.csv"))
 head(pv_summary_df_timing)
 ```
@@ -230,12 +241,12 @@ These are the columns included in this dataset:
  
 *upr_lfm*: the upper bounds of the TLP (LFM, %) as identified using by adding one standard deviation from the TLP (expressed as LFM)
 
-# --------------------------
+--------------------------
 
 # Processed Data
 
 ## seki_flam_data_all.csv
-```{r}
+```{r, include = F}
 seki_flam_data_all <- read_csv(here("processed-data", "seki_flam_data_all.csv"))
 head(seki_flam_data_all)
 ```
@@ -284,7 +295,7 @@ where max(tti) and max(fh) were determined for each method prior to calculating 
 The first two dataframes we used most often (by far), while the last three were used primarily for extra analyses or exploratory analyses
 
 ### bothmethods_bothlocations_wide.csv
-```{r}
+```{r, include = F}
 bothmethods_bothlocations_wide <- read_csv(here("processed-data", "bothmethods_bothlocations_wide.csv"))
 head(bothmethods_bothlocations_wide)
 ```
@@ -292,7 +303,7 @@ head(bothmethods_bothlocations_wide)
 This combines the data gathered from the SEKI and chapparal sites, from both epiradiator and hot plate methods. In this .csv, the data is in a 'wide' format with columns for the data from the epiradiator (_epi) and the hot plate (_hp). This was a possibility due to us simultaneously burning plant samples using both methods, so for each individual and round, there was data for both epiradiator and hot plate methods
 
 ### bothmethods_bothlocations_long.csv
-```{r}
+```{r, include = F}
 bothmethods_bothlocations_long <- read_csv(here("processed-data", "bothmethods_bothlocations_long.csv"))
 head(bothmethods_bothlocations_long)
 ```
@@ -300,7 +311,7 @@ head(bothmethods_bothlocations_long)
 This combines the data gathered from the SEKI and chapparal sites, from both epiradiator and hot plate methods by stitching the rows together. Unlike the 'wide' format, there are individual rows for each burn that have a *model* column describing if it is from the epiradiator or hot plate method.
 
 ### bothm_bothl_manual_ignitions_in.csv
-```{r}
+```{r, include = F}
 bothm_bothl_manual_ignitions_in <- read_csv(here("processed-data", "bothm_bothl_manual_ignitions_in.csv"))
 head(bothm_bothl_manual_ignitions_in)
 ```
@@ -308,14 +319,14 @@ head(bothm_bothl_manual_ignitions_in)
 This includes data-of-interest (excluding certain species as noted in 1.data_wrangling_methods.Rmd) for both methods and both locations and includes manual ignitions
 
 ### bothmethods_and_locations_long_noignitionsincluded.csv
-```{r}
+```{r, include = F}
 bothmethods_and_locations_long_noignitionsincluded <- read_csv(here("processed-data", "bothmethods_and_locations_long_noignitionsincluded.csv"))
 head(bothmethods_and_locations_long_noignitionsincluded)
 ```
 This includes non-ignitions; the columns have all been defined above.
 
 ### bothmethods_and_locations_wide_noignitionsincluded.csv
-```{r}
+```{r, include = F}
 bothmethods_and_locations_wide_noignitionsincluded <- read_csv(here("processed-data", "bothmethods_and_locations_wide_noignitionsincluded.csv"))
 head(bothmethods_and_locations_wide_noignitionsincluded)
 ```
