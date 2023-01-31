@@ -4,12 +4,14 @@
 
 ## A comparison of a novel hot-plate-based flammability chamber design and an epiradiator-based design
 
-## Joe Celebrezze, Indra Boving, and Max Moritz
+## Joe Celebrezze*, Indra Boving, and Max Moritz
+
+### *: correspondence, celebrezze@ucsb.edu
 
 --------------------------------
 
 ## Introductory Statement
-This repository is meant for the storage and sharing of data, scripts, figures, and mixed effects model result tables related to the manuscript titled 'A comparison of a novel hot-plate-based flammability chamber design and an epiradiator-based design' by Joe Celebrezze, Indra Boving and Max Moritz which introduces a hot-plate-based flammability chamber design, comparing it to existing methods with an in-depth comparison to an epiradiator method.
+This repository is meant for the storage and sharing of data, scripts, figures, and mixed effects model result tables related to the paper titled *A comparison of a novel hot-plate-based flammability chamber design and an epiradiator-based design* by Joe Celebrezze, Indra Boving, and Max Moritz which introduces a hot-plate-based flammability chamber design, comparing it to existing methods using a literature review and an in-depth comparison to an epiradiator method in which we simultaneously burned samples using both the novel hot-plate-based method and an epiradiator method.
 
 --------------------------------
 
@@ -18,9 +20,9 @@ This repository is meant for the storage and sharing of data, scripts, figures, 
 **Raw Data**:
 The raw-data folder consists of five dataframes in .csv format. For more comprehensive information regarding each of the dataframes, see the metadata. Below are descriptions for those dataframes:
   
-  *lit.review.csv*: this exhibits the methods used in the 134 studies identified in the literature review along with identifiers for the studies (authors and year), a description of the size of sample (if included) either in terms of weight (g), length (cm), area (cm2), or volume (cm3)
+  *lit.review.csv*: this exhibits the methods used in the 134 studies identified in the literature review along with identifiers for the studies (authors and year), a description of the size of sample (if included) either in terms of weight (g), length (cm), area (cm2), or volume (cm3), and a description of the heating temperature or irradiance of the method used.
   
-  *lit.review.locations.csv*: this accompanies the lit.review, but focuses on the locations (latitude and longitude and notes on the location) that samples were gathered from for each study (if included). The accuracy of the locations vary, as some studies provided specific coordinates while others provided broad regions or stated that samples were in greenhouses near their laboratory and the coordinates for the laboratory were used.
+  *lit.review.locations.csv*: this accompanies the *lit.review.csv*, but it focuses on the locations (latitude and longitude and notes on the location) that samples were gathered from for each study (if included). The accuracy of the locations vary, as some studies provided specific coordinates while others provided broad regions or stated that samples were in greenhouses near their laboratory and the coordinates for the laboratory were used. This was used to make *Fig2a.lit.review.locations.all.ignitions*
   
   *local_flam_data_all.csv*: this includes the flammability testing results for chapparal shrubs, *Adenostoma fasciculatum* and *Ceanothus megacarpus*, reporting a variety of metrics including multiple ways to identify samples, bins of LFM, the method used (either epiradiator -- EPI or hot plate -- HP), live fuel moisture and water potential data along the benchtop drydown, a variety of flammability metrics (flame height (fh), time to first glow (ttfg), glow to ignition (gti), time to ignition (tti), flame duration (fd), glow duration (gd), post-flame glow (pfg), maximum temperature (temp.max), and temperature at ignition (ignition.temp)), sample weight, the proportion of new growth, and a variety of other variables. For more information and a comprehensive breakdown of each variable, see metadata.
   
@@ -49,7 +51,7 @@ The scripts folder includes scripts for all of the code we used to wrangle data,
   *extra-analyses*: as previously alluded to, any exploratory analyses or scripts which were improved upon or elaborated on by the main 6 scripts described above were placed in the extra-analyses folder. This folder includes analyses not mentioned above such as variance decomposition, classification and regression trees, segmented regressions, using the flammability index developed in Essaghi et. al. 2017, and an investigation into manual ignitions (mostly for *Ceanothus cordulataus*). Importantly, it also contains the data_wrangling_SEKI.Rmd file dedicated to wrangling the SEKI.flammability.csv into a more usable format in seki_flam_data_all.csv
   
 **Figures**:
-The figures folder includes all figures included in the manuscript, supplementary index, as well as figures we did not end up presenting (mostly placed in the extra-figures folder). All main and supplementary figures were labelled appropriately with FigX. or FigSX. preceding the description of the figure. 
+The figures folder includes all figures included in the manuscript, supplementary index, as well as figures we did not end up presenting (mostly placed in the extra-figures folder). All main and supplementary figures were labelled appropriately with FigX. or FigSX. preceding the description of the figure. Note that *Fig1.methods.images.png* is not made in any script, but instead consists of two pictures taken by Indra Boving and Joe Celebrezze.
 
 **Mixed Effects Model Selection Tables**:
 These are placed in the *mem-model-selection* folder and informed our conclusions regarding this analysis.

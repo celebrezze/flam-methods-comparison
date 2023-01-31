@@ -81,7 +81,7 @@ ggplot(data.summary, aes(x=group, y=count, fill=group)) +
         axis.title.y = element_text(face = 'bold', size = 14),
         axis.text.x = element_text(face = 'bold', angle = 90, hjust = 1,vjust = 0.4, size = 20))
 
-ggsave(here('figures/lit.review.barplot.jpg'), height = 7, width = 12.64)
+ggsave(here('figures/Fig2b.lit.review.barplot.jpg'), height = 7, width = 12.64)
 ```
 
 # Comparing Weights

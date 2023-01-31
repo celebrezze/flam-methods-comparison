@@ -19,12 +19,12 @@ library(tidyverse)
 
 # Introduction
 
-This .Rmd file covers the necessary metadata for the datasets that we used in the analyses for this manuscript.
+This .Rmd file covers the necessary metadata for the datasets that we used in the analyses for the paper, *A comparison of a novel hot-plate-based flammability chamber design and an epiradiator-based design*.
 
-It does so by describing each column of each dataset included in this GitHub. For more information on the organization of the GitHub or which scripts are responsible for which analyses, see the README file included on the GitHub. Many variables/columns are repeated on multiple datasets, and in these cases we do not describe them again, as this would be redundant; however, we try to make it clear where repeated columns exist and why.
+It does so by describing each column of each dataset included in this GitHub. For more information on the organization of the GitHub or which scripts are responsible for which analyses, see the README file included on the GitHub. Many variables/columns are repeated on multiple datasets, and in these cases we do not describe them again, as this would be redundant; however, we try to make it clear where repeated columns exist and, if necessary, why.
 
 This metadata was last updated on:
-**January 23, 2023** by **Joe Celebrezze**
+**January 30, 2023** by **Joe Celebrezze**
 
 --------------------------
 
@@ -40,6 +40,14 @@ head(lit.review)
 
 *year*: publishing year of the given study
 
+*heating.notes*: notes taken on the heating regime of the sample, if included; if NA, then no information was provided; this was used to inform the next three columns
+
+*heating.temp*: temperature of the heating unit in the given method (degrees C)
+
+*heating.irradiance*: irradiance of the heating unit in the given method (kW/m^2)
+
+*second.heating*: for five instances (White et. al. 1996, Weise et. al. 2005, Della Rocca et. al. 2015, Fenesi et. al. 2016, Ramadhan et. al. 2021), studies used heating as a treatment in their study -- typically with different irradiances, but Fenesi et. al. (2016) used two different temperatures (160 and 210 C) for a slow and fast combustion setup
+
 *sample.size.description*: notes taken on the sample size used in the flammability tests; if NA, then no information was provided; this was used to inform the next four columns
 
 *sample.weight*: average weight of flammability samples in grams; if NA, then no information was provided
@@ -50,9 +58,9 @@ head(lit.review)
 
 *sample.volume.cm*: average volume of flammability samples in cm^3; if NA, then no information was provided
 
-**Methods Columns**: the following 16 columns -- *epiradiator*, *wind.tunnel*, *muffle.furnace*, *MLC*, *xylene.lattice*, *fire.bench*, *grill*, *oxygen.bomb.calorimeter*, *steel.ring.litter.bed*, *tray*, *FFB*, *FPA*, *cone.calorimeter*, *bunsen.burner*, *other*, *intermediate.scale.calorimeter* -- were formatted in the same way where they were given a binary identifier of 1 or 0, 1 denoting that the study used this specific method and 0 denoting that thy did not. The dataset was organized so that there was only 1 method used per row, so in cases where multiple methods were used by one study, then multiple rows were assigned for methods characterization (see *duplicate*). For in-depth descriptions of methods, see the table located in the appendix (Table A1).
+**Methods Columns**: the following 16 columns -- *epiradiator*, *wind.tunnel*, *muffle.furnace*, *MLC* (mass loss calorimeter), *xylene.lattice* (as described in Mutch 1970), *fire.bench*, *grill* (as described in Jaureguiberry et. al. 2011), *oxygen.bomb.calorimeter*, *steel.ring.litter.bed*, *tray*, *FFB* (flat flame burner), *FPA* (fire propogation apparatus), *cone.calorimeter*, *bunsen.burner* (or direct flame), *other*, *intermediate.scale.calorimeter* -- were formatted in the same way where they were given a binary identifier of 1 or 0, 1 denoting that the study used this specific method and 0 denoting that thy did not. The dataset was organized so that there was only 1 method used per row, so in cases where multiple methods were used by one study, then multiple rows were assigned for methods characterization (see *duplicate*). For in-depth descriptions of methods and a list of each of the studies that use that given method, see the table located in the appendix (Table A1).
 
-*duplicate*: assigned a binary identifier of N (no) or Y (yes) denoting whether or not multple methods were used in the same study
+*duplicate*: assigned a binary identifier of N (no) or Y (yes) denoting whether or not multiple methods were used in the same study. From the paper: "19 studies utilized more than one method to test different aspects of flammability or different fuels, with a few using more than two methods (Madrigal et. al. 2012, Della Rocca et. al. 2015, Romero and Ganteaume 2021)."
 
 *model*: a character vector assigned to the method used in the row where the following abbreviations were used matching up to the list of columns above in **Methods Columns** -- EPI, WT, MF, MLC, XL, FB, grill, OB, SR, tray, FFB, FPA, CC, BB, other, ISC
 
@@ -141,7 +149,7 @@ LFM = 100 \times \frac{fresh weight - dry weight}{dry weight}
 
 *site*: a character identifier describing the site that we gathered the samples from (either St. Marys = chapparal Site 1 = 34.4613, -119.6934 or Painted Caves = chapparal Site 2 = 34.4931, -119.7910)
 
-*lfm_outliers_out*: a column reporting LFM values, with outliers replaced with NAs
+*lfm_outliers_out*: a column reporting LFM values, with outliers replaced with NAs; outliers were identified using the outlierKD2 function (http://goo.gl/UUyEzD)
 
 *lfm_n_as_imputed*: a column reporting LFM values, with NAs replaced by imputing the predicted LFM value at that water potential
 
@@ -166,6 +174,12 @@ LFM = 100 \times \frac{fresh weight - dry weight}{dry weight}
 *gdw_gfw*: grams of dry weight per grams of fresh weight (from LFM subsample); used in calculation of *dw.flam.sample* (see below)
 
 *gww_gdw*: grams of wet weight per grams of dry weight (from LFM subsample); not used in analyses
+
+*flam_index*: derived from Essaghi et. al. 2017, using maximum *tti* and maximum *fh*, an index of flammability as a scale of least (1) to most (20) flammable. The following equation was used: 
+\begin{equation}
+flam_index = x \times (\frac{max(tti) - tti}{min(tti) + tti})^{\frac{fh}{fh + max(fh)}^2}
+\end{equation}
+where max(tti) and max(fh) were determined for each method prior to calculating and where x is some arbitrary coefficient so that the maximum value off the flammability index (i.e., tti = 0, fh = max(fh)) is equal to 20
 
 *max_mpa_sample*: the maximum (wettest) water potential measured using this method
 
@@ -251,7 +265,13 @@ seki_flam_data_all <- read_csv(here("processed-data", "seki_flam_data_all.csv"))
 head(seki_flam_data_all)
 ```
 
+Many of the columns in this dataset are described in either *SEKI_flammability.csv* or *local_flam_data_all.csv*, so their descriptions are not included below
+
 *model.spp.gr.sample*: an identifier that includes *year_month*, *model*, *spp*, *gr*, and *sample* in that order, with underscores between each variable
+
+*lfm.outliers.out*: see *lfm_outliers_out* above
+
+*lfm.NAs.imputed*: see *lfm_n_as_imputed* above
 
 *ignition_no_double*: after removing non-ignitions, all instances where *ignition* = 2 (multiple ignitions), are coded as NA. Otherwise, *ignition_no_double* = 1
 
@@ -277,7 +297,11 @@ sample.wt \times gdw.gfw
 sample.wt - dw.flam.sample
 \end{equation}
 
+*flam.index*: see *flam_index* above
+
 *dry.norm...*: the seven columns -- *dry.norm.fh*, *dry.norm.gd*, *dry.norm.fd*, *dry.norm.pfg*, *dry.norm.ttfg*, *dry.norm.tti*, *dry.norm.gti* -- are the flammability metrics normalized by the dry weight of the flammability sample, as reported in *dw.flam.sample*; these were used in some exploratory analyses, but not very extensively
+
+*fh_nas_imputed*: flame heights with the NA values imputed; this was not used in any main analyses, but may have been used in some exploratory analyses
 
 *precip.2mo*: precipitation as recorded by a weather station at Santa Barbara Botanical Gardens for Santa Barbara county for the 2 months prior to flammability testing (see: https://www.countyofsb.org/2256/Historical-Rainfall-Reservoir-Informatio); note: this was not used for analyses looking at SEKI data since the precipitation was not representative of the location; however, for purposes of merging the dataset with the local_flam_data, we added it in
 
@@ -286,13 +310,9 @@ The following datasets were in 1.data_wrangling_methods.Rmd as a combination of 
 
 *location*: either local (chapparal sites) or seki (Sierra Nevadas sites, seki = Sequoia-Kings Canyon)
 
-*flam_index*: derived from Essaghi et. al. 2017, using maximum *tti* and maximum *fh*, an index of flammability as a scale of least (1) to most (20) flammable. The following equation was used: 
-\begin{equation}
-flam_index = x \times (\frac{max(tti) - tti}{min(tti) + tti})^{\frac{fh}{fh + max(fh)}^2}
-\end{equation}
-where max(tti) and max(fh) were determined for each method prior to calculating and where x is some arbitrary coefficient so that the maximum value off the flammability index (i.e., tti = 0, fh = max(fh)) is equal to 20
+*individual_round*: *individual* and *round* (as described above) separated by an underscore
 
-The first two dataframes we used most often (by far), while the last three were used primarily for extra analyses or exploratory analyses
+The first two dataframes we used most often (by far), while the last three were used primarily for extra or exploratory analyses
 
 ### bothmethods_bothlocations_wide.csv
 ```{r, include = F}
@@ -300,7 +320,7 @@ bothmethods_bothlocations_wide <- read_csv(here("processed-data", "bothmethods_b
 head(bothmethods_bothlocations_wide)
 ```
 
-This combines the data gathered from the SEKI and chapparal sites, from both epiradiator and hot plate methods. In this .csv, the data is in a 'wide' format with columns for the data from the epiradiator (_epi) and the hot plate (_hp). This was a possibility due to us simultaneously burning plant samples using both methods, so for each individual and round, there was data for both epiradiator and hot plate methods
+This combines the data gathered from the SEKI and chapparal sites, from both epiradiator and hot plate methods. In this .csv, the data is in a 'wide' format with columns for the data from the epiradiator (_epi) and the hot plate (_hp). This was a possibility due to us simultaneously burning plant samples using both methods, so for each individual and round, there was data for both epiradiator and hot plate methods. This also led to some of the columns being redundant (i.e., mpa_epi and mpa_hp, as we conducted the same measurements prior to burning the samples using each method). Also, note that the *model_epi* and *model_hp* columns are full of EPI and HP values (respectively), making them mostly useless, but they were kept in, as they helped us confirm if our data wrangling worked out (i.e., if there was an HP value in *model_epi*, then we would have raised some eyebrows).
 
 ### bothmethods_bothlocations_long.csv
 ```{r, include = F}
@@ -316,18 +336,20 @@ bothm_bothl_manual_ignitions_in <- read_csv(here("processed-data", "bothm_bothl_
 head(bothm_bothl_manual_ignitions_in)
 ```
 
-This includes data-of-interest (excluding certain species as noted in 1.data_wrangling_methods.Rmd) for both methods and both locations and includes manual ignitions
+This includes data-of-interest (excluding certain species as noted in *1.data_wrangling_methods.Rmd*) for both methods and both locations and includes manual ignitions.
 
 ### bothmethods_and_locations_long_noignitionsincluded.csv
 ```{r, include = F}
 bothmethods_and_locations_long_noignitionsincluded <- read_csv(here("processed-data", "bothmethods_and_locations_long_noignitionsincluded.csv"))
 head(bothmethods_and_locations_long_noignitionsincluded)
 ```
-This includes non-ignitions; the columns have all been defined above.
+
+This includes non-ignitions, following the same formatting as *bothmethods_bothlocations_long.csv*; the columns have all been defined above.
 
 ### bothmethods_and_locations_wide_noignitionsincluded.csv
 ```{r, include = F}
 bothmethods_and_locations_wide_noignitionsincluded <- read_csv(here("processed-data", "bothmethods_and_locations_wide_noignitionsincluded.csv"))
 head(bothmethods_and_locations_wide_noignitionsincluded)
 ```
-This includes non-ignitions but in a wide format with variables followed by _epi or _hp depending on which *model* was used
+
+This includes non-ignitions but in a wide format with variables followed by _epi or _hp depending on which *model* was used, following the same formatting as *bothmethods_bothlocations_wide.csv*; the columns have all been defined above.
