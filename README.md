@@ -19,6 +19,18 @@ This repository is meant for the storage and sharing of data, scripts, figures, 
 
 [- Raw Data](https://github.com/celebrezze/flam-methods-comparison#raw-data)
 
+[- Processed Data](https://github.com/celebrezze/flam-methods-comparison#processed-data)
+
+[- Scripts](https://github.com/celebrezze/flam-methods-comparison#scripts)
+
+[- Figures](https://github.com/celebrezze/flam-methods-comparison#figures)
+
+[- Mixed Effects Model Selection Tables](https://github.com/celebrezze/flam-methods-comparison#mixed-effects-model-selection-tables)
+
+[Metadata](https://github.com/celebrezze/flam-methods-comparison#metadata)
+
+[Contact Information](https://github.com/celebrezze/flam-methods-comparison#contact-information)
+
 --------------------------------
 
 ## Breakdown of Folders
