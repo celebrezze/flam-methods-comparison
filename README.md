@@ -4,9 +4,7 @@
 
 ## A comparison of a novel hot-plate-based flammability chamber design and an epiradiator-based design
 
-## Joe Celebrezze*, Indra Boving, and Max Moritz
-
-### *: correspondence, celebrezze@ucsb.edu
+## Joe Celebrezze, Indra Boving, and Max Moritz
 
 --------------------------------
 
@@ -15,10 +13,18 @@ This repository is meant for the storage and sharing of data, scripts, figures, 
 
 --------------------------------
 
+## Table of Contents
+
+[Breakdown of Folders](https://github.com/celebrezze/flam-methods-comparison#breakdown-of-folders)
+
+[- Raw Data](https://github.com/celebrezze/flam-methods-comparison#raw-data)
+
+--------------------------------
+
 ## Breakdown of Folders
 
-**Raw Data**:
-The raw-data folder consists of five dataframes in .csv format. For more comprehensive information regarding each of the dataframes, see the metadata. Below are descriptions for those dataframes:
+### Raw Data:
+The **raw-data** folder consists of five dataframes in .csv format. For more comprehensive information regarding each of the dataframes, see the metadata. Below are descriptions for those dataframes:
   
   *lit.review.csv*: this exhibits the methods used in the 134 studies identified in the literature review along with identifiers for the studies (authors and year), a description of the size of sample (if included) either in terms of weight (g), length (cm), area (cm2), or volume (cm3), and a description of the heating temperature or irradiance of the method used.
   
@@ -28,13 +34,13 @@ The raw-data folder consists of five dataframes in .csv format. For more compreh
   
   *pv_summary_df_timing.csv*: this includes data from pressure-volume (PV) curves conducted on the species we were interested from the Sierra Nevadas and chapparal sites. PV curves were conducted using the protocol identified in Tyree and Hammel 1972. We did not use the PV curve data in the main analyses or supplemental analyses; however, we did end up using them in the exploratory analyses, hence why this dataframe remains in the repository. For a more comprehensive description of the columns or the protocol followed to gather the data, see the metadata.
   
-  *SEKI_flammability.csv*: this includes similar variables reported in the local_flam_data_all.csv but for the flammability testing results for the species tested in the Sierra Nevadas, *Arctostaphylos patula*, *Ceanothus cordulatus*, *Abies concolor*, *Pinus jeffreyii*, *Calocedrus decurrens*, and *Quercus kelloggii*. Compared to the local_flam_data_all.csv, this dataset has far fewer variables: ID, species, method, water potential, live fuel moisture, sample weight, proportion new, and flammability metrics to name the most important ones. This .csv was significantly wrangled in a different script located in the extra-analyses folder (data_wrangling_SEKI.Rmd) and the dataframe in the processed-data folder was used in the analyses (seki_flam_data_all.csv). This wrangled dataframe was far more similar to the local_flam_data_all.csv.
+  *SEKI_flammability.csv*: this includes similar variables reported in the local_flam_data_all.csv but for the flammability testing results for the species tested in the Sierra Nevadas, *Arctostaphylos patula*, *Ceanothus cordulatus*, *Abies concolor*, *Pinus jeffreyii*, *Calocedrus decurrens*, and *Quercus kelloggii*. Compared to the local_flam_data_all.csv, this dataset has far fewer variables: ID, species, method, water potential, live fuel moisture, sample weight, proportion new, and flammability metrics to name the most important ones. This .csv was significantly wrangled in a different script located in the extra-analyses folder (*data_wrangling_SEKI.Rmd*) and the dataframe in the processed-data folder was used in the analyses (*seki_flam_data_all.csv*). This wrangled dataframe was far more similar to the *local_flam_data_all.csv*.
   
-**Processed Data**:
-The processed-data folder consists of dataframes manipulated at some stage from the raw-data. The dataframes in this folder primarily are composed of dataframes in different iterations that include data in which both methods were used simultaneously. See the metadata for more information. Otherwise, see 1.data_wrangling_methods.Rmd (for the combined datasets as described in the metadata or data_wrangling_SEKI.Rmd (in extra-analyses; for seki_flam_data_all) for details on how datasets were 'wrangled'.
+### Processed Data:
+The **processed-data** folder consists of dataframes manipulated at some stage from the raw-data. The dataframes in this folder primarily are composed of dataframes in different iterations that include data in which both methods were used simultaneously. See the metadata for more information. Otherwise, see 1.data_wrangling_methods.Rmd (for the combined datasets as described in the metadata or *data_wrangling_SEKI.Rmd* (in *extra-analyses*; for *seki_flam_data_all.csv*) for details on how datasets were 'wrangled'.
 
-**Scripts**:
-The scripts folder includes scripts for all of the code we used to wrangle data, complete analyses, and design tables and figures for the main body of the manuscript, the supplementary index, and for exploratory analyses (which are primarily located in the extra-analyses folder inside of the scripts folder). The scripts are numbered in a logical order which follows the order presented in the manuscript. Further details regarding each of the 6 main scripts follow:
+### Scripts:
+The **scripts** folder includes scripts for all of the code we used to wrangle data, complete analyses, and design tables and figures for the main body of the manuscript, the supplementary index, and for exploratory analyses (which are primarily located in the *extra-analyses* folder inside of the **scripts** folder). The scripts are numbered in a logical order which follows the order presented in the manuscript. Further details regarding each of the 6 main scripts follow:
 
   *1.data_wrangling_methods.Rmd*: this takes the dataframes from the raw-data folder and cleans them up so that they could be combined into one dataset for further analyses. It removes species with less than 6 ignitions for either of the methods (leaving *Adenostoma fasciculatum*, *Ceanothus megacarpus*, *Arctostaphylos patula*, and *Ceanothus cordulatus*), removes rows with NA values in certain variables, and moves any instances of manual ignitions (where after 7 minutes elapsed, we manually ignited the samples by lifting them into the propane-fueled pilot flame) into a specific dataset, otherwise removing them from the bulk of datasets.
   
@@ -48,13 +54,21 @@ The scripts folder includes scripts for all of the code we used to wrangle data,
   
   *5.PCA_NMDS.Rmd*: this involves all code necessary for the principal component analysis included in the manuscript as well as code for non-metric multidimensional scaling (NMDS) analyses which were not used in the final product.
   
-  *extra-analyses*: as previously alluded to, any exploratory analyses or scripts which were improved upon or elaborated on by the main 6 scripts described above were placed in the extra-analyses folder. This folder includes analyses not mentioned above such as variance decomposition, classification and regression trees, segmented regressions, using the flammability index developed in Essaghi et. al. 2017, and an investigation into manual ignitions (mostly for *Ceanothus cordulataus*). Importantly, it also contains the data_wrangling_SEKI.Rmd file dedicated to wrangling the SEKI.flammability.csv into a more usable format in seki_flam_data_all.csv
+  *extra-analyses*: as previously alluded to, any exploratory analyses or scripts which were improved upon or elaborated on by the main 6 scripts described above were placed in the *extra-analyses* folder. This folder includes analyses not mentioned above such as variance decomposition, classification and regression trees, segmented regressions, using the flammability index developed in Essaghi et. al. 2017, and an investigation into manual ignitions (mostly for *Ceanothus cordulataus*). Importantly, it also contains the *data_wrangling_SEKI.Rmd* file dedicated to wrangling the *SEKI.flammability.csv* into a more usable format in *seki_flam_data_all.csv*.
   
-**Figures**:
-The figures folder includes all figures included in the manuscript, supplementary index, as well as figures we did not end up presenting (mostly placed in the extra-figures folder). All main and supplementary figures were labelled appropriately with FigX. or FigSX. preceding the description of the figure. Note that *Fig1.methods.images.png* is not made in any script, but instead consists of two pictures taken by Indra Boving and Joe Celebrezze.
+### Figures:
+The **figures** folder includes all figures included in the manuscript, supplementary index, as well as figures we did not end up presenting (mostly placed in the *extra-figures* folder). All main and supplementary figures were labelled appropriately with FigX. or FigSX. preceding the description of the figure. Note that *Fig1.methods.images.png* is not made in any script, but instead consists of two pictures taken by Indra Boving and Joe Celebrezze.
 
-**Mixed Effects Model Selection Tables**:
-These are placed in the *mem-model-selection* folder and informed our conclusions regarding this analysis.
+### Mixed Effects Model Selection Tables:
+These are placed in the **mem-model-selection** folder and informed our conclusions regarding this analysis.
 
-**Metadata**:
-This is located in the *METADATA.Rmd* or *METADATA.html* files
+## Metadata:
+This is located in the *METADATA.Rmd* and *METADATA.html* files
+
+## Contact Information
+
+Joe Celebrezze*: celebrezze@ucsb.edu
+
+Indra Boving: bovingi@ucsb.edu
+
+**correspondence*
