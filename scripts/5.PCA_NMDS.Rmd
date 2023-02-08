@@ -491,11 +491,11 @@ epiPCA <- ggplot(PCAvalues.epi, aes(x = PC1, y = PC2)) +
   geom_segment(data = PCA_ttfg, aes(x = 0, y = 0, 
                                              xend = PC1, yend = PC2),
      arrow = arrow(length = unit(1/2, "picas")), 
-     size = .93, alpha = 0.9, color = 'grey70') +
+     size = .93, alpha = 0.9, color = '#FC5130') +
   geom_segment(data = PCA_maxtemp, aes(x = 0, y = 0, 
                                              xend = PC1, yend = PC2),
      arrow = arrow(length = unit(1/2, "picas")), 
-     size = .93, alpha = 0.9, color = 'grey70') +
+     size = .93, alpha = 0.9, color = '#FC5130') +
   annotate("text", 
            x = (PCA_combustability$PC1 * 1.85), 
           y = (PCA_combustability$PC2 * 1.12),
@@ -515,12 +515,12 @@ epiPCA <- ggplot(PCAvalues.epi, aes(x = PC1, y = PC2)) +
            x = (PCA_maxtemp$PC1 * 1.85),
            y = (PCA_maxtemp$PC2 * 1.12), 
            label = PCA_maxtemp$Variables, size = 6,
-           fontface = 'bold') +
+           fontface = 'bold', color = '#FC5130') +
   annotate("text",
            x = (PCA_ttfg$PC1 * 6),
            y = (PCA_ttfg$PC2 * 6), 
            label = PCA_ttfg$Variables, size = 6,
-           fontface = 'bold') +
+           fontface = 'bold', color = '#FC5130') +
     annotate("text", x = -2.7, y = 2.35, label = "a", size = 16, fontface = "bold") +
     annotate("text", x = 1.6, y = 2.35, label = "Epiradiator", size = 10) +
   theme(panel.background = element_rect(fill='white', colour='black'), # Make background white and border black
@@ -661,11 +661,11 @@ hpPCA <- ggplot(PCAvalues.hp, aes(x = PC1, y = PC2)) +
   geom_segment(data = PCA_maxtemp, aes(x = 0, y = 0,
                                              xend = PC1, yend = PC2),
      arrow = arrow(length = unit(1/2, "picas")), 
-     size = .93, alpha = 0.9, color = 'grey70') +
+     size = .93, alpha = 0.9, color = '#FC5130') +
   geom_segment(data = PCA_ttfg, aes(x = 0, y = 0, 
                                              xend = PC1, yend = PC2),
      arrow = arrow(length = unit(1/2, "picas")), 
-     size = .93, alpha = 0.9, color = 'grey70') +
+     size = .93, alpha = 0.9, color = '#FC5130') +
   annotate("text", 
            x = (PCA_combustability$PC1 * 1.55), 
           y = (PCA_combustability$PC2 * 1.15),
@@ -685,12 +685,12 @@ hpPCA <- ggplot(PCAvalues.hp, aes(x = PC1, y = PC2)) +
            x = (PCA_maxtemp$PC1 * 1.55), 
           y = (PCA_maxtemp$PC2 * 1.15),
           label = PCA_maxtemp$Variables, size = 6,
-          fontface = 'bold') +
+          fontface = 'bold', color = '#FC5130') +
   annotate("text",
            x = (PCA_ttfg$PC1 * 1.2),
            y = (PCA_ttfg$PC2 * 1.15),  
            label = PCA_ttfg$Variables, size = 6,
-           fontface = 'bold') +   
+           fontface = 'bold', color = '#FC5130') +   
   annotate("text", x = -2.32, y = 2.35, label = "b", size = 16, fontface = 'bold') +
   annotate("text", x = 1.325, y = 2.35, label = "Hot Plate", size = 10) +
   theme(panel.background = element_rect(fill='white', colour='black'), # Make background white and border black

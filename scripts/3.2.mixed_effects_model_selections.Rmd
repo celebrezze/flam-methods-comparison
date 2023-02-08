@@ -555,7 +555,7 @@ m1 <- lmer(tti ~ mpa + lfm + dw_flam_sample + spp + sample_wt + site + year_mont
 multicollinearity(m1) # dry weight and lfm
 
 m2 <- lmer(tti ~ mpa + lfm + dw_flam_sample + spp + site + year_month + (1|individual), data = epi.df)
-multicollinearity(m2) # lfm moderate correlation (VIF = 5.97)
+multicollinearity(m2) # lfm moderate correlation (VIF = 3.76)
 
 m3 <- lmer(tti ~ mpa + lfm + spp + site + year_month + (1|individual), data = epi.df)
 multicollinearity(m3) # all good
@@ -1202,39 +1202,33 @@ tab_model(mpa.mod, lfm.mod, dw.mod, ww.mod, mod1, mod2, mod3, mod4, int1, int2, 
 # ------------------------------
 # MEM Selection Table
 ```{r}
-col1 <- c('Time to Ignition', ' ', ' ', 'Flame Duration', ' ', ' ', 'Flame Height', ' ', 'Glow Duration', ' ', ' ', 'Maximum Temperature', ' ', 'Post-Flame Glow', ' ', ' ', 'Glow to Ignition', ' ', 'Time to First Glow')
-col2 <- c('MPa*** + DW* x species', ' ', ' ', 'DW x species', 'WW x species', ' ', 'MPa + DW x species', 'DW x species', 'MPa + LFM + DW x species', 'DW x species','LFM + DW x species', 'MPa*** + LFM* + DW* x species', 'MPa** + DW x species', 'MPa** + [DW x species]*', 'MPa*** + LFM + [DW x species]**', 'LFM + [DW x species]*', 'MPa + DW x species', ' ', '[WW*** x species]**')
-col3 <- c('MPa + [DW*** x species]*', 'LFM + MPa + DW** x species', 'LFM + [DW** x species]*', 'DW x species', 'WW x species', 'MPa + DW x species', 'DW* x species', 'LFM + DW** x species', 'MPa + LFM* + [DW** x species]**', 'LFM + [DW** x species]**', 'DW x species','MPa*** + DW** x species', 'MPa*** + LFM + DW** x species', 'MPa + [DW* x species]**', 'LFM + [DW x species]**', ' ', 'MPa + LFM + DW** x species', 'LFM + DW** x species', 'MPa** + DW x species')
-col4 <- c('651.189', ' ', ' ', '513.814', '515.805', ' ', '522.753', '523.215', '860.247', '860.494', '862.221', '884.899', '886.737', '828.631', '831.333', '832.698', '653.906', ' ', '576.627')
-col5 <- c('723.571', '726.364', '727.353', '572.756', '573.225', '573.969', '477.555', '482.359', '842.114', '845.501', '846.865', '737.287', '739.601', '809.005', '813.056', ' ', '737.883', '739.439', '752.668')
-col6 <- c('0.345 / 0.420', ' ', ' ', '0.126 / 0.137', '0.098 / NA', ' ', '0.187 / NA', '0.157 / NA', '0.332 / 0.405', '0.325 / 0.402', '0.333 / 0.399', '0.224 / NA', '0.193 / NA', '0.343 / 0.419', '0.341 / 0.416', '0.343 / 0.416', '0.164 / NA', ' ', '0.419 / 0.423')
-col7 <- c('0.482 / NA', '0.481 / NA', '0.483 / NA', '0.184 / 0.335', '0.192 / 0.307', '0.192 / 0.326', '0.277 / NA', '0.295 / NA', '0.290 / 0.343', '0.283 / 0.349', '0.251 / 0.378', '0.404 / 0.603', '0.402 / 0.624', '0.289 / 0.345', '0.287 / 0.335', ' ', '0.256 / 0.349', '0.254 / 0.355', '0.185 / 0.287')
+col1 <- c('Time to Ignition', 'Flame Duration', ' ', ' ', 'Flame Height', ' ', 'Glow Duration', ' ', ' ', 'Maximum Temperature', ' ', 'Post-Flame Glow', 'Glow to Ignition', ' ', 'Time to First Glow')
+col2 <- c('MPa*** + DW* x species', 'DW x species', 'WW x species', ' ', 'MPa + DW x species', 'DW x species', 'MPa + LFM + DW x species', 'DW x species','LFM + DW x species', 'MPa*** + LFM* + DW* x species', 'MPa** + DW x species', 'MPa** + [DW x species]*', 'MPa + DW x species', ' ', '[WW*** x species]**')
+col3 <- c('MPa + [DW*** x species]*', 'DW x species', 'WW x species', 'MPa + DW x species', 'DW* x species', ' ', 'MPa + LFM* + [DW** x species]**', ' ', ' ','MPa*** + DW** x species', ' ', 'MPa + [DW* x species]**', 'MPa + LFM + DW** x species', 'LFM + DW** x species', 'MPa** + DW x species')
+col4 <- c('651.189', '513.814', '515.805', ' ', '522.753', '523.215', '860.247', '860.494', '862.221', '884.899', '886.737', '828.631', '653.906', ' ', '576.627')
+col5 <- c('723.571', '572.756', '573.225', '573.969', '477.555', ' ', '842.114', ' ', ' ', '737.287', ' ', '809.005', '737.883', '739.439', '752.668')
+col6 <- c('0.345 / 0.420', '0.126 / 0.137', '0.098 / NA', ' ', '0.187 / NA', '0.157 / NA', '0.332 / 0.405', '0.325 / 0.402', '0.333 / 0.399', '0.224 / NA', '0.193 / NA', '0.343 / 0.419', '0.164 / NA', ' ', '0.419 / 0.423')
+col7 <- c('0.482 / NA', '0.184 / 0.335', '0.192 / 0.307', '0.192 / 0.326', '0.277 / NA', ' ', '0.290 / 0.343', ' ', ' ', '0.404 / 0.603', ' ', '0.289 / 0.345', '0.256 / 0.349', '0.254 / 0.355', '0.185 / 0.287')
 
 kable.df <- data.frame(col1, col2, col3, col4, col5, col6, col7)
 ```
 
 ```{r}
-kable.df[1,4:5] <- cell_spec(kable.df[1,4:5], 'html', bold = T)
-kable.df[4,4:5] <- cell_spec(kable.df[4,4:5], 'html', bold = T)
-kable.df[5,4:5] <- cell_spec(kable.df[5,4:5], 'html', bold = T)
-kable.df[6,5] <- cell_spec(kable.df[6,5], 'html', bold = T)
-kable.df[7,4:5] <- cell_spec(kable.df[7,4:5], 'html', bold = T)
-kable.df[8,4] <- cell_spec(kable.df[8,4], 'html', bold = T)
-kable.df[9:14,4] <- cell_spec(kable.df[9:14,4], 'html', bold = T)
-kable.df[9,5] <- cell_spec(kable.df[9,5], 'html', bold = T)
-kable.df[12,5] <- cell_spec(kable.df[12,5], 'html', bold = T)
-kable.df[14,5] <- cell_spec(kable.df[14,5], 'html', bold = T)
-kable.df[17,4:5] <- cell_spec(kable.df[17,4:5], 'html', bold = T)
-kable.df[18,5] <- cell_spec(kable.df[18,5], 'html', bold = T)
-kable.df[19,4:5] <- cell_spec(kable.df[19,4:5], 'html', bold = T)
+#kable.df[1:3,4] <- cell_spec(kable.df[1:3,4], 'html', bold = T)
+#kable.df[1:5,5] <- cell_spec(kable.df[1:5,5], 'html', bold = T)
+#kable.df[5:13,4] <- cell_spec(kable.df[5:13,4], 'html', bold = T)
+#kable.df[7,5] <- cell_spec(kable.df[7,5], 'html', bold = T)
+#kable.df[10,5] <- cell_spec(kable.df[10,5], 'html', bold = T)
+#kable.df[12:15,5] <- cell_spec(kable.df[12:15,5], 'html', bold = T)
+#kable.df[15,4] <- cell_spec(kable.df[15,4], 'html', bold = T)
 
 kable.df %>% 
   kable(format = 'html', escape = F, col.names = c('Flammability Metric', 'Epiradiator', 'Hot Plate', 'Epiradiator','Hot Plate', 'Epiradiator', 'Hot Plate')) %>% 
   kable_styling(bootstrap_options = c('hover', 'bordered', 'condensed'), fixed_thead = T) %>% 
-  row_spec(c(0:19), color = 'black') %>% 
+  row_spec(c(0:15), color = 'black') %>% 
   column_spec(1, bold = T, border_left = T, border_right = T) %>% 
   column_spec(c(3,5,7), border_right = T) %>% 
-  row_spec(c(1:3, 7:8, 12:13, 17:18), background = '#F9F6EE') %>% 
+  row_spec(c(1, 5:6, 10:11, 13:14), background = '#F9F6EE') %>% 
   add_header_above(c(" ", "Top Model(s)" = 2, "AIC" = 2, "Marginal R \U00B2 / Conditional R \U00B2" = 2), color = 'black', border_left = T, border_right = T) %>% 
   save_kable(here('mem-model-selection/MEM_kable.html'))
 ```

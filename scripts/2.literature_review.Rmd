@@ -26,14 +26,14 @@ NOTE: these datasets are *very large*. They are too large to push to the GitHub 
 ```{r}
 # Ignitions (2016) Dataset from global fire atlas
 temp <- tempfile()
-url <- 'https://daac.ornl.gov/orders/a97981aeff140af7f473132ebfc67fde/CMS_Global_Fire_Atlas/data/Global_fire_atlas_V1_ignitions_2016.zip' # Note: this URL may expire after 30 days (in late December)
+url <- 'https://daac.ornl.gov/orders/a773665852b1e734aebf200638e3c5b5/CMS_Global_Fire_Atlas/data/Global_fire_atlas_V1_ignitions_2016.zip' # Note: this URL may expire after 30 days (in March)
 download.file(url, temp)
 fire.map2016 <- unzip(zipfile = temp)
 fire.map2016 <- sf::read_sf('Global_fire_atlas_V1_ignitions_2016.shp')
 
 # Ignitions (2015) Dataset from global fire atlas
 temp <- tempfile()
-url <- 'https://daac.ornl.gov/orders/a97981aeff140af7f473132ebfc67fde/CMS_Global_Fire_Atlas/data/Global_fire_atlas_V1_ignitions_2015.zip' # Note: this URL may expire after 30 days (in late December)
+url <- 'https://daac.ornl.gov/orders/a773665852b1e734aebf200638e3c5b5/CMS_Global_Fire_Atlas/data/Global_fire_atlas_V1_ignitions_2015.zip' # Note: this URL may expire after 30 days (in March)
 download.file(url, temp)
 fire.map2015 <- unzip(zipfile = temp)
 fire.map2015 <- sf::read_sf('Global_fire_atlas_V1_ignitions_2015.shp')
@@ -125,6 +125,11 @@ large.fire.map <- fire.map %>%
 # Focusing on Class G fires (defined by the National Wildfire Coordinating Group as fires 5000 acres or larger)
 v.large.fire.map <- fire.map %>% 
   filter(size > 20.23428)
+
+# California map
+states <- map_data("state")
+states <- states %>% 
+  filter(region == 'california')
 ```
 
 ## All Ignitions
@@ -133,6 +138,7 @@ world <- map_data("world")
 
 ggplot(data = world) +
   geom_map(data = world, map = world, aes(x = long, y = lat, map_id = region), fill = 'white') +
+  geom_map(data = states, map = states, aes(x = long, y = lat, map_id = region), fill = 'gray85') +
   ylim(-55,90) +
   geom_point(data = fire.map, aes(x = longitude, y = latitude, color = size), alpha = 0.025, size = 0.01) +
   labs(color = "Fire Size (km2)") +
@@ -182,6 +188,35 @@ ggplot(data = world) +
         legend.text = element_text (size = 12))
 
 ggsave(here('figures/extra-figures/lit.review.locations.G.ignitions.jpg'), height = 7, width = 12.64)
+```
+
+## California Map
+This map includes our sites!
+```{r}
+# Coordinates for our sites (using site 1 at each location, as site 1 and site 2 are rather close to each other in both locations, so mapping both sites at both locations doesn't make much sense aesthetically)
+site.labels <- c('Chaparral', 'Sierra Nevadas')
+site.latitude <- c(34.4613, 36.7209)
+site.longitude <- c(-119.6934, -118.9708)
+site.coordinates <- data.frame(site.labels, site.latitude, site.longitude)
+
+# Removing point in Nevada
+location.data.ca <- location.data.clean %>% 
+  filter(latitude != 40.28)
+
+ggplot(data = states) +
+  geom_map(data = states, map = states, aes(x = long, y = lat, map_id = region), fill = 'gray85') +
+  xlim(c(-124.4, -114)) +
+  ylim(c(32, 42.03)) +
+  geom_point(data = fire.map, aes(x = longitude, y = latitude, color = size), alpha = 0.15, size = 0.35) +
+  scale_color_gradient(low = '#FFC55B', high = '#EA2B1F', trans = 'log', breaks = c(1, 5, 25, 125, 625, 3000, 9000)) +
+  geom_point(data = location.data.ca, aes(x = longitude, y = latitude), color = 'black', size = 4, alpha = 0.7) +
+  geom_point(data = site.coordinates, aes(x = site.longitude, y = site.latitude), color = '#f78c45', size = 6, shape = 18) +
+  geom_text(data = site.coordinates, aes(x = site.longitude, y = site.latitude + 0.45, label = site.labels), size = 8) +
+  theme_void() +
+  theme(panel.background = element_rect(fill = '#0AA3CF'),
+        legend.position = 'none')
+
+ggsave(here('figures/Fig2a.2.california.inset.jpg'), height = 6, width = 6)
 ```
 
 # Drydown Types
