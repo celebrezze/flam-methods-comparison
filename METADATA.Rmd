@@ -66,13 +66,51 @@ head(lit.review)
 
 *notes*: any extra notes taken on the methods used in the study -- often for somewhat unique changes to methods or for 'other' methods
 
+## lit.review.drydown.csv
+```{r}
+lit.review.drydown <- read_csv(here("raw-data", "lit.review.drydown.csv"))
+head(lit.review.drydown)
+```
+
+This .csv was created to investigate different drydown methods used in the studies in the literature review
+
+*author*, *year*, *duplicate*, *model*, *notes*: see above
+
+*drydown.method*: an identification of the drydown method used in the study, the groups of methods are described below:
+
+  no: author(s) used fresh foliage or litter and did not implement any sort of 'drydown' of the fuel prior to burning
+  
+  oven: used oven to dry foliage or litter
+  
+  air: air-dried foliage or litter (but no gradient of fuel moisture, setting it apart from the method used in our methods section)
+  
+  fresh.oven: compared fresh foliage/litter to oven-dried
+  
+  lab.drydown: benchtop drydown like the one described in our methods section or for the protocol of pressure-volume curves [26]
+  
+  dead.live: compared dead fuel to live fuel
+  
+  field.drought: gathered samples from field throughout drought season, used fresh samples in burn tests
+  
+  fresh.air.oven: compared fresh foliage/litter, air-dried and oven-dried
+  
+  air.oven: compared air-dried litter to oven-dried litter
+  
+  fresh.air: compared fresh foliage to air-dried (but no gradient of fuel moisture, only two treatments)
+  
+  potted.plants: imposed drought on potted plants
+  
+  other: 3 fuel moisture treatments — fresh, saturated with water and heat-dried (with heat gun); this is from         earliest study in lit. review [43]
+  
+*drydown.notes*: if necessary, extra notes on the drydown method used
+
 ## lit.review.locations.csv
 ```{r, include = F}
 lit.review.locations <- read_csv(here("raw-data", "lit.review.locations.csv"))
 head(lit.review.locations)
 ```
 
-*study*: identifier of the study using the author(s) and publishing year, NA values are for instances where multiplee locations were provided for the same study, in which the numerical id (see below) can adequately cross-reference the location data to the correct study
+*study*: identifier of the study using the author(s) and publishing year, NA values are for instances where multiple locations were provided for the same study, in which the numerical id (see below) can adequately cross-reference the location data to the correct study
 
 *id*: numerical identifier of the study, where the studies were ordered in alphabetical order of the last name of the first author. There are certain gaps in id's for instances where studies did not include any information on locations
 

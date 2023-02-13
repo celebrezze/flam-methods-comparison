@@ -15,6 +15,7 @@ here = here::here
 library(ggpubr) #to put graphs side by side
 library(sf) #for dealing with shapefiles
 library(gcookbook) #for continuous color palette
+library(kableExtra) #for table A1
 
 data <- read_csv(here('raw-data', 'lit.review.csv'))[1:158,]
 location.data <- read_csv(here('raw-data', 'lit.review.locations.csv'))[1:184,]
@@ -236,4 +237,65 @@ ggplot(data = drydown.data.clean, aes(x = drydown.method, y = counts)) +
         axis.title = element_text(size = 16, face = 'bold'))
 ```
 
+# Table A1
+Descriptions of all methods used and studies that used the given method, included in the appendix
+```{r}
+# Methods
+methods <- c('Epiradiator', 'Grill', 'Muffle Furnace', 'Cone Calorimeter', 'Mass Loss Calorimeter', 'Oxygen Bomb','Steel Ring', 'Wind Tunnel', 'Fire Bench', 'Xylene Lattice', 'Direct Flame', 'Tray', 'FPA Calorimeter', 'Flat-Flame Burner',	'Intermediate Scale Calorimeter', 'Other')
+
+# Descriptions
+epi.description <- 'This method is defined by a Quartzalliance epiradiator as the primary heating source. Suspension methods (i.e., wire mesh), inclusion of a pilot flame, sample weights, heat flux, starting temperature, locations of thermocouples vary across different studies. Studies investigating bark flammability (e.g., [63]) have the surface of the epiradiator in a vertical orientation; however, the epiradiator is typically in a horizontal orientation, as the majority of studies using this method investigate either live vegetation or litter layers.'
+grill.description <- 'The grill apparatus was designed and described in detail in [9] In this case, it involves a 85x60cm metal barrel cut in half, a metal grill placed in between each half with propane-powered burners below the grill as heat source, a blow torch as an ignition source, and removable wind protection in an attempt to control the environment between burns. In some other cases, a manufactured BBQ grill was used in place of the barrel-based grill, as they are more easily accessible.'
+mf.description <- 'This method consists of placing a sample inside a muffle furnace and measuring flammability parameters such as time to ignition. Samples are often individual leaf specimens. Temperature of the muffle furnace varied between studies from 400-700°C. The door of the muffle furnace is kept open during tests to allow for the measurement of flammability metrics.'
+cc.description <- 'This calorimetry method measures heat release rate by measuring the consumption of oxygen resulting from combustion. It consists of a conical heater with a fixed heat flux to heat samples. The ignition source varies between tests with the more common ones including a spark ignitor and a pilot flame. Tests are typically performed in accordance with ATSM E 1354 standards [107]. ** In some cases, the iCone calorimeter (Fire Testing Technology, East Grinstead, UK) was used. This is an advanced, automatic cone calorimeter designed to test a variety of flammability parameters.'
+mlc.description <- 'This is a specific type of calorimeter, manufactured by Fire Testing Technology Limited (FTT®), which is very similar to a cone calorimeter, but with adjustments to specialize in full fires and to measure smaller changes in mass loss. It also looks at heat release and heat flux. The MLC involves a conical heater, a 500g-capacity load cell, a spark ignition source, a chimney with a thermopile. Tests were most commonly conducted at 50 kW/m2.'
+ob.description <- 'This is a calorimetry method commonly used to measure gross energy content and heat of combustion. It operates by having a reaction occur in a container (referred to as the ‘bomb’) with a fixed volume, so that changes in temperature can be attributed to the energy flux of the reaction rather to any changes in volume. In this review, it was always paired with other methods.'
+sr.description <- 'This is similar to the ‘tray’ method, but it involves a more sophisticated setup to maximize airflow and can incorporate both leaf litter and/or vegetation samples. It involves a steel mesh ring with samples loaded into it. Often, it also has a fireproof base, such as one made from a hardiflex cement fiber board. Ignition sources vary, including a paper towel soaked in isopropyl alcohol and a cotton ball soaked in ethanol.'
+wt.description <- 'This group consists of any method that has a wind tunnel directing wind towards the samples emulating winds that play a key role during wildfires. Sample size and composition varies across the studies, from looking at full, reconstructed shrubs and litter layers to looking at 4g samples. A heat source, such as an infrared panel, is often utilized and usually located above a sample. An ignition source is typically present and varies by study, with the most common sources including a firebrand and a coiled wire igniter.'
+fb.description <- 'This method involves a large flat surface in which large plant samples or, more commonly, litter beds are tested for flammability. Ignition sources vary for the different studies and include ‘firebrands’ (usually a small block of wood, ignited by means of an epiradiator), cotton wicks soaked in a flammable liquid such as ethanol, and a propane torch.'
+xl.description <- 'This is another commonly used method to test litter bed flammability. It involves placing litter beds atop a lattice of cotton strings soaked in xylene, a flammable liquid, and then igniting the lattice of strings from one or multiple points leading to rapid ignition and combustion of the litter bed.'
+direct.flame.description <- 'Samples are directly ignited by an open flame without any other heat source present. The open flame varies across studies from a bunsen burner to a larger U-shaped gas burner'
+tray.description <- 'This is yet another method to test litter bed flammability. It involves placing litter beds in a metal tray with limited airflow from the sides or bottom. An ignition source, typically a firebrand, is placed in the center or edge of the litter bed to cause ignition and combustion of the litter bed.'
+fpa.description <-  'This method is similar to the cone calorimeter, but the combustion chamber allows for a more controlled environment with less stochasticity in gas flow rate and composition.'
+ffb.description <- 'This method was designed to emulate a moving flame front. Small samples (typically, individual leaves) are suspended and a flat flame burner moves towards the sample by route of a small motor. Sometimes, a 6000W radiative panel (Omega) is also included as a radiative heat source.'
+isc.description <- 'This is also similar to a cone calorimeter, but it is designed for larger scale samples, typically burning full plants. It consists of equipment to measure gaseous concentrations, a propane line burner to create a vertical ‘wall of flame’, three wooden walls lined with ceramic fibreboard, and a plant rack in the middle of the three wooden walls.'
+other.description <- '(1) Litter was placed in a cubic basket which was then loaded into a recirculating air oven which sustained temperatures up to 250°C, while thermocouples placed in the middle of the litter took temperature readings.
+(2) This is a specialized experiment investigating the propagation of flames from litter layers to shrub canopies. 20x20cm litter samples were dried and then ignited 10cm below a steel wire netting holding a variety of shrub samples representative of the shrublands of SE France to emulate litter-to-shrub fire spread
+(3) Litter was placed in a cubic cage which was loaded atop a sand surface into a 1.09m-tall chamber made of vermiculite insulation board. Inside the chamber, the sample was heated using an IR lamp and a handheld spark generator was used as an ignition source;
+(4) Leaf-level flammability was measured using a Federal Aviation Administration (FAA, USA) microcalorimeter using 10-15mg samples;
+(5) Shoot-level flammability was measured using a horizontal 4kW radiant panel located 1cm beneath the shoot sample which was suspended by a specialized holder, with a heat flux sensor measuring heat flux and a scale beneath the sample holder measuring weight consumed during burning.
+(6) Full-plant flammability was measured using potted plants. Aluminum discs were located at soil level and 50cm above soil level to estimate heat release. The plant was ignited by a burning cotton ball, soaked in 10mL of ethanol.'
+descriptions <- c(epi.description, grill.description, mf.description, cc.description, mlc.description, ob.description, sr.description, wt.description, fb.description, xl.description, direct.flame.description, tray.description, fpa.description, ffb.description, isc.description, other.description)
+
+epi.studies <- '[5,6],[16,17],[24],[30],[32],[42],[57],[63-86],[15,18,31,33,34]*'
+grill.studies <- '[9],[87-99]'
+mf.studies <- '[7],[43],[52,53],[95],[100-106]'
+cc.studies <- '[108]*,[109-116],[45,117]**'
+mlc.studies <- '[8],[10,11],[44],[56],[63],[118-121]'
+ob.studies <- '[6-8],[10],[57],[71],[75],[85],[122,123]'
+sr.studies <- '[124-132]'
+wt.studies <- '[10,11],[47],[54],[133-137]'
+fb.studies <- '[17],[51],[120],[138-143]'
+xl.studies <- '[20],[144-149]'
+direct.flame.studies <- '[19],[122,123],[127],[150,151]'
+tray.studies <- '[24],[134],[152-155]'
+fpa.studies <- '[156-159]'
+ffb.studies <- '[14],[55],[160,161]'
+isc.studies <- '[50],[111]'
+other.studies <- '(1) [162];(2) [155];(3) [163];(4) [45];(5) [24];(6) [164]'
+studies <- c(epi.studies, grill.studies, mf.studies, cc.studies, mlc.studies, ob.studies, sr.studies, wt.studies, fb.studies, xl.studies, direct.flame.studies, tray.studies, fpa.studies, ffb.studies, isc.studies, other.studies)
+
+table.a1.df <- data.frame(methods, descriptions, studies)
+```
+
+```{r}
+table.a1.df %>% 
+  kable(format = 'html', escape = F, col.names = c('Method', 'Description', 'Studies'), caption = '* : the six studies identified with an asterisk used the laboratory benchtop drydown process described in our methods and in pressure-volume curve protocol [26]') %>% 
+  kable_styling(bootstrap_options = c('hover', 'bordered', 'condensed'), fixed_thead = T) %>% 
+  row_spec(c(0:16), color = 'black') %>% 
+  column_spec(1, bold = T, border_left = T, border_right = T) %>%  
+  column_spec(2:3, border_left = T, border_right = T) %>% 
+  row_spec(c(2,4,6,8,10,12,14,16), background = '#F9F6EE') %>% 
+  save_kable(here('figures/TableA1.html'))
+```
 
