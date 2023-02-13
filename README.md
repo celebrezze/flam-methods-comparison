@@ -2,7 +2,7 @@
 
 ## A GitHub Repository for: 
 
-## A comparison of a novel hot-plate-based flammability chamber design and an epiradiator-based design
+## Tissue-level flammability testing: A review of existing methods and a comparison of a novel hot plate design to an epiradiator design
 
 ## Joe Celebrezze, Indra Boving, and Max Moritz
 
