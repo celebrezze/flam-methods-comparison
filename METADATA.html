@@ -368,6 +368,7 @@ display: none;
 <li><a href="#raw-data" id="toc-raw-data">Raw Data</a>
 <ul>
 <li><a href="#lit.review.csv" id="toc-lit.review.csv">lit.review.csv</a></li>
+<li><a href="#lit.review.drydown.csv" id="toc-lit.review.drydown.csv">lit.review.drydown.csv</a></li>
 <li><a href="#lit.review.locations.csv" id="toc-lit.review.locations.csv">lit.review.locations.csv</a></li>
 <li><a href="#local_flam_data_all.csv" id="toc-local_flam_data_all.csv">local_flam_data_all.csv</a></li>
 <li><a href="#seki_flammability.csv" id="toc-seki_flammability.csv">SEKI_flammability.csv</a></li>
@@ -392,9 +393,9 @@ Datasets</a>
 <div id="introduction" class="section level1">
 <h1>Introduction</h1>
 <p>This .Rmd file covers the necessary metadata for the datasets that we
-used in the analyses for the paper, <em>A comparison of a novel
-hot-plate-based flammability chamber design and an epiradiator-based
-design</em>.</p>
+used in the analyses for the paper, <em>Tissue-level flammability
+testing: A review of existing methods and a comparison of a novel hot
+plate design to an epiradiator design</em>.</p>
 <p>It does so by describing each column of each dataset included in this
 GitHub. For more information on the organization of the GitHub or which
 scripts are responsible for which analyses, see the README file included
@@ -402,7 +403,7 @@ on the GitHub. Many variables/columns are repeated on multiple datasets,
 and in these cases we do not describe them again, as this would be
 redundant; however, we try to make it clear where repeated columns exist
 and, if necessary, why.</p>
-<p>This metadata was last updated on: <strong>January 30, 2023</strong>
+<p>This metadata was last updated on: <strong>February 13, 2023</strong>
 by <strong>Joe Celebrezze</strong></p>
 <hr />
 </div>
@@ -470,10 +471,60 @@ XL, FB, grill, OB, SR, tray, FFB, FPA, CC, BB, other, ISC</p>
 study – often for somewhat unique changes to methods or for ‘other’
 methods</p>
 </div>
+<div id="lit.review.drydown.csv" class="section level2">
+<h2>lit.review.drydown.csv</h2>
+<pre class="r"><code>lit.review.drydown &lt;- read_csv(here(&quot;raw-data&quot;, &quot;lit.review.drydown.csv&quot;))</code></pre>
+<pre><code>## Rows: 158 Columns: 7
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: &quot;,&quot;
+## chr (6): author, drydown.method, duplicate, model, drydown.notes, notes
+## dbl (1): year
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
+<pre class="r"><code>head(lit.review.drydown)</code></pre>
+<pre><code>## # A tibble: 6 × 7
+##   author            year drydown.method duplicate model drydown.notes      notes
+##   &lt;chr&gt;            &lt;dbl&gt; &lt;chr&gt;          &lt;chr&gt;     &lt;chr&gt; &lt;chr&gt;              &lt;chr&gt;
+## 1 Cui et al         2022 air            N         grill air-dried for 24 … &lt;NA&gt; 
+## 2 Cui et al         2020 air            N         grill air-dried for 24 … &lt;NA&gt; 
+## 3 Dibble et al      2007 air            N         CC    litter dried in a… aver…
+## 4 Ellis             2000 air            N         WT    air-dried for two… &lt;NA&gt; 
+## 5 Engstrom et al    2004 air            N         FFB   air-dried for one… &lt;NA&gt; 
+## 6 Grootemaat et al  2017 air            N         MF    air-dried before … &lt;NA&gt;</code></pre>
+<p>This .csv was created to investigate different drydown methods used
+in the studies in the literature review</p>
+<p><em>author</em>, <em>year</em>, <em>duplicate</em>, <em>model</em>,
+<em>notes</em>: see above</p>
+<p><em>drydown.method</em>: an identification of the drydown method used
+in the study, the groups of methods are described below:</p>
+<p>no: author(s) used fresh foliage or litter and did not implement any
+sort of ‘drydown’ of the fuel prior to burning</p>
+<p>oven: used oven to dry foliage or litter</p>
+<p>air: air-dried foliage or litter (but no gradient of fuel moisture,
+setting it apart from the method used in our methods section)</p>
+<p>fresh.oven: compared fresh foliage/litter to oven-dried</p>
+<p>lab.drydown: benchtop drydown like the one described in our methods
+section or for the protocol of pressure-volume curves [26]</p>
+<p>dead.live: compared dead fuel to live fuel</p>
+<p>field.drought: gathered samples from field throughout drought season,
+used fresh samples in burn tests</p>
+<p>fresh.air.oven: compared fresh foliage/litter, air-dried and
+oven-dried</p>
+<p>air.oven: compared air-dried litter to oven-dried litter</p>
+<p>fresh.air: compared fresh foliage to air-dried (but no gradient of
+fuel moisture, only two treatments)</p>
+<p>potted.plants: imposed drought on potted plants</p>
+<p>other: 3 fuel moisture treatments — fresh, saturated with water and
+heat-dried (with heat gun); this is from earliest study in lit. review
+[43]</p>
+<p><em>drydown.notes</em>: if necessary, extra notes on the drydown
+method used</p>
+</div>
 <div id="lit.review.locations.csv" class="section level2">
 <h2>lit.review.locations.csv</h2>
 <p><em>study</em>: identifier of the study using the author(s) and
-publishing year, NA values are for instances where multiplee locations
+publishing year, NA values are for instances where multiple locations
 were provided for the same study, in which the numerical id (see below)
 can adequately cross-reference the location data to the correct
 study</p>
