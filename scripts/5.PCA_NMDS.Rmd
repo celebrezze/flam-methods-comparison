@@ -368,7 +368,7 @@ ggplot(PCAvalues, aes(x = PC1, y = PC2)) +
   scale_color_manual(values = c("#FC5130","#F7B801","#0B032D","#5F758E")) +
   coord_equal()
 
-ggsave(here('figures/FigS3.PCAflammetrics.jpg'), height = 8, width = 12)
+ggsave(here('figures/FigS4.PCAflammetrics.jpg'), height = 8, width = 12)
 ```
 
 ## Side-by-side PCAs
@@ -714,7 +714,7 @@ hpPCA
 PCA.epi.and.hp <- cowplot::plot_grid(epiPCA, hpPCA, ncol = 2, rel_widths = c(1,1))
 PCA.epi.and.hp
 
-ggsave(here('figures/Fig5.pca.sidebyside.jpg'), plot = PCA.epi.and.hp, height = 7.5, width = 16.5)
+ggsave(here('figures/Fig4.pca.sidebyside.jpg'), plot = PCA.epi.and.hp, height = 7.5, width = 16.5)
 ```
 
 # MAIN TABLE
@@ -983,7 +983,7 @@ ggplot(PCAvalues, aes(x = PC1, y = PC2)) +
   scale_color_manual(values = c("#FC5130","#F7B801","#0B032D","#5F758E")) +
   coord_equal()
 
-ggsave(here('figures/FigS4.PCAflammetrics.scaled.centered.jpg'), height = 8, width = 12)
+ggsave(here('figures/FigS5.PCAflammetrics.scaled.centered.jpg'), height = 8, width = 12)
 ```
 
 # -----------------------------

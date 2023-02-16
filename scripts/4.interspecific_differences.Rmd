@@ -14,6 +14,7 @@ library(lme4) # mixed effects models
 library(performance)
 library(cowplot)
 library(gridExtra)
+library(ggpubr)
 library(remef)
 library(grid)
 library(car) # for qqPlot()
@@ -1563,7 +1564,7 @@ ggsave(here('figures/3spp.species.differences.boxplot.jpg'), height = 7, width =
 ```
 
 
-## FIGURE 4
+## FIGURE S3
 ### Setup
 Only comparing ADFA and ARPA
 ```{r}
@@ -1646,7 +1647,7 @@ hp.box
 
 ggarrange(epi.box, hp.box, ncol = 1, common.legend = TRUE, legend = 'right', heights = c(1,1))
 
-ggsave(here('figures/Fig4.spp.diff.boxplot.jpg'), height = 7, width = 11)
+ggsave(here('figures/FigS3.spp.diff.boxplot.jpg'), height = 7, width = 11)
 ```
 
 ## Statistical Test - T Test

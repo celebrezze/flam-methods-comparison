@@ -64,7 +64,7 @@ The **scripts** folder includes scripts for all of the code we used to wrangle d
   
   *3.2.mixed_effects_model_selections.Rmd*: this involves the primary mixed effects model selection discussed in the manuscript and accompanying mixed effects model summary tables.
   
-  *4.interspecific_differences.Rmd*: this focuses on the section of the manuscript concerned with interspecific differences and involves many iterations of similar analyses (a lot of which were not utilized); otherwise, it contains statistical tests, visualizations and summary tables.
+  *4.interspecific_differences.Rmd*: this focuses on the section of the supplementary index concerned with interspecific differences and involves many iterations of similar analyses (a lot of which were not utilized); otherwise, it contains statistical tests, visualizations and summary tables.
   
   *5.PCA_NMDS.Rmd*: this involves all code necessary for the principal component analysis included in the manuscript as well as code for non-metric multidimensional scaling (NMDS) analyses which were not used in the final product.
   

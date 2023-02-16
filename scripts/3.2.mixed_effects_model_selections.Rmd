@@ -12,8 +12,10 @@ library(tidyverse)
 library(here)
 library(lme4) # mixed effects models
 library(sjPlot) #tab_model function
-library(performance) # colinearity check
+library(performance) # colinearity check and Nakagawa R2 value for MEM
 library(kableExtra) # for Kable table
+library(emmeans)
+library(lmerTest) # for Kenward-Roger approx. p-value
 here = here::here
 select = dplyr::select
 col3 = hcl.colors(10, "YlOrRd", rev = TRUE) #color scale to use for consistency 
@@ -636,6 +638,12 @@ tab_model(mpa.mod, lfm.mod, dw.mod, ww.mod, mod1, mod2, mod3, mod4, int1, int2, 
 # LFM + DW close behind
 ```
 
+P-values
+```{r}
+int2 <- lmer(tti ~ mpa + dw_flam_sample*spp + site + year_month + (1|individual), data = epi.df, REML = TRUE)
+summary(int2, ddf = 'Kenward-Roger')
+```
+
 ##### FD
 ```{r}
 mpa.mod <- lmer(fd ~ mpa + spp + sample_wt + site + year_month + (1|individual), data = epi.df)
@@ -675,6 +683,15 @@ tab_model(mpa.mod, lfm.mod, dw.mod, ww.mod, mod1, mod2, mod3, mod4, int1, int2, 
 # MPa + DW close behind
 ```
 
+P Values
+```{r}
+int1 <- lmer(fd ~ dw_flam_sample*spp + site + year_month + (1|individual), data = epi.df, REML = T)
+summary(int1, ddf = 'Kenward-Roger')
+int4 <- lmer(fd ~ ww_flam_sample*spp + site + year_month + (1|individual), data = epi.df, REML = T)
+summary(int4, ddf = 'Kenward-Roger')
+```
+
+
 ##### FH
 ```{r}
 mpa.mod <- lmer(fh ~ mpa + spp + sample_wt + site + year_month + (1|individual), data = epi.df)
@@ -688,7 +705,7 @@ mod4 <- lmer(fh ~ lfm + dw_flam_sample + spp + site + year_month + (1|individual
 # Interactions
 int1 <- lmer(fh ~ lfm + dw_flam_sample*spp + site + year_month + (1|individual), data = epi.df)
 int2 <- lmer(fh ~ dw_flam_sample*spp + site + year_month + (1|individual), data = epi.df)
-int3 <- mod3 <- lmer(fh ~ mpa + dw_flam_sample*spp + site + year_month + (1|individual), data = epi.df)
+int3 <- lmer(fh ~ mpa + dw_flam_sample*spp + site + year_month + (1|individual), data = epi.df)
 
 tab_model(mpa.mod, lfm.mod, dw.mod, ww.mod, mod1, mod2, mod3, mod4, int1, int2, int3,
           show.reflvl = TRUE, 
@@ -708,6 +725,15 @@ tab_model(mpa.mod, lfm.mod, dw.mod, ww.mod, mod1, mod2, mod3, mod4, int1, int2, 
 
 # Best models:  MPa + DW and MPa + DW*spp, LFM + DW*spp not sig. worse
 ```
+
+P Values
+```{r}
+int3 <- lmer(fh ~ mpa + dw_flam_sample*spp + site + year_month + (1|individual), data = epi.df, REML = T)
+summary(int3, ddf = 'Kenward-Roger')
+int2 <- lmer(fh ~ dw_flam_sample*spp + site + year_month + (1|individual), data = epi.df, REML = T)
+summary(int2, ddf = 'Kenward-Roger')
+```
+
 
 ##### GD
 ```{r}
@@ -744,8 +770,17 @@ tab_model(mpa.mod, lfm.mod, dw.mod, ww.mod, mod1, mod2, mod3, mod4, int1, int2, 
   string.p = "P-Value", 
   p.style = "stars",
   file = here('mem-model-selection/gd.EPI.mem.html'))
-
 # Best model: LFM + DW*spp
+```
+
+P Values
+```{r}
+int3 <- lmer(gd ~ mpa + lfm + dw_flam_sample*spp + site + year_month + (1|individual), data = epi.df, REML = T)
+summary(int3, ddf = 'Kenward-Roger')
+int2 <- lmer(gd ~ dw_flam_sample*spp + site + year_month + (1|individual), data = epi.df, REML = T)
+summary(int2, ddf = 'Kenward-Roger')
+int1 <- lmer(gd ~ lfm + dw_flam_sample*spp + site + year_month + (1|individual), data = epi.df, REML = T)
+summary(int1, ddf = 'Kenward-Roger')
 ```
 
 ##### Max. Temp.
@@ -788,6 +823,14 @@ tab_model(mpa.mod, lfm.mod, dw.mod, ww.mod, mod1, mod2, mod3, mod4, int1, int2, 
 # MPa + DW, MPa alone close behind
 ```
 
+P Values
+```{r}
+int1 <- lmer(temp_max ~ mpa + lfm + dw_flam_sample*spp + site + year_month + (1|individual), data = epi.df, REML = T)
+summary(int1, ddf = 'Kenward-Roger')
+int5 <- lmer(temp_max ~ mpa + dw_flam_sample*spp + site + year_month + (1|individual), data = epi.df, REML = T)
+summary(int5, ddf = 'Kenward-Roger')
+```
+
 ##### PFG
 ```{r}
 mpa.mod <- lmer(pfg ~ mpa + spp + sample_wt + site + year_month + (1|individual), data = epi.df)
@@ -823,7 +866,13 @@ tab_model(mpa.mod, lfm.mod, dw.mod, ww.mod, mod1, mod2, mod3, mod4, int1, int2, 
   p.style = "stars",
   file = here('mem-model-selection/pfg.EPI.mem.html'))
 
-# Best model: LFM + DW*spp
+# Best model: MPa + DW*spp
+```
+
+P Values
+```{r}
+int3 <- lmer(pfg ~ mpa + dw_flam_sample*spp + site + year_month + (1|individual), data = epi.df, REML = T)
+summary(int3, ddf = 'Kenward-Roger')
 ```
 
 ##### GTI
@@ -862,6 +911,12 @@ tab_model(mpa.mod, lfm.mod, dw.mod, ww.mod, mod1, mod2, mod3, mod4, int1, int2, 
 # DW alone close behind
 ```
 
+P Values
+```{r}
+int2 <- lmer(gti ~ mpa + dw_flam_sample*spp + site + year_month + (1|individual), data = epi.df, REML = T)
+summary(int2, ddf = 'Kenward-Roger')
+```
+
 ##### TTFG
 ```{r}
 mpa.mod <- lmer(ttfg ~ mpa + spp + sample_wt + site + year_month + (1|individual), data = epi.df)
@@ -895,6 +950,12 @@ tab_model(mpa.mod, lfm.mod, dw.mod, ww.mod, mod1, mod2, mod3, mod4, int1, int2, 
   file = here('mem-model-selection/ttfg.EPI.mem.html'))
 
 # Best model: LFM + DW*spp
+```
+
+P Values
+```{r}
+int3 <- lmer(ttfg ~ ww_flam_sample*spp + site + year_month + (1|individual), data = epi.df, REML = T)
+summary(int3, ddf = "Kenward-Roger")
 ```
 
 #### Hot Plate
@@ -942,6 +1003,12 @@ tab_model(mpa.mod, lfm.mod, dw.mod, ww.mod, mod1, mod2, mod3, mod4, int1, int2, 
 # MPa*spp close behind
 ```
 
+P Values
+```{r}
+int6 <- lmer(tti ~ mpa + dw_flam_sample*spp + site + year_month + (1|individual), data = hp.df, REML = T)
+summary(int6, ddf = 'Kenward-Roger')
+```
+
 ##### FD
 ```{r}
 mpa.mod <- lmer(fd ~ mpa + spp + sample_wt + site + year_month + (1|individual), data = hp.df)
@@ -980,6 +1047,16 @@ tab_model(mpa.mod, lfm.mod, dw.mod, ww.mod, mod1, mod2, mod3, mod4, int1, int2, 
 # LFM + DW close behind
 ```
 
+P Values
+```{r}
+int1 <- lmer(fd ~ dw_flam_sample*spp + site + year_month + (1|individual), data = hp.df, REML = T)
+summary(int1, ddf = 'Kenward-Roger')
+int4 <- lmer(fd ~ ww_flam_sample*spp + site + year_month + (1|individual), data = hp.df, REML = T)
+summary(int4, ddf = 'Kenward-Roger')
+int2 <- lmer(fd ~ mpa + dw_flam_sample*spp + site + year_month + (1|individual), data = hp.df, REML = T)
+summary(int2, ddf = 'Kenward-Roger')
+```
+
 ##### FH
 ```{r}
 mpa.mod <- lmer(fh ~ mpa + spp + sample_wt + site + year_month + (1|individual), data = hp.df)
@@ -1014,6 +1091,12 @@ tab_model(mpa.mod, lfm.mod, dw.mod, ww.mod, mod1, mod2, mod3, mod4, int1, int2, 
 # Best model: LFM + DW*spp; DW*spp not sig. worse
 # Best model (w/o interactions): DW alone; LFM + DW not sig. worse
 # MPa + DW close behind
+```
+
+P Values
+```{r}
+int1 <- lmer(fh ~ dw_flam_sample*spp + site + year_month + (1|individual), data = hp.df, REML = T)
+summary(int1, ddf = 'Kenward-Roger')
 ```
 
 ##### GD
@@ -1054,6 +1137,12 @@ tab_model(mpa.mod, lfm.mod, dw.mod, ww.mod, mod1, mod2, mod3, mod4, int1, int2, 
 # Best model: LFM + DW*spp
 ```
 
+P Values
+```{r}
+int3 <- lmer(gd ~ mpa + lfm + dw_flam_sample*spp + site + year_month + (1|individual), data = hp.df)
+summary(int3, ddf = 'Kenward-Roger')
+```
+
 ##### Max. Temp.
 ```{r}
 mpa.mod <- lmer(temp_max ~ mpa + spp + sample_wt + site + year_month + (1|individual), data = hp.df)
@@ -1087,6 +1176,12 @@ tab_model(mpa.mod, lfm.mod, dw.mod, ww.mod, mod1, mod2, mod3, mod4, int1, int2, 
   file = here('mem-model-selection/temp_max.HP.mem.html'))
 
 # Best model: MPa + DW*spp; MPa + LFM + DW*spp not sig. worse
+```
+
+P Values
+```{r}
+int1 <- lmer(temp_max ~ mpa + dw_flam_sample*spp + site + year_month + (1|individual), data = hp.df, REML = T)
+summary(int1, ddf = 'Kenward-Roger')
 ```
 
 ##### PFG
@@ -1123,6 +1218,12 @@ tab_model(mpa.mod, lfm.mod, dw.mod, ww.mod, mod1, mod2, mod3, mod4, int1, int2, 
   file = here('mem-model-selection/pfg.HP.mem.html'))
 
 # Best model: LFM + DW*spp
+```
+
+P Values
+```{r}
+int5 <- lmer(pfg ~ mpa + dw_flam_sample*spp + site + year_month + (1|individual), data = hp.df, REML = T)
+summary(int5, ddf = 'Kenward-Roger')
 ```
 
 ##### GTI
@@ -1162,6 +1263,14 @@ tab_model(mpa.mod, lfm.mod, dw.mod, ww.mod, mod1, mod2, mod3, mod4, int1, int2, 
 # Best model: LFM + DW*spp
 ```
 
+P Values
+```{r}
+int5 <- lmer(gti ~ mpa + lfm + dw_flam_sample*spp + site + year_month + (1|individual), data = hp.df, REML = T)
+summary(int5, ddf = 'Kenward-Roger')
+int1 <- lmer(gti ~ lfm + dw_flam_sample*spp + site + year_month + (1|individual), data = hp.df, REML = T)
+summary(int1, ddf = 'Kenward-Roger')
+```
+
 ##### TTFG
 ```{r}
 mpa.mod <- lmer(ttfg ~ mpa + spp + sample_wt + site + year_month + (1|individual), data = hp.df)
@@ -1199,12 +1308,19 @@ tab_model(mpa.mod, lfm.mod, dw.mod, ww.mod, mod1, mod2, mod3, mod4, int1, int2, 
 # Best model: LFM + DW*spp
 ```
 
+P Values
+```{r}
+int1 <- lmer(ttfg ~ mpa + dw_flam_sample*spp + site + year_month + (1|individual), data = hp.df, REML = T)
+summary(int1, ddf = 'Kenward-Roger')
+```
+
+
 # ------------------------------
 # MEM Selection Table
 ```{r}
 col1 <- c('Time to Ignition', 'Flame Duration', ' ', ' ', 'Flame Height', ' ', 'Glow Duration', ' ', ' ', 'Maximum Temperature', ' ', 'Post-Flame Glow', 'Glow to Ignition', ' ', 'Time to First Glow')
-col2 <- c('MPa*** + DW* x species', 'DW x species', 'WW x species', ' ', 'MPa + DW x species', 'DW x species', 'MPa + LFM + DW x species', 'DW x species','LFM + DW x species', 'MPa*** + LFM* + DW* x species', 'MPa** + DW x species', 'MPa** + [DW x species]*', 'MPa + DW x species', ' ', '[WW*** x species]**')
-col3 <- c('MPa + [DW*** x species]*', 'DW x species', 'WW x species', 'MPa + DW x species', 'DW* x species', ' ', 'MPa + LFM* + [DW** x species]**', ' ', ' ','MPa*** + DW** x species', ' ', 'MPa + [DW* x species]**', 'MPa + LFM + DW** x species', 'LFM + DW** x species', 'MPa** + DW x species')
+col2 <- c('MPa*** + DW* x species', 'DW x species', 'WW x species', ' ', 'MPa + DW x species', 'DW x species', 'MPa + LFM + DW x species', 'DW x species','LFM + DW x species', 'MPa*** + LFM + DW x species', 'MPa** + DW x species', 'MPa + DW x species', 'MPa + DW x species', ' ', 'WW*** x species')
+col3 <- c('MPa + DW** x species', 'DW x species', 'WW x species', 'MPa + DW x species', 'DW* x species', ' ', 'MPa + LFM* + DW** x species', ' ', ' ','MPa*** + DW** x species', ' ', 'MPa + DW* x species', 'MPa + LFM + DW** x species', 'LFM + DW** x species', 'MPa** + DW x species')
 col4 <- c('651.189', '513.814', '515.805', ' ', '522.753', '523.215', '860.247', '860.494', '862.221', '884.899', '886.737', '828.631', '653.906', ' ', '576.627')
 col5 <- c('723.571', '572.756', '573.225', '573.969', '477.555', ' ', '842.114', ' ', ' ', '737.287', ' ', '809.005', '737.883', '739.439', '752.668')
 col6 <- c('0.345 / 0.420', '0.126 / 0.137', '0.098 / NA', ' ', '0.187 / NA', '0.157 / NA', '0.332 / 0.405', '0.325 / 0.402', '0.333 / 0.399', '0.224 / NA', '0.193 / NA', '0.343 / 0.419', '0.164 / NA', ' ', '0.419 / 0.423')
