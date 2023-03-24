@@ -368,7 +368,7 @@ ggplot(PCAvalues, aes(x = PC1, y = PC2)) +
   scale_color_manual(values = c("#FC5130","#F7B801","#0B032D","#5F758E")) +
   coord_equal()
 
-ggsave(here('figures/FigS4.PCAflammetrics.jpg'), height = 8, width = 12)
+ggsave(here('figures/FigS6.PCAflammetrics.jpg'), height = 8, width = 12)
 ```
 
 ## Side-by-side PCAs
@@ -983,7 +983,7 @@ ggplot(PCAvalues, aes(x = PC1, y = PC2)) +
   scale_color_manual(values = c("#FC5130","#F7B801","#0B032D","#5F758E")) +
   coord_equal()
 
-ggsave(here('figures/FigS5.PCAflammetrics.scaled.centered.jpg'), height = 8, width = 12)
+ggsave(here('figures/FigS7.PCAflammetrics.scaled.centered.jpg'), height = 8, width = 12)
 ```
 
 # -----------------------------
