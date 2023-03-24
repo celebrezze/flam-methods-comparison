@@ -2188,19 +2188,20 @@ both_df1.remef$r_tti.top2 <- remef(top2.tti.mR, fix = c('site2', 'sitePainted Ca
 Plot:
 ```{r}
 tti.top2R <- ggplot(data = both_df1.remef, aes(y = r_tti.top2, x = mpa, color = Model)) +
-  geom_point(size = 1, alpha = 0.8, aes(shape = Species)) +
+  geom_point(size = 2.1, alpha = 0.7, aes(shape = Species)) +
   geom_smooth(method = "lm", se = F) +
   labs(y ="Time to Ignition", x = "Water Potential (MPa)", color = "Method", shape = "Species") +
   theme_bw()+
   scale_color_manual(values = c("grey70", "black")) +
-  annotate('text', x = -9.5, y = 1.73, label = 'a', size = 11, fontface = 'bold') +
+  annotate('text', x = -9.5, y = 1.73, label = 'a', size = 12, fontface = 'bold') +
   guides(color = guide_legend(override.aes = list(size = 1.2))) +
   guides(shape = guide_legend(override.aes = list(size = 2))) +
-  theme(axis.title = element_text(face = 'bold', size = 16),
-        axis.text = element_text(size = 14),
+  theme(axis.title = element_text(face = 'bold', size = 18),
+        axis.text = element_text(size = 16),
         legend.title = element_text(face = 'bold', size = 18),
         legend.text = element_text(face = 'italic', size = 16),
-        axis.title.x = element_blank())
+        axis.title.x = element_blank(),
+        axis.text.x = element_blank())
 tti.top2R
 ```
 
@@ -2247,18 +2248,19 @@ both_df1.remef$r_fh.top2 <- remef(top2.fh.mR, fix = c('site2', 'sitePainted Cave
 Plot:
 ```{r}
 fh.top2R <- ggplot(data = both_df1.remef, aes(y = r_fh.top2, x = dw_scaled, color = Model)) +
-  geom_point(size = 1, alpha = 0.8, aes(shape = Species)) +
+  geom_point(size = 2.1, alpha = 0.7, aes(shape = Species)) +
   geom_smooth(method = "lm", se = F) +
   labs(y ="Flame Height", x = "Dry Weight (scaled)", color = "Method", shape = "Species") +
   theme_bw()+
   scale_color_manual(values = c("grey70", "black")) +
-  annotate('text', x = -2.7, y = 2.89, label = 'e', size = 11, fontface = 'bold') +
-  theme(axis.title = element_text(face = 'bold', size = 16),
-        axis.text = element_text(size = 14),
+  annotate('text', x = -2.7, y = 2.89, label = 'e', size = 12, fontface = 'bold') +
+  theme(axis.title = element_text(face = 'bold', size = 18),
+        axis.text = element_text(size = 16),
         legend.title = element_text(face = 'bold', size = 18),
         legend.text = element_text(face = 'italic', size = 16),
         legend.position = 'none',
-        axis.title.x = element_blank())
+        axis.title.x = element_blank(),
+        axis.text.x = element_blank())
 fh.top2R
 ```
 
@@ -2305,18 +2307,19 @@ both_df1.remef$r_fd.top2 <- remef(top2.fd.mR, fix = c('site2', 'sitePainted Cave
 Plot:
 ```{r}
 fd.top2R <- ggplot(data = both_df1.remef, aes(y = r_fd.top2, x = dw_scaled, color = Model)) +
-  geom_point(size = 1, alpha = 0.8, aes(shape = Species)) +
+  geom_point(size = 2.1, alpha = 0.7, aes(shape = Species)) +
   geom_smooth(method = 'lm', se = F) +
   labs(y ="Flame Duration", x = "Dry Weight (scaled)", color = "Method", shape = "Species") +
   theme_bw()+
   scale_color_manual(values = c("grey70", "black")) +
-  annotate('text', x = -2.7, y = 3.29, label = 'f', size = 11, fontface = 'bold') +
-  theme(axis.title = element_text(face = 'bold', size = 16),
-        axis.text = element_text(size = 14),
+  annotate('text', x = -2.7, y = 3.29, label = 'f', size = 12, fontface = 'bold') +
+  theme(axis.title = element_text(face = 'bold', size = 18),
+        axis.text = element_text(size = 16),
         legend.title = element_text(face = 'bold', size = 18),
         legend.text = element_text(face = 'italic', size = 16),
         legend.position = 'none',
-        axis.title.x = element_blank())
+        axis.title.x = element_blank(),
+        axis.text.x = element_blank())
 fd.top2R
 ```
 
@@ -2363,18 +2366,19 @@ both_df1.remef$r_gd.top2 <- remef(top2.gd.mR, fix = c('site2', 'sitePainted Cave
 Plot:
 ```{r}
 gd.top2R <- ggplot(data = both_df1.remef, aes(y = r_gd.top2, x = dw_scaled, color = Model)) +
-  geom_point(size = 1, alpha = 0.8, aes(shape = Species)) +
+  geom_point(size = 2.1, alpha = 0.7, aes(shape = Species)) +
   geom_smooth(method = 'lm', se = F) +
   labs(y ="Glow Duration", x = "Dry Weight (scaled)", color = "Method", shape = "Species") +
   theme_bw()+
   scale_color_manual(values = c("grey70", "black")) +
-  annotate('text', x = -2.7, y = 3.3, label = 'g', size = 11, fontface = 'bold') +
-  theme(axis.title = element_text(face = 'bold', size = 16),
-        axis.text = element_text(size = 14),
+  annotate('text', x = -2.7, y = 3.3, label = 'g', size = 12, fontface = 'bold') +
+  theme(axis.title = element_text(face = 'bold', size = 18),
+        axis.text = element_text(size = 16),
         legend.title = element_text(face = 'bold', size = 18),
         legend.text = element_text(face = 'italic', size = 16),
         legend.position = 'none',
-        axis.title.x = element_blank())
+        axis.title.x = element_blank(),
+        axis.text.x = element_blank())
 gd.top2R
 ```
 
@@ -2421,19 +2425,20 @@ both_df1.remef$r_temp.top2 <- remef(top2.temp.mR, fix = c('site2', 'sitePainted 
 Plot:
 ```{r}
 temp.top2R <- ggplot(data = both_df1.remef, aes(y = r_temp.top2, x = mpa, color = Model)) +
-  geom_point(size = 1, alpha = 0.8, aes(shape = Species)) +
+  geom_point(size = 2.1, alpha = 0.7, aes(shape = Species)) +
   geom_smooth(method = 'lm', se = F) +
   labs(y ="Maximum Temperature", x = "Water Potential (MPa)", color = "Method", shape = "Species") +
   theme_bw()+
   scale_color_manual(values = c("grey70", "black")) +
-  annotate('text', x = -9.5, y = 3.65, label = 'b', size = 11, fontface = 'bold') +
-  guides(color = guide_legend(override.aes = list(size = 1.2))) +
+  annotate('text', x = -9.5, y = 3.65, label = 'b', size = 12, fontface = 'bold') +
+  guides(color = guide_legend(override.aes = list(size = 1.6))) +
   guides(shape = guide_legend(override.aes = list(size = 2))) +
- theme(axis.title = element_text(face = 'bold', size = 16),
-        axis.text = element_text(size = 14),
+ theme(axis.title = element_text(face = 'bold', size = 18),
+        axis.text = element_text(size = 16),
         legend.title = element_text(face = 'bold', size = 18),
         legend.text = element_text(face = 'italic', size = 16),
-        axis.title.x = element_blank())
+        axis.title.x = element_blank(),
+        axis.text.x = element_blank())
 temp.top2R
 ```
 
@@ -2480,14 +2485,14 @@ both_df1.remef$r_pfg.top2 <- remef(top2.pfg.mR, fix = c('site2', 'sitePainted Ca
 Plot:
 ```{r}
 pfg.top2R <- ggplot(data = both_df1.remef, aes(y = r_pfg.top2, x = dw_scaled, color = Model)) +
-  geom_point(size = 1, alpha = 0.8, aes(shape = Species)) +
+  geom_point(size = 2.1, alpha = 0.7, aes(shape = Species)) +
   geom_smooth(method = 'lm', se = F) +
   labs(y ="Post-Flame Glow", x = "Dry Weight (scaled)", color = "Method", shape = "Species") +
   theme_bw()+
   scale_color_manual(values = c("grey70", "black")) +
-  annotate('text', x = -2.7, y = 3.865, label = 'h', size = 11, fontface = 'bold') +
-  theme(axis.title = element_text(face = 'bold', size = 16),
-        axis.text = element_text(size = 14),
+  annotate('text', x = -2.7, y = 3.865, label = 'h', size = 12, fontface = 'bold') +
+  theme(axis.title = element_text(face = 'bold', size = 18),
+        axis.text = element_text(size = 16),
         legend.title = element_text(face = 'bold', size = 18),
         legend.text = element_text(face = 'italic', size = 16),
         legend.position = 'none',
@@ -2538,19 +2543,20 @@ both_df1.remef$r_ttfg.top2 <- remef(top2.ttfg.mR, fix = c('site2', 'sitePainted 
 Plot:
 ```{r}
 ttfg.top2R <- ggplot(data = both_df1.remef, aes(y = r_ttfg.top2, x = mpa, color = Model)) +
-  geom_point(size = 1, alpha = 0.8, aes(shape = Species)) +
+  geom_point(size = 2.1, alpha = 0.7, aes(shape = Species)) +
   geom_smooth(method = 'lm', se = F) +
   labs(y ="Time to First Glow", x = "Water Potential (MPa)", color = "Method", shape = "Species") +
   theme_bw()+
   scale_color_manual(values = c("grey70", "black")) +
-  annotate('text', x = -9.5, y = 2.37, label = 'c', size = 11, fontface = 'bold') +
-  guides(color = guide_legend(override.aes = list(size = 1.2))) +
+  annotate('text', x = -9.5, y = 2.37, label = 'c', size = 12, fontface = 'bold') +
+  guides(color = guide_legend(override.aes = list(size = 1.6))) +
   guides(shape = guide_legend(override.aes = list(size = 2))) +
- theme(axis.title = element_text(face = 'bold', size = 16),
-        axis.text = element_text(size = 14),
+ theme(axis.title = element_text(face = 'bold', size = 18),
+        axis.text = element_text(size = 16),
         legend.title = element_text(face = 'bold', size = 18),
         legend.text = element_text(face = 'italic', size = 16),
-        axis.title.x = element_blank())
+        axis.title.x = element_blank(),
+        axis.text.x = element_blank())
 ttfg.top2R
 ```
 
@@ -2597,16 +2603,16 @@ both_df1.remef$r_gti.top2 <- remef(top2.gti.mR, fix = c('site2', 'sitePainted Ca
 Plot:
 ```{r}
 gti.top2R <- ggplot(data = both_df1.remef, aes(y = r_gti.top2, x = mpa, color = Model)) +
-  geom_point(size = 1, alpha = 0.8, aes(shape = Species)) +
+  geom_point(size = 2.1, alpha = 0.7, aes(shape = Species)) +
   geom_smooth(method = 'lm', se = F) +
   labs(y ="Glow to Ignition", x = "Water Potential (MPa)", color = "Method", shape = "Species") +
   theme_bw()+
   scale_color_manual(values = c("grey70", "black")) +
-  guides(color = guide_legend(override.aes = list(size = 1.2))) +
+  guides(color = guide_legend(override.aes = list(size = 1.6))) +
   guides(shape = guide_legend(override.aes = list(size = 2))) +
-  annotate('text', x = -9.5, y = 2.705, label = 'd', size = 11, fontface = 'bold') +
- theme(axis.title = element_text(face = 'bold', size = 16),
-        axis.text = element_text(size = 14),
+  annotate('text', x = -9.5, y = 2.705, label = 'd', size = 12, fontface = 'bold') +
+ theme(axis.title = element_text(face = 'bold', size = 18),
+        axis.text = element_text(size = 16),
         legend.title = element_text(face = 'bold', size = 18),
         legend.text = element_text(face = 'italic', size = 16),
         axis.title.x = element_blank())
@@ -2614,6 +2620,24 @@ gti.top2R
 ```
 
 ### All plots together
+2 columns (Figure 3)
+```{r}
+mpa.plots <- ggarrange(tti.top2R, temp.top2R, ttfg.top2R, gti.top2R, ncol = 1, nrow = 4, legend = 'none')
+mpa.plots.grob <-ggarrange(arrangeGrob(mpa.plots, bottom = mpa.grob))
+
+dw.plots <- ggarrange(fh.top2R, fd.top2R, gd.top2R, pfg.top2R, ncol = 1, nrow = 4)
+dw.plots.grob <- ggarrange(arrangeGrob(dw.plots, bottom = dw.grob))
+
+plots <- ggarrange(mpa.plots.grob, dw.plots.grob, nrow = 1)
+
+legend <- get_legend(gti.top2R)
+
+plots.legend <- cowplot::plot_grid(plots, legend, ncol = 2, rel_widths = c(4.5, 1))
+plots.legend
+ggsave(here("figures/Fig3.hydration.vs.metrics.MEM.selection.r.jpg"), height = 14, width = 12)
+```
+
+4 columns (old version of fig. 3)
 ```{r}
 mpa.plots <- ggarrange(tti.top2R, temp.top2R, ttfg.top2R, gti.top2R, ncol = 4, nrow = 1, common.legend = TRUE)
 mpa.plots.grob <-ggarrange(arrangeGrob(mpa.plots, bottom = mpa.grob))
@@ -2624,7 +2648,7 @@ dw.plots.grob <- ggarrange(arrangeGrob(dw.plots, bottom = dw.grob))
 plots <- ggarrange(mpa.plots.grob, dw.plots.grob, nrow = 2)
 plots
 
-ggsave(here("figures/Fig3.hydration.vs.metrics.MEM.selection.r.jpg"), height = 7, width = 13)
+#ggsave(here("figures/Fig3.hydration.vs.metrics.MEM.selection.r.jpg"), height = 8.5, width = 14)
 ```
 
 # ----------------------------

@@ -27,14 +27,14 @@ NOTE: these datasets are *very large*. They are too large to push to the GitHub 
 ```{r}
 # Ignitions (2016) Dataset from global fire atlas
 temp <- tempfile()
-url <- 'https://daac.ornl.gov/orders/a773665852b1e734aebf200638e3c5b5/CMS_Global_Fire_Atlas/data/Global_fire_atlas_V1_ignitions_2016.zip' # Note: this URL may expire after 30 days (in March)
+url <- 'https://daac.ornl.gov/orders/59d386f26ee3bdb165507bd6ff4134df/CMS_Global_Fire_Atlas/data/Global_fire_atlas_V1_ignitions_2016.zip' # Note: this URL may expire after 30 days (in March)
 download.file(url, temp)
 fire.map2016 <- unzip(zipfile = temp)
 fire.map2016 <- sf::read_sf('Global_fire_atlas_V1_ignitions_2016.shp')
 
 # Ignitions (2015) Dataset from global fire atlas
 temp <- tempfile()
-url <- 'https://daac.ornl.gov/orders/a773665852b1e734aebf200638e3c5b5/CMS_Global_Fire_Atlas/data/Global_fire_atlas_V1_ignitions_2015.zip' # Note: this URL may expire after 30 days (in March)
+url <- 'https://daac.ornl.gov/orders/59d386f26ee3bdb165507bd6ff4134df/CMS_Global_Fire_Atlas/data/Global_fire_atlas_V1_ignitions_2015.zip' # Note: this URL may expire after 30 days (in April)
 download.file(url, temp)
 fire.map2015 <- unzip(zipfile = temp)
 fire.map2015 <- sf::read_sf('Global_fire_atlas_V1_ignitions_2015.shp')
@@ -51,8 +51,8 @@ value <- c(rep(NaN, 16))
 data.summary <- data.frame(group, value)
 
 for(i in c(1:16)) {
-  data.summary$value[i] <- sum(data[,i+7])/nrow(data)
-  data.summary$count[i] <- sum(data[,i+7])
+  data.summary$value[i] <- sum(data[,i+11])/nrow(data)
+  data.summary$count[i] <- sum(data[,i+11])
 }
 
 data.summary$group <- factor(data.summary$group, levels = c('Epiradiator', 'Grill', 'Muffle Furnace', 'Cone Calorimeter', 'Mass Loss\n Calorimeter', 'Oxygen Bomb','Steel Ring', 'Wind Tunnel', 'Fire Bench', 'Xylene Lattice', 'Direct Flame', 'Tray', 'FPA Calorimeter', 'Flat-Flame Burner',	'Intermediate\n Scale Calorimeter', 'Other'))
@@ -112,6 +112,39 @@ ggplot(data = data, aes(x = sample.weight)) +
 ggsave(here('figures/lit.review.all.methods.weights.jpg'), height = 5, width = 7.5)
 ```
 
+## All Models & Epiradiator Specifically
+```{r}
+data.epi <- data %>% 
+  filter(model == 'EPI')
+# Plot
+plot.s1 <- ggplot() +
+  labs(x = "Sample Weight (g)", y = "Kernel Probability Density") +
+  geom_density(data = data, aes(x = sample.weight), size = 1.2) +
+  geom_density(data = data.epi, aes(x = sample.weight), size = 1.2, alpha = 0.3, color = 'grey70') +
+  scale_x_continuous(trans = 'log10', breaks = c(0.1, 1, 10, 100, 1000), labels = c(0.1, 1, 10, 100, 1000)) +
+  theme_bw() +
+  theme(axis.title = element_text(face = 'bold', size = 14),
+        axis.text = element_text(size = 12))
+plot.s1
+# Legend
+legend.s1 <- get_legend( 
+  data %>%   
+  mutate(legend.tag = if_else(model == 'EPI', 'Epiradiator', 'All Models')) %>% 
+  ggplot(aes(x = sample.weight, y = year, color = legend.tag)) +
+    geom_smooth(size = 1.2, se = F) +
+    labs(color = ' ') +
+    scale_color_manual(values = c('black', 'grey70')) +
+    theme_bw() +
+    theme(legend.title = element_text(face = 'bold', size = 14),
+          legend.text = element_text(size = 12)))
+legend.s1
+# Arranging
+main.plot.s1 <- cowplot::plot_grid(plot.s1, legend.s1, ncol = 2, rel_widths = c(4,1))
+main.plot.s1
+# Saving
+ggsave(here('figures/FigS1.lit.review.weights.jpg'), height = 5, width = 9)
+```
+
 # Map!
 Cleaning up dataframes
 ```{r}
@@ -131,22 +164,39 @@ v.large.fire.map <- fire.map %>%
 states <- map_data("state")
 states <- states %>% 
   filter(region == 'california')
+
+# Classifying fire sizes
+fire.map <- fire.map %>% 
+  mutate(size.class = case_when(
+    size > 0 & size <= 1 ~ '0-1km',
+    size > 1 & size <= 2.5 ~  '1-2.5km',
+    size > 2.5 & size <= 5 ~ '2.5-5km',
+    size > 5 & size <= 20 ~ '5-20km',
+    size > 20 & size <= 100 ~ '20-100km',
+    size > 100 & size <= 1000 ~ '100-1000km',
+    size > 1000 ~ '>1000km'
+  )) %>% 
+  mutate(size.class = as.factor(size.class))
+fire.map$size.class <- factor(fire.map$size.class, levels = c('>1000km', '100-1000km','20-100km', '5-20km', '2.5-5km','1-2.5km','0-1km'))
+levels(fire.map$size.class)
 ```
 
 ## All Ignitions
 ```{r}
 world <- map_data("world")
-
 ggplot(data = world) +
   geom_map(data = world, map = world, aes(x = long, y = lat, map_id = region), fill = 'white') +
   geom_map(data = states, map = states, aes(x = long, y = lat, map_id = region), fill = 'gray85') +
   ylim(-55,90) +
-  geom_point(data = fire.map, aes(x = longitude, y = latitude, color = size), alpha = 0.025, size = 0.01) +
+  geom_point(data = fire.map, aes(x = longitude, y = latitude, color = size.class), alpha = 0.035, size = 0.008) +
   labs(color = "Fire Size (km2)") +
-  scale_color_gradient(low = '#FFC55B', high = '#EA2B1F', trans = 'log', breaks = c(1, 5, 25, 125, 625, 3000, 9000)) +
+  scale_color_manual(values = c('#2d0300', '#663417', '#ac5011', '#df6100', '#e9802b', '#f5b05d', '#f5f05d')) +
+  #scale_color_manual(values = c('y))
+  #scale_color_gradient2(low = '#FFF06D', mid = '#AF5A26', high = '#840900', trans = 'log', midpoint = 3.65, breaks = c(1, 5, 25, 125, 625, 3000, 9000)) +
   geom_point(data = location.data.clean, aes(x = longitude, y = latitude), color = 'black', size = 1.25, alpha = 0.7) +
   annotate('text', x = -172, y = 85, label = 'a', size = 14, fontface = 'bold')+
   theme_void() +
+  guides(color = guide_legend(override.aes = list(size=5, alpha = 0.8))) +
   theme(panel.background = element_rect(fill = '#0AA3CF'),
         legend.position = c(0.13, 0.2),
         legend.title = element_text(face = 'bold', size = 14),
@@ -208,8 +258,8 @@ ggplot(data = states) +
   geom_map(data = states, map = states, aes(x = long, y = lat, map_id = region), fill = 'gray85') +
   xlim(c(-124.4, -114)) +
   ylim(c(32, 42.03)) +
-  geom_point(data = fire.map, aes(x = longitude, y = latitude, color = size), alpha = 0.15, size = 0.35) +
-  scale_color_gradient(low = '#FFC55B', high = '#EA2B1F', trans = 'log', breaks = c(1, 5, 25, 125, 625, 3000, 9000)) +
+  geom_point(data = fire.map, aes(x = longitude, y = latitude, color = size.class), alpha = 0.25, size = 0.5) +
+  scale_color_manual(values = c('#2d0300', '#663417', '#ac5011', '#df6100', '#e9802b', '#f5b05d', '#f5f05d')) +
   geom_point(data = location.data.ca, aes(x = longitude, y = latitude), color = 'black', size = 4, alpha = 0.7) +
   geom_point(data = site.coordinates, aes(x = site.longitude, y = site.latitude), color = '#f78c45', size = 6, shape = 18) +
   geom_text(data = site.coordinates, aes(x = site.longitude, y = site.latitude + 0.45, label = site.labels), size = 8) +
@@ -267,22 +317,22 @@ other.description <- '(1) Litter was placed in a cubic basket which was then loa
 (6) Full-plant flammability was measured using potted plants. Aluminum discs were located at soil level and 50cm above soil level to estimate heat release. The plant was ignited by a burning cotton ball, soaked in 10mL of ethanol.'
 descriptions <- c(epi.description, grill.description, mf.description, cc.description, mlc.description, ob.description, sr.description, wt.description, fb.description, xl.description, direct.flame.description, tray.description, fpa.description, ffb.description, isc.description, other.description)
 
-epi.studies <- '[5,6],[16,17],[24],[30],[32],[45],[60],[66-89],[15,18,31,33,34]*'
-grill.studies <- '[9],[90-102]'
-mf.studies <- '[7],[46],[55,56],[98],[103-109]'
-cc.studies <- '[111]*,[112-119],[48,120]**'
-mlc.studies <- '[8],[10,11],[47],[59],[66],[121-124]'
-ob.studies <- '[6-8],[10],[60],[74],[78],[88],[125,126]'
-sr.studies <- '[127-135]'
-wt.studies <- '[10,11],[50],[57],[136-140]'
-fb.studies <- '[17],[54],[123],[141-146]'
-xl.studies <- '[20],[147-152]'
-direct.flame.studies <- '[19],[125,126],[130],[153,154]'
-tray.studies <- '[24],[137],[155-158]'
-fpa.studies <- '[159-162]'
-ffb.studies <- '[14],[58],[163,164]'
-isc.studies <- '[50],[114]'
-other.studies <- '(1) [165];(2) [158];(3) [166];(4) [48];(5) [27];(6) [167]'
+epi.studies <- '[5,6],[16,17],[24],[30],[32],[45],[67-91],[15,18,31,33,34]*'
+grill.studies <- '[11],[92-104]'
+mf.studies <- '[8],[46],[55,56],[100],[105-111]'
+cc.studies <- '[113]*,[114-121],[48,122]**'
+mlc.studies <- '[9],[12,13],[47],[59],[67],[123-126]'
+ob.studies <- '[6], [8,9], [12],[75],[79],[89],[93],[127,128]'
+sr.studies <- '[129-137]'
+wt.studies <- '[12,13],[50],[57],[138-142]'
+fb.studies <- '[17],[54],[125],[143-148]'
+xl.studies <- '[20],[149-154]'
+direct.flame.studies <- '[19],[127,128],[132],[155,156]'
+tray.studies <- '[24],[139],[157-160]'
+fpa.studies <- '[161-164]'
+ffb.studies <- '[7],[58],[165,166]'
+isc.studies <- '[50],[116]'
+other.studies <- '(1) [167];(2) [160];(3) [168];(4) [48];(5) [27];(6) [169]'
 studies <- c(epi.studies, grill.studies, mf.studies, cc.studies, mlc.studies, ob.studies, sr.studies, wt.studies, fb.studies, xl.studies, direct.flame.studies, tray.studies, fpa.studies, ffb.studies, isc.studies, other.studies)
 
 table.a1.df <- data.frame(methods, descriptions, studies)
@@ -296,6 +346,6 @@ table.a1.df %>%
   column_spec(1, bold = T, border_left = T, border_right = T) %>%  
   column_spec(2:3, border_left = T, border_right = T) %>% 
   row_spec(c(2,4,6,8,10,12,14,16), background = '#F9F6EE') %>% 
-  save_kable(here('figures/TableA1.html'))
+  save_kable(here('figures/TableA1.jpg'))
 ```
 

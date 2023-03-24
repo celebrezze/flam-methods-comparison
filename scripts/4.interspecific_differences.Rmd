@@ -1563,6 +1563,19 @@ ggplot() +
 ggsave(here('figures/3spp.species.differences.boxplot.jpg'), height = 7, width = 11)
 ```
 
+```{r}
+ggplot(data = hp.df2, aes(x = spp, y = lfm, fill = spp)) +
+  geom_boxplot()
+mean(hp.df2$lfm)
+
+shoob <- epi.df2 %>% 
+  filter(spp == 'ARPA') %>% 
+  select(lfm)
+
+mean(shoob$lfm)
+sd(shoob$lfm)
+```
+
 
 ## FIGURE S3
 ### Setup
